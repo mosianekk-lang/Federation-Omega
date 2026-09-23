@@ -55,6 +55,17 @@ class MissionProfile:
     requires_memory: bool = False
     requires_dynamic_models: bool = False
     requires_release: bool = False
+    requires_adaptive_effort: bool = False
+    requires_cross_window_context: bool = False
+    requires_dynamic_tools: bool = False
+    requires_portable_skills: bool = False
+    requires_persistent_agent: bool = False
+    requires_adaptive_computer_use: bool = False
+    requires_hypothesis_evolution: bool = False
+    requires_strict_self_verification: bool = False
+    requires_harness_simplification: bool = False
+    requires_artifact_production: bool = False
+    requires_local_multimodal: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,6 +97,11 @@ VENDORS: tuple[VendorProfile, ...] = (
     VendorProfile("Botpress", "Autonomous Nodes / Workflows", ("autonomous nodes", "tools", "knowledge", "reusable workflows", "background workflows", "retries")),
     VendorProfile("Intercom", "Fin", ("RAG", "query refinement", "retrieval/reranking", "simulations", "batch tests", "answer ratings", "escalation")),
     VendorProfile("Sierra", "Agent OS", ("testing", "monitoring", "NL authoring", "release checks", "simulations", "split-traffic rollout")),
+    VendorProfile("OpenAI", "GPT-6 Astra / Work / Codex", ("max-effort reasoning", "parallel subagent delegation", "searchable cross-window context", "computer use", "professional artifacts", "self-verification")),
+    VendorProfile("Anthropic", "Claude 5 / Managed Agents", ("long-horizon autonomy", "dynamic tool search", "programmatic tool calling", "portable agent skills", "brain-hand separation", "context rehydration")),
+    VendorProfile("Google", "Gemini 3.5 / Co-Scientist", ("native computer use", "1M-class long context", "multi-agent hypothesis evolution", "tool use", "local multimodal lane")),
+    VendorProfile("SpaceXAI", "Grok 4.7 / Grok Bot", ("long-running agents", "always-on agent computers", "self-verification", "interactive visual work", "persistent teammate memory")),
+    VendorProfile("Microsoft", "Copilot Studio Computer-Using Agents", ("adaptive UI automation", "credential-aware computer use", "multi-step workflows", "model choice", "resilient interface automation")),
 )
 
 
@@ -134,6 +150,19 @@ GENES: tuple[CapabilityGene, ...] = (
     G(38,"Artifact Attestation / Provenance","GOVERNANCE",("GitHub","SLSA-pattern"),HarvestMode.REUSE_VERIFIED,"FACP-001 + Artifact Registry + Airlock","digest + source epoch + custody readback"),
     G(39,"Versioned Blueprint / Hot Rollback","RELEASE",("UiPath","Sierra","Salesforce","Kore.ai"),HarvestMode.COMPOSED_BY_FABRIC,"versioned mission contracts","immutable version + rollback target"),
     G(40,"Support Simulation / Quality Flywheel","CX",("Intercom","Sierra","Salesforce"),HarvestMode.COMPOSED_BY_FABRIC,"CFBE simulation + evidence ratings","offline simulation before live effect"),
+    G(41,"Adaptive Reasoning Effort Controller","METACOGNITION",("OpenAI","Anthropic"),HarvestMode.COMPOSED_BY_FABRIC,"AIR effort governor + N-OMEGA RouteScore","effort changes only when marginal quality/value justifies cost"),
+    G(42,"Searchable Cross-Window Context","MEMORY",("OpenAI","Anthropic"),HarvestMode.COMPOSED_BY_FABRIC,"Bible/KDV searchable mission window index","requirements/failures remain retrievable across compaction without canon drift"),
+    G(43,"Deferred Tool Discovery / Schema Loading","TOOLS",("Anthropic","OpenAI","AWS"),HarvestMode.COMPOSED_BY_FABRIC,"Capability market + lazy tool schema loader","only eligible tools enter working context; authority unchanged"),
+    G(44,"Programmatic Tool Orchestration","TOOLS",("Anthropic","OpenAI","Google"),HarvestMode.COMPOSED_BY_FABRIC,"sandbox/code-mode orchestration over typed tool gateway","loops/branches execute deterministically with bounded tool receipts"),
+    G(45,"Portable Skill Capsules / Progressive Disclosure","TOOLS",("Anthropic","OpenAI","GitHub"),HarvestMode.COMPOSED_BY_FABRIC,"Federation skill registry + resource bundles","metadata-first selection; full instructions/resources load only on demand"),
+    G(46,"Brain / Hands Runtime Decoupling","EXECUTION",("Anthropic","Microsoft","SpaceXAI"),HarvestMode.REUSE_VERIFIED,"MissionIR/FDOF brain + Genesis/provider execution hands","model replacement cannot widen effect authority or lose durable mission state"),
+    G(47,"Persistent Always-On Agent Workspace","DURABILITY",("SpaceXAI","Anthropic","Microsoft"),HarvestMode.PROVIDER_GATED,"Genesis resident executor + FDOF durable mission runtime","survives chat loss/restart and resumes from checkpoint with provider/runtime readback",4),
+    G(48,"Adaptive Computer-Use Control","EXECUTION",("OpenAI","Google","Microsoft","SpaceXAI"),HarvestMode.PROVIDER_GATED,"Windows/Computer-Use capability adapter","UI state sensed before action; exact effect and post-action state independently read back",5),
+    G(49,"Multi-Agent Hypothesis Evolution","ORCHESTRATION",("Google","OpenAI","Anthropic"),HarvestMode.COMPOSED_BY_FABRIC,"N-Council + Formation hypothesis tournament","generate/debate/falsify/evolve while preserving minority hypotheses and evidence"),
+    G(50,"Verification-First Self-Check","EVALUATION",("OpenAI","SpaceXAI","Anthropic"),HarvestMode.REUSE_VERIFIED,"ProofOS + Reality Judge + task-specific tests","agent must inspect observed outcome and tests before declaring completion"),
+    G(51,"Harness Assumption Reaper","METACOGNITION",("OpenAI","Anthropic"),HarvestMode.COMPOSED_BY_FABRIC,"Harness Tournament + CFBE no-regression reaper","remove stale scaffolding only when matched court preserves or improves outcomes"),
+    G(52,"Artifact-Native Professional Production","VALUE",("OpenAI","Anthropic","Microsoft"),HarvestMode.COMPOSED_BY_FABRIC,"Artifact Workspace + template/style contracts","finished document/spreadsheet/presentation matches task template and passes artifact verification"),
+    G(53,"Local Multimodal Sovereign Lane","EXECUTION",("Google-open-model","LocalLLM","Federation"),HarvestMode.BUILD_ADDITIVE,"LocalLLM/OmniSurface local vision+voice+reasoning adapter","offline-capable multimodal task passes privacy/no-exfiltration and matched quality court",2),
 )
 
 
@@ -150,7 +179,7 @@ class AgenticFrontierCompiler:
             raise ValueError("duplicate gene id")
 
     def validate(self) -> None:
-        if len(VENDORS) < 15 or len(self.genes) < 40:
+        if len(VENDORS) < 22 or len(self.genes) < 53:
             raise ValueError("frontier coverage floor not met")
         required_domains = {"SPECIFICATION","ORCHESTRATION","DURABILITY","MEMORY","TOOLS","EXECUTION","SECURITY","CONTROL","OBSERVABILITY","EVALUATION","RELEASE","ROUTING","METACOGNITION","KNOWLEDGE","CX","PROOF","VALUE","GOVERNANCE"}
         if required_domains - DOMAINS:
@@ -164,15 +193,15 @@ class AgenticFrontierCompiler:
         selected = set(self.CORE)
         selected.update(g.gene_id for g in self.genes.values() if g.domain in mission.domains)
         if mission.long_running:
-            selected.update({"AGF-007","AGF-008","AGF-031"})
+            selected.update({"AGF-007","AGF-008","AGF-031","AGF-042","AGF-046","AGF-047","AGF-050"})
         if mission.multi_agent:
-            selected.update({"AGF-003","AGF-004","AGF-005","AGF-006","AGF-012"})
+            selected.update({"AGF-003","AGF-004","AGF-005","AGF-006","AGF-012","AGF-049","AGF-050"})
         if mission.tool_heavy:
-            selected.update({"AGF-013","AGF-014"})
+            selected.update({"AGF-013","AGF-014","AGF-043","AGF-044","AGF-045"})
         if mission.code_execution:
             selected.add("AGF-015")
         if mission.browser_or_computer:
-            selected.add("AGF-016")
+            selected.update({"AGF-016","AGF-048"})
         if mission.legacy_ui:
             selected.add("AGF-017")
         if mission.customer_facing:
@@ -182,9 +211,31 @@ class AgenticFrontierCompiler:
         if mission.requires_memory:
             selected.update({"AGF-010","AGF-011","AGF-012"})
         if mission.requires_dynamic_models:
-            selected.update({"AGF-025","AGF-026"})
+            selected.update({"AGF-025","AGF-026","AGF-041","AGF-050"})
         if mission.requires_release:
-            selected.update({"AGF-024","AGF-039"})
+            selected.update({"AGF-024","AGF-039","AGF-050","AGF-051"})
+        if mission.requires_adaptive_effort:
+            selected.add("AGF-041")
+        if mission.requires_cross_window_context:
+            selected.update({"AGF-042","AGF-050"})
+        if mission.requires_dynamic_tools:
+            selected.update({"AGF-043","AGF-044"})
+        if mission.requires_portable_skills:
+            selected.add("AGF-045")
+        if mission.requires_persistent_agent:
+            selected.update({"AGF-007","AGF-031","AGF-046","AGF-047","AGF-050"})
+        if mission.requires_adaptive_computer_use:
+            selected.update({"AGF-016","AGF-048","AGF-050"})
+        if mission.requires_hypothesis_evolution:
+            selected.update({"AGF-006","AGF-023","AGF-049","AGF-050"})
+        if mission.requires_strict_self_verification:
+            selected.add("AGF-050")
+        if mission.requires_harness_simplification:
+            selected.add("AGF-051")
+        if mission.requires_artifact_production:
+            selected.update({"AGF-038","AGF-052"})
+        if mission.requires_local_multimodal:
+            selected.update({"AGF-025","AGF-053"})
 
         ordered = sorted((self.genes[i] for i in selected), key=lambda g: (-g.score(weights), g.gene_id))
         proof = {"SOURCE_IDENTITY","TEST_OR_EVAL_RECEIPT","INDEPENDENT_ASSURANCE","ROLLBACK_OR_NO_EFFECT_BOUNDARY"}
@@ -265,4 +316,8 @@ def frontier_summary() -> dict[str, object]:
         "provider_effect_authorized_by_benchmark": False,
         "n_omega_cfbe_integrated": True,
         "lifecycle": N_OMEGA_LIFECYCLE,
+        "frontier_2026_gene_ids": tuple(f"AGF-{i:03d}" for i in range(41,54)),
+        "clean_room_harvest": True,
+        "proprietary_weights_imported": False,
+        "undocumented_vendor_internals_imported": False,
     }

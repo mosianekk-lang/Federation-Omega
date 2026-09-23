@@ -249,10 +249,37 @@ class AutonomicMissionSpineTests(unittest.TestCase):
         self.assertTrue(r.final_snapshot.terminal_value)
         self.assertTrue(self.spine.verify_chain(r.snapshots))
         self.assertEqual(
-            [SpineStage.INIT, SpineStage.CAPABILITY_ADMITTED, SpineStage.TOPOLOGY_READY,
+            [SpineStage.INIT, SpineStage.FRONTIER_COMPILED, SpineStage.CAPABILITY_ADMITTED, SpineStage.TOPOLOGY_READY,
              SpineStage.ACTIONS_ADMITTED, SpineStage.EXECUTION_CLOSED, SpineStage.VALUE_OBSERVED],
             [x.stage for x in r.snapshots],
         )
+
+    def test_frontier_superstack_is_compiled_before_capability_admission(self) -> None:
+        m = mission()
+        r = self.spine.run(**self.base_kwargs(m))
+        self.assertEqual(SpineStage.FRONTIER_COMPILED, r.snapshots[1].stage)
+        self.assertEqual("FRONTIER_SUPERSTACK_COMPILED", r.snapshots[1].state)
+        self.assertIn("AGF-041", r.frontier_gene_ids)
+        self.assertIn("AGF-050", r.frontier_gene_ids)
+        self.assertTrue(r.frontier_plan_digest.startswith("sha256:"))
+        self.assertEqual(r.frontier_plan_digest, r.snapshots[1].stage_receipt_digest)
+
+    def test_swarm_and_tool_capabilities_pull_frontier_residuals(self) -> None:
+        m = replace(
+            mission(),
+            metadata={
+                "multi_agent": "true",
+                "tool_heavy": "true",
+                "long_running": "true",
+                "requires_dynamic_models": "true",
+            },
+        )
+        kw = self.base_kwargs(m)
+        kw["require_swarm"] = True
+        r = self.spine.run(**kw)
+        for gene in ("AGF-042","AGF-043","AGF-044","AGF-045","AGF-046","AGF-047","AGF-049","AGF-050"):
+            self.assertIn(gene, r.frontier_gene_ids)
+
 
     def test_tampered_snapshot_chain_is_rejected(self) -> None:
         m = mission()
