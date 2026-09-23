@@ -140,6 +140,29 @@ Never pause/delete unrelated work merely to free capacity.
 
 ---
 
+## 3A--1. CHAT/CLIENT FAILURE CONTINUITY MATRIX
+
+Use the existing CFRE classifier; do not build a parallel classifier.
+
+- `TRANSPORT_INTERRUPTION` -> effect-safe checkpoint/readback/rebind.
+- `SERVER_GENERATION_FAILURE` -> distinguish response-only failure from in-flight tools/effects; read back before replay when effect uncertainty exists.
+- `STALL_TIMEOUT` -> bounded health grace, then checkpoint/progress/effect readback and reroute.
+- `CONTEXT_PRESSURE` -> compact working-set successor/durable executor; full history external.
+- `TOOL_OR_CONNECTOR_FAILURE` -> tool/provider outcome readback before retry; isolate only that lane.
+- `FILE_OR_ATTACHMENT_FAILURE` -> verify pointer/digest, regenerate/reattach from canonical source.
+- `AUTH_OR_SESSION_FAILURE` -> preserve pending action and fail closed; authority is never inferred.
+- `RATE_OR_CAPACITY_LIMIT` -> changed route/backoff/work-steal; never global stop.
+- `CLIENT_RESOURCE_FAILURE` -> rebind client/carrier; never infer whole device or estate failure.
+- `USER_INTERRUPTION` -> explicit owner stop/cancel is authoritative for that intent and must not be auto-resumed.
+- `UNKNOWN_CHAT_FAILURE` -> checkpoint, minimal telemetry, possible-effect readback, lowest-risk alternate route.
+
+### Cross-tab writer fencing
+Multiple visible tabs may observe a mission, but only one current client epoch may auto-send/commit for a given mission-effect lane. Verified takeover increments the client epoch; stale tabs become observers and cannot auto-send. This prevents a late recovered response or duplicated tab from committing the same action twice.
+
+### Partial-response handling
+Partial assistant text is `PARTIAL_UNACKED`, not terminal proof. A visible tool-call marker without a terminal answer is `POSSIBLE_EFFECT_PENDING_READBACK`. Preserve partial text for context, but reconcile tool/effect state before any replay or completion claim.
+
+---
 ## 3A-0. CHAT TRANSPORT INTERRUPTION CONTINUITY
 
 Observed provider/client signature: `Connection interrupted. Waiting for the complete answer`.
