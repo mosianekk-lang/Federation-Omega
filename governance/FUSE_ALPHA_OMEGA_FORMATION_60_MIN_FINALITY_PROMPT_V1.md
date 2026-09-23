@@ -140,6 +140,33 @@ Never pause/delete unrelated work merely to free capacity.
 
 ---
 
+## 3A--2. CLIENT LIVENESS SUPERVISOR / SILENT FAILURE
+
+Do not rely on error banners. Track each request through a durable lifecycle journal:
+`REQUEST_ACCEPTED -> STREAM_OPEN -> RESPONSE_PROGRESS / TOOL_INFLIGHT -> TOOL_RESULT_SEEN -> TERMINAL_ACKED`.
+
+If meaningful progress disappears, transition first to `SUSPECT_NO_PROGRESS`, not failure. Pure elapsed time does not prove failure and must not preempt legitimate long-running reasoning while generation/progress liveness is observable.
+
+`CONFIRMED_STALL` requires an independent supporting signal or a hard runtime-policy boundary. On suspect state, checkpoint and prepare a safe alternate route without replay. On confirmed stall, reconcile possible effects and then rebind/take over.
+
+### No lease-by-time
+A stale heartbeat or elapsed client lease makes the client suspect; it does not release it. Takeover requires a current-epoch CAS/receipt and possible-effect readback. This mirrors the FDOF rule `EXPIRY != RELEASE`.
+
+### Orphan states
+- request with no terminal acknowledgement remains nonterminal;
+- interrupted tool marker with no result = `POSSIBLE_EFFECT_PENDING_READBACK`;
+- tool result visible with no terminal assistant response = `RESULT_PRESENT_RESPONSE_ORPHANED`;
+- late response from an older client epoch after takeover = `STALE_EPOCH_RECONCILE_ONLY`.
+
+### Terminal acknowledgement
+For response-only work, a stable terminal client response may satisfy delivery acknowledgement. For effectful work, visible terminal text does not clear an unknown effect: matching effect/provider readback is required.
+
+### Split-brain prevention
+Only one current client epoch may auto-send for each mission-effect lane. A verified takeover increments the epoch and forces prior tabs to observer-only mode. Late stale responses may inform reconciliation but cannot trigger a second commit.
+
+Unrelated READY work continues during both suspect and confirmed client stall.
+
+---
 ## 3A--1. CHAT/CLIENT FAILURE CONTINUITY MATRIX
 
 Use the existing CFRE classifier; do not build a parallel classifier.
