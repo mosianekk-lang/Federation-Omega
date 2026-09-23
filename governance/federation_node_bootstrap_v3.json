@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -17,7 +17,10 @@
     "AO-CRA-FEDERATION-INHERITANCE-V1",
     "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
     "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
-    "N_OMEGA_AGENTIC_FRONTIER_V1"
+    "N_OMEGA_AGENTIC_FRONTIER_V1",
+    "FUSE-ESTATE-RESOLUTION-START433",
+    "FUSE-MISSION-ROUTE-PORTFOLIO-V2",
+    "FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2"
   ],
   "required_contracts": {
     "n_directive": "governance/federation_n_directive_v3.yaml",
@@ -35,7 +38,10 @@
     "prompt_scientist_v1": "REQUIRED_WHEN_PROMPT_FRICTION_OR_REPEATED_MISSION_FAILURE_IS_OBSERVED",
     "innovation_frontier": "REQUIRED",
     "continuous_learning": "REQUIRED",
-    "agentic_frontier_compiler": "REQUIRED_FOR_NONTRIVIAL_MISSIONS"
+    "agentic_frontier_compiler": "REQUIRED_FOR_NONTRIVIAL_MISSIONS",
+    "estate_resolver": "REQUIRED_FOR_MATERIAL_CAPABILITY_ACCESS_AND_NO_ACCESS_DECISIONS",
+    "mission_route_portfolio_v2": "REQUIRED_FOR_MATERIAL_NONTRIVIAL_MISSIONS",
+    "more_autonomous_convergence_v2": "REQUIRED_ON_OWNER_MORE_AND_SAFE_POST_RESULT_CONTINUATION"
   },
   "required_sequence": [
     "PASS_FEDOMEGA_NODE_BOOTSTRAP_V2",
@@ -43,12 +49,18 @@
     "VERIFY_V3_CONTRACTS_ARE_ON_CURRENT_ADMITTED_MAIN",
     "LOAD_LATEST_VERIFIED_CHECKPOINT",
     "FRESH_READ_VOLATILE_SOURCE_PROVIDER_AND_ROUTE_STATE",
+    "RESOLVE_ESTATE_CAPABILITY_STATE_CAP00_TO_CAP70_BLK10_TO_BLK90",
+    "LOAD_PROVIDER_NEUTRAL_EXECUTION_CAPABILITY_PASSPORT_SURFACE_GRAPH_AND_CAPABILITY_FEDERATION_MAP",
     "FORMATION_INTENT_LOCK_AND_OBJECTIVE_MEANS_SEPARATION",
     "AO_CRA_BOUNDARY_TO_BUILD_PREFLIGHT",
     "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
     "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
     "COMPILE_FRONTIER_CAPABILITY_SUPERSTACK",
     "COMPILE_FINITE_DEPENDENCY_DAG",
+    "COMPILE_MULTIPLE_FEASIBLE_MISSION_ROUTE_PORTFOLIOS",
+    "BUILD_ROUTE_FAILURE_DOMAIN_VECTORS_AND_PORTFOLIO_MIN_CUT",
+    "RETAIN_BOUNDED_PARETO_NONDOMINATED_PORTFOLIOS",
+    "SCORE_PORTFOLIOS_WITH_PORTFOLIO_SCORE_V2_AND_HYSTERESIS",
     "CALCULATE_CRITICAL_PATH",
     "FORM_COLLISION_SAFE_WORK_PACKETS",
     "COMPILE_BLOCKER_ENVELOPES_AND_COLLISION_DOMAINS",
@@ -60,12 +72,14 @@
     "EXECUTE_MAXIMUM_USEFUL_EFFECT_FREE_PARALLELISM",
     "SERIALIZE_CANONICAL_SHARED_TARGET_PROVIDER_AND_EXTERNAL_EFFECT_MUTATIONS",
     "TEST_FALSIFY_AND_READ_BACK_MATERIAL_RESULTS",
+    "CALIBRATE_ROUTE_PREDICTION_VS_ACTUAL_AND_UPDATE_ROUTE_FAILURE_MEMORY",
     "CIRCUIT_BREAK_SECOND_IDENTICAL_DETERMINISTIC_FAILURE",
     "REPAIR_AND_BIND_REGRESSION",
     "EVALUATE_PROMPT_FRICTION_WHERE_APPLICABLE",
     "PROMOTE_ONLY_MEASURED_GREEN_PROMPT_CHALLENGER",
     "RECORD_TERMINAL_LEARNING_AND_MEASURED_VALUE",
     "ASSESS_MATURITY_WITH_PROOF_LADDER",
+    "EXECUTE_MORE_V2_CONVERGENCE_UNTIL_REAL_STOP_CONDITION",
     "CONTINUE_NEXT_ELIGIBLE_SAFE_PACKET"
   ],
   "parallelism": {
@@ -137,7 +151,10 @@
     "prompt_self_score_is_sufficient_for_promotion": false,
     "ten_x_is_measured_target_only": true,
     "single_blocker_can_prove_global_mission_blocked": false,
-    "global_hold_requires_proven_universal_causal_dependency": true
+    "global_hold_requires_proven_universal_causal_dependency": true,
+    "route_portfolio_selected_is_execution": false,
+    "more_cycle_executed_is_best_in_market_proven": false,
+    "best_in_market_internal_score_is_sufficient": false
   },
   "failure_state": "BOOTSTRAP_V3_BLOCKED_FAIL_CLOSED",
   "frontier_capability_adoption": {
@@ -412,5 +429,122 @@
       "NO_OWNER_RECAP_WHILE_DURABLE_STATE_EXISTS",
       "EXPLICIT_USER_STOP_IS_NOT_OVERRIDDEN"
     ]
+  },
+  "estate_resolution": {
+    "policy_id": "FUSE-ESTATE-RESOLUTION-START433",
+    "service_id": "estate.resolve",
+    "capability_states": [
+      "CAP-00_UNKNOWN",
+      "CAP-10_TOOL_SCHEMA_KNOWN",
+      "CAP-20_CONNECTOR_DISCOVERED",
+      "CAP-30_AUTH_OR_SESSION_VALID",
+      "CAP-40_ROUTE_CALLABLE",
+      "CAP-50_ROUTE_EXECUTED",
+      "CAP-60_READBACK_VERIFIED",
+      "CAP-70_OBJECTIVE_COMPLETE"
+    ],
+    "blocker_states": [
+      "BLK-10_LOCAL_ROUTE_ERROR",
+      "BLK-20_INVALID_ARGUMENT_OR_SCHEMA",
+      "BLK-30_AUTH_OR_CONNECTION",
+      "BLK-40_APPROVAL_OR_PERMISSION",
+      "BLK-50_EXTERNAL_DEPENDENCY",
+      "BLK-60_TRANSIENT",
+      "BLK-70_SAFETY_OR_POLICY_HARD",
+      "BLK-80_PLATFORM_HARD_LIMIT",
+      "BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED"
+    ],
+    "provider_neutral_inputs": [
+      "EXECUTION_CAPABILITY_PASSPORT",
+      "EXECUTION_SURFACE_GRAPH",
+      "CAPABILITY_FEDERATION_MAP",
+      "FIO_SURFACE_AUTHORITY",
+      "ROUTE_MEMORY",
+      "FAILURE_MEMORY"
+    ],
+    "no_access_claim_requires": [
+      "BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED",
+      "GENUINE_HARD_SAFETY_OR_PLATFORM_BOUNDARY"
+    ],
+    "first_route_failure_is_estate_absence": false,
+    "legacy_provider_specific_mission_passport_is_primary_runtime_selector": false,
+    "strategic_service": "strategy.intelligence",
+    "hydrate_strategy_only_when_task_fit": true
+  },
+  "mission_route_portfolio_v2": {
+    "policy_id": "FUSE-MISSION-ROUTE-PORTFOLIO-V2",
+    "generate_multiple_feasible_portfolios_after_hard_gates": true,
+    "preserve_incumbent_lkg": true,
+    "preserve_bounded_pareto_nondominated_challengers": true,
+    "failure_domain_vector": [
+      "provider_company",
+      "provider_account_or_project",
+      "credential_or_auth_chain",
+      "network_or_region",
+      "host_or_runtime",
+      "queue_or_scheduler",
+      "state_store",
+      "code_or_release_lineage",
+      "model_or_runtime_family",
+      "owner_only_gate"
+    ],
+    "route_name_diversity_is_failure_independence": false,
+    "unknown_shared_dependency_counts_as_independent_redundancy": false,
+    "portfolio_min_cut_required_for_critical_missions": true,
+    "score_id": "PORTFOLIO_SCORE_V2",
+    "score_additions": [
+      "common_mode_failure_exposure",
+      "failover_restore_time",
+      "checkpoint_portability",
+      "proof_freshness",
+      "prediction_calibration",
+      "switching_cost",
+      "warm_fallback_readiness",
+      "concentration",
+      "expected_regret"
+    ],
+    "hysteresis_required": true,
+    "warm_fallback_requires_positive_expected_recovery_value": true,
+    "safe_shadow_or_hedge_only_for_effect_free_idempotent_work": true,
+    "post_execution_actual_vs_predicted_calibration_required": true,
+    "degraded_route_replaces_smallest_affected_subgraph": true
+  },
+  "more_autonomous_convergence_v2": {
+    "policy_id": "FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2",
+    "semantic_version": "BOOTSTRAP_MORE_V2",
+    "cycle": [
+      "FRESH_READ",
+      "JOIN_REUSE",
+      "ESTATE_RESOLVE",
+      "AUTO_SYNC",
+      "AUTO_REPAIR",
+      "AUTO_CONVERGE",
+      "MISSIONIR_DAG_READY_COLLISIONS",
+      "PORTFOLIO_V2_TOURNAMENT",
+      "SAFE_DISPATCH_WORK_STEAL",
+      "AUTO_HARVEST_TRUE_RESIDUALS",
+      "AUTO_AUDIT",
+      "MATCHED_FRONTIER_MARKET_BENCHMARK_WHEN_MATERIAL",
+      "COMPOSE_OR_BUILD_MINIMUM_RESIDUAL_IF_TRAILING",
+      "VERIFY_READBACK",
+      "LEARNING_REGRET_UPDATE",
+      "AUTO_CONTINUE"
+    ],
+    "wait_for_another_more_while_safe_ready_work_exists": false,
+    "best_in_market_is_challenger_process_not_self_certification": true,
+    "best_in_market_claim_requires": [
+      "CURRENT_MATCHED_EXTERNAL_EVIDENCE",
+      "COMPARABLE_TASK_POPULATION_TIME_PERIOD",
+      "EXPLICIT_HARD_FLOORS",
+      "INDEPENDENT_PROOF_OR_JUDGE",
+      "NO_AUTHORITY_PRIVACY_SECURITY_RECOVERY_REGRESSION"
+    ],
+    "stop_conditions": [
+      "TERMINAL_PREDICATES_AND_REQUIRED_PROOF",
+      "IRREDUCIBLE_OWNER_ONLY_AUTHORITY_OR_CONSENT",
+      "ALL_LAWFUL_ROUTES_EXHAUSTED_DURABLE_HOLD",
+      "NO_POSITIVE_VALUE_ACTION"
+    ],
+    "owner_action_required_while_safe_machine_route_exists": false
   }
 }
