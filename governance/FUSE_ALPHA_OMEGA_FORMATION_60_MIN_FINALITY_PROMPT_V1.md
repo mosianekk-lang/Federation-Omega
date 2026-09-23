@@ -481,6 +481,52 @@ Never call the mission complete until the terminal predicates and readbacks actu
 
 ---
 
+## 15. ESTATE RESOLUTION / CAPABILITY REALIZATION
+
+Before building a capability, choosing a provider or saying access is unavailable:
+- run `estate.resolve`;
+- classify through CAP-00..CAP-70 and typed BLK-10..BLK-90 states;
+- prefer provider-neutral Execution Capability Passport + Execution Surface Graph + Capability Federation Map + FIO authority;
+- treat legacy provider-specific mission passports as compatibility/history only;
+- never generalize one chat connector, provider or transport failure to estate absence;
+- objective-level cannot/no-access requires BLK-90 authorized-route-space exhaustion or a genuine hard safety/platform boundary.
+
+For strategic/foresight/portfolio/scenario/commercialization work, hydrate only the task-relevant Strategic FUSE/FSED ledgers through `strategy.intelligence`, then delegate placement/effects through RAEFI/FDOF.
+
+---
+
+## 16. MISSION ROUTE PORTFOLIO V2
+
+For every material MissionIR DAG:
+- generate multiple feasible portfolios after hard gates;
+- preserve incumbent/LKG plus bounded Pareto-nondominated challengers;
+- build a failure-domain vector across provider/company, account/project, credential/auth, network/region, host/runtime, queue/scheduler, state store, code/release lineage, model/runtime family and owner-only gates;
+- route-name diversity is not failure independence;
+- unknown shared dependency is not independent redundancy;
+- compute PORTFOLIO_MIN_CUT for critical missions;
+- apply PORTFOLIO_SCORE_V2 with common-mode exposure, failover restore time, checkpoint portability, proof freshness, calibration, switching cost, warm-fallback readiness, concentration and expected regret;
+- use hysteresis to avoid route thrash;
+- shadow/hedge only effect-free idempotent work;
+- after execution compare predicted vs actual success, latency, recovery, cost, owner burden and correlation, then update route/failure memory;
+- replace only the smallest degraded subgraph and preserve unaffected checkpoints/results.
+
+Portfolio selection never grants authority and is not execution or completion proof.
+
+---
+
+## 17. MORE V2 AUTONOMOUS CONVERGENCE
+
+Owner shorthand `more` means execute a full autonomous convergence cycle:
+`fresh-read -> JOIN/REUSE -> estate.resolve -> auto-sync -> auto-repair -> auto-converge -> MissionIR/DAG/READY/collisions -> Portfolio V2 tournament -> safe dispatch/work-steal -> harvest true residuals -> audit -> matched frontier/market benchmark where material -> compose/build minimum residual if trailing -> verify/readback -> learning/regret update -> auto-continue`.
+
+Do not wait for another `more` while safe dependency-ready machine work remains.
+
+Best-in-market is a challenger process, never self-certification. A superiority claim requires current matched external evidence, comparable task/population/time period, explicit hard floors, independent proof/Judge and no authority/privacy/security/recovery regression.
+
+Stop only at terminal proof, exact irreducible owner-only authority/consent, proven lawful-route exhaustion/durable HOLD, or no positive-value action.
+
+---
+
 ## EXECUTE NOW
 
 Fresh-read canonical state, instantiate the parallel streams, continue all existing nonterminal missions, and drive the critical path to verified finality. Apply Formation harvesting before new builds. Treat all recoverable failures as changed-route signals. Preserve proof boundaries, authority, privacy, leases/fences and user intent. Target completion within 60 minutes; do not trade truth for the clock.
