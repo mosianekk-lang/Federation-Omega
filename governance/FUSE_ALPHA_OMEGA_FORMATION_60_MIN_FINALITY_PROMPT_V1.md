@@ -140,6 +140,24 @@ Never pause/delete unrelated work merely to free capacity.
 
 ---
 
+## 3A--4. DELIVERY PROOF TIERS / CROSS-SESSION RESULT HYDRATION
+
+Do not collapse machine delivery into human-read proof.
+
+- `D0_RESULT_READY`: immutable terminal result artifact/pointer exists.
+- `D1_DELIVERY_JOURNALED`: its DeliveryJournal transaction exact-reads.
+- `D2_CURRENT_CLIENT_RENDER_VERIFIED`: the identical result/pointer is verified on the current authorized client/result surface.
+- `D3_EXPLICIT_OWNER_INTERACTION_CONFIRMED`: explicit owner interaction references the result.
+
+Normal delivery completion requires D2 unless a mission explicitly requires stronger D3. `DeliveryJournal.ACKNOWLEDGED` maps to D2, not proof the human personally read the result.
+
+On every bootstrap/rebind, after currentness and effect reconciliation, hydrate pending delivery debt. If an orphaned result hash is already verifiably present on the current client, acknowledge the same transaction without duplicate redelivery. Otherwise deliver the highest-value pending result first and preserve the rest.
+
+Pending-result ordering: explicit owner-requested > critical/security > terminal mission > material failure/hold > high owner value > routine completion > low-value progress.
+
+Delivery remains privacy/authority scoped. Preserve matter walls; prefer minimum necessary pointer/hash for large or sensitive artifacts; never widen provider authority merely to clear delivery debt.
+
+---
 ## 3A--3. TERMINAL DELIVERY ASSURANCE
 
 `EXECUTION_COMPLETE != OWNER_DELIVERY_ACKNOWLEDGED`.
