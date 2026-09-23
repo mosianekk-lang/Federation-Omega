@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -67,6 +67,7 @@
     "CLASSIFY_CHAT_TRANSPORT_INTERRUPTION_AND_RECONCILE_UNKNOWN_EFFECTS_BEFORE_RETRY",
     "APPLY_CHAT_FAILURE_CONTINUITY_MATRIX_AND_CLIENT_EPOCH_FENCING",
     "START_CLIENT_LIVENESS_SUPERVISOR_AND_DURABLE_REQUEST_JOURNAL",
+    "JOURNAL_TERMINAL_RESULT_AND_REQUIRE_OWNER_DELIVERY_ACK",
     "ASSERT_GLOBAL_STALL_ONLY_IF_READY_SET_EMPTY_AND_ALL_NONTERMINAL_REQUIRED_NODES_SHARE_CAUSAL_BLOCKER",
     "WORK_STEAL_ALL_DISJOINT_READY_NODES",
     "PREPARE_BUILD_TEST_BRANCH_PR_FOR_DISJOINT_SOURCE_WORK_WHILE_MAIN_ADMISSION_IS_HELD",
@@ -641,6 +642,60 @@
       "cross_tab_epoch_takeover_canary",
       "late_stale_response_reconciliation_canary",
       "response_only_recovery_canary"
+    ]
+  },
+  "terminal_delivery_assurance": {
+    "policy_id": "FUSE-TERMINAL-DELIVERY-ASSURANCE-V1",
+    "existing_primitive": "evidenceops.build_system.runtime_controls.DeliveryJournal",
+    "invariant": "EXECUTION_COMPLETE != OWNER_DELIVERY_ACKNOWLEDGED",
+    "durable_states": [
+      "RESULT_READY",
+      "ORPHANED_UNACKNOWLEDGED",
+      "ACKNOWLEDGED"
+    ],
+    "result_transaction": {
+      "immutable_transaction_id": true,
+      "immutable_artifact_id": true,
+      "immutable_artifact_sha256": true,
+      "payload_or_pointer_must_be_durably_reconstructable": true
+    },
+    "before_owner_delivery": [
+      "freeze final result artifact or reconstructable result pointer",
+      "hash result identity",
+      "journal terminal delivery transaction before/with first delivery attempt"
+    ],
+    "on_missing_ack": [
+      "mark ORPHANED_UNACKNOWLEDGED",
+      "do not rerun mission effects",
+      "keep result eligible for redelivery on current or successor client",
+      "redeliver identical artifact under same transaction identity",
+      "transition to ACKNOWLEDGED only after owner-visible/current-client acknowledgement"
+    ],
+    "delivery_complete_requires": [
+      "artifact identity/hash consistency",
+      "owner-visible delivery acknowledgement or equivalent verified current-client receipt",
+      "delivery journal readback"
+    ],
+    "forbidden": [
+      "rerun underlying work merely because final response was not delivered",
+      "mint a new result transaction for the same terminal artifact to bypass an orphan",
+      "mark mission owner-delivered from execution success alone",
+      "drop orphaned result because chat client detached",
+      "overwrite acknowledged result with different content under same transaction"
+    ],
+    "bootstrap_recovery": [
+      "scan pending ORPHANED_UNACKNOWLEDGED results",
+      "semantic-dedupe against current owner-visible deliveries",
+      "redeliver highest-value pending result through current healthy client/durable result surface",
+      "acknowledge same transaction after verified delivery",
+      "leave underlying mission/effects terminal and unchanged unless new work is separately required"
+    ],
+    "runtime_proof_required": [
+      "effectful_execution_completes_then_response_stream_dies_then_successor_redelivers_without_effect_replay",
+      "response_only_final_delivery_orphan_then_same_transaction_acknowledges",
+      "duplicate_redelivery_is_idempotent",
+      "content_rebinding_under_same_transaction_is_rejected",
+      "acknowledged_result_survives_client_restart"
     ]
   }
 }
