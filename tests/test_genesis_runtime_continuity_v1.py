@@ -97,7 +97,7 @@ class T(unittest.TestCase):
         d.close()
     def test_12_dispatch_persists_restart(self):
         p=self.root/"i.db"; d=self.ingress(p)
-        d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True); d.close()
+        d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=120); d.close()
         d=self.ingress(p); self.assertEqual(d.row("DISPATCH-1")["scheduler_id"],"GOOGLE_APPS_SCRIPT"); d.close()
 
     def test_13_effect_prepare(self):
