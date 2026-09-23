@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import sqlite3,json,hashlib,secrets
+from .currentness import SourceEpoch, resolve_source_epoch
 
 GENESIS="0"*64
 def canon(x): return json.dumps(x,sort_keys=True,separators=(",",":"),ensure_ascii=False)
@@ -143,15 +144,17 @@ class CreativeMarket:
   req=set(mods); xs=[x for x in self.m if x.current and req<=set(x.mods) and (not editable or x.editable)]
   xs.sort(key=lambda x:(not x.local,x.id)); return xs[0] if xs else None
 
-MAIN="55fd191796327e0b4ab131c0faf2e09a8ad7b575"; WRITER="F320"; FENCE=320
-def cold_boot_receipt(root):
+def cold_boot_receipt(root, epoch: SourceEpoch | None = None, *, environ=None):
+ epoch=resolve_source_epoch(epoch,environ)
  root=Path(root); root.mkdir(parents=True,exist_ok=True)
- s=SovereignState(root/"state.db"); scope="repo:main"; s.acquire_lease(scope,WRITER,FENCE); s.expire(scope); s.put_fact("FULL_KIM_DATAVERSE_BOUND","UNKNOWN"); s.upsert_mission("GENESIS","RUNNING",{"checkpoint":"F320"})
+ s=SovereignState(root/"state.db"); scope="repo:main"; s.acquire_lease(scope,epoch.writer,epoch.fence); s.expire(scope); s.put_fact("FULL_KIM_DATAVERSE_BOUND","UNKNOWN")
+ checkpoint={"source_main":epoch.main_sha,"writer":epoch.writer,"fence":epoch.fence,"source_epoch_digest":epoch.digest}
+ s.upsert_mission(epoch.mission_id,"RUNNING",checkpoint)
  o=ObjectStore(root/"objects"); oid=o.put(b"genesis-proof")
- e=EventFabric(root/"events.db"); seq=e.publish(Event("evt","k",{"object":oid})); row=e.poll("worker")[0]; e.ack("worker",row)
+ e=EventFabric(root/"events.db"); seq=e.publish(Event("evt","k",{"object":oid,"source_epoch":epoch.digest})); row=e.poll("worker")[0]; e.ack("worker",row)
  ids=IdentityRegistry(); ids.add(Identity("worker","keyref:worker")); tok=TokenIssuer(ids).issue("worker","local",1000,300)
- g=SessionGateway(MAIN,WRITER,FENCE)
+ g=SessionGateway(epoch.main_sha,epoch.writer,epoch.fence)
  mm=ModelMarket(); mm.add(Model("local-reasoner",True,("reason","code"),True))
  cm=CreativeMarket(); cm.add(Creative("local-renderer",True,("image",),True,True))
- r={"state_chain_valid":s.verify_chain(),"lease_state":s.lease(scope)["state"],"unknown_preserved":s.fact("FULL_KIM_DATAVERSE_BOUND")["state"],"object_verified":o.verify(oid),"event_seq":seq,"event_drained":e.poll("worker")==[],"identity_valid":TokenIssuer(ids).valid(tok,"local",1100),"session_admitted":g.admit(MAIN,WRITER,FENCE),"local_model":mm.choose(("reason",)).id,"local_creative":cm.choose(("image",)).id,"external_provider_required":False}
+ r={"state_chain_valid":s.verify_chain(),"lease_state":s.lease(scope)["state"],"unknown_preserved":s.fact("FULL_KIM_DATAVERSE_BOUND")["state"],"object_verified":o.verify(oid),"event_seq":seq,"event_drained":e.poll("worker")==[],"identity_valid":TokenIssuer(ids).valid(tok,"local",1100),"session_admitted":g.admit(epoch.main_sha,epoch.writer,epoch.fence),"local_model":mm.choose(("reason",)).id,"local_creative":cm.choose(("image",)).id,"external_provider_required":False,"source_epoch":epoch.as_dict(),"source_epoch_digest":epoch.digest}
  r["digest"]=sha(r); e.close(); s.close(); return r

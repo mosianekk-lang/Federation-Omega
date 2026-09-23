@@ -1,26 +1,30 @@
 import tempfile,shutil,pathlib,unittest
 from fuse_genesis.cold_boot import *
+from fuse_genesis.currentness import SourceEpoch,SourceCurrentnessError,resolve_source_epoch
+
+E=SourceEpoch("a"*40,"F323",323,"GENESIS")
 class T(unittest.TestCase):
  def setUp(self): self.d=pathlib.Path(tempfile.mkdtemp())
  def tearDown(self): shutil.rmtree(self.d,ignore_errors=True)
 def add(n,fn): setattr(T,f"test_{n:02d}",fn)
-add(1,lambda s:s.assertTrue(cold_boot_receipt(s.d/"b")["state_chain_valid"]))
-add(2,lambda s:s.assertEqual(cold_boot_receipt(s.d/"b")["lease_state"],"ACTIVE_EXPIRED_NONTERMINAL"))
-add(3,lambda s:s.assertEqual(cold_boot_receipt(s.d/"b")["unknown_preserved"],"UNKNOWN"))
-add(4,lambda s:s.assertTrue(cold_boot_receipt(s.d/"b")["object_verified"]))
-add(5,lambda s:s.assertTrue(cold_boot_receipt(s.d/"b")["event_drained"]))
-add(6,lambda s:s.assertTrue(cold_boot_receipt(s.d/"b")["identity_valid"]))
-add(7,lambda s:s.assertTrue(cold_boot_receipt(s.d/"b")["session_admitted"]))
-add(8,lambda s:s.assertEqual(cold_boot_receipt(s.d/"b")["local_model"],"local-reasoner"))
-add(9,lambda s:s.assertEqual(cold_boot_receipt(s.d/"b")["local_creative"],"local-renderer"))
-add(10,lambda s:s.assertFalse(cold_boot_receipt(s.d/"b")["external_provider_required"]))
+def receipt(s,n="b"): return cold_boot_receipt(s.d/n,E)
+add(1,lambda s:s.assertTrue(receipt(s)["state_chain_valid"]))
+add(2,lambda s:s.assertEqual(receipt(s)["lease_state"],"ACTIVE_EXPIRED_NONTERMINAL"))
+add(3,lambda s:s.assertEqual(receipt(s)["unknown_preserved"],"UNKNOWN"))
+add(4,lambda s:s.assertTrue(receipt(s)["object_verified"]))
+add(5,lambda s:s.assertTrue(receipt(s)["event_drained"]))
+add(6,lambda s:s.assertTrue(receipt(s)["identity_valid"]))
+add(7,lambda s:s.assertTrue(receipt(s)["session_admitted"]))
+add(8,lambda s:s.assertEqual(receipt(s)["local_model"],"local-reasoner"))
+add(9,lambda s:s.assertEqual(receipt(s)["local_creative"],"local-renderer"))
+add(10,lambda s:s.assertFalse(receipt(s)["external_provider_required"]))
 def stale(s):
- x=SovereignState(s.d/"s"); x.acquire_lease("x","F320",320)
- with s.assertRaises(StaleFence): x.acquire_lease("x","old",319)
+ x=SovereignState(s.d/"s"); x.acquire_lease("x","F323",323)
+ with s.assertRaises(StaleFence): x.acquire_lease("x","old",322)
  x.close()
 add(11,stale)
 def rel(s):
- x=SovereignState(s.d/"s"); x.acquire_lease("x","F320",320); x.release("x","F320",320); s.assertEqual(x.lease("x")["state"],"RELEASED"); x.close()
+ x=SovereignState(s.d/"s"); x.acquire_lease("x","F323",323); x.release("x","F323",323); s.assertEqual(x.lease("x")["state"],"RELEASED"); x.close()
 add(12,rel)
 def fact(s):
  x=SovereignState(s.d/"s"); x.put_fact("f","DISPUTED",{"x":1}); s.assertEqual(x.fact("f")["state"],"DISPUTED"); x.close()
@@ -66,14 +70,32 @@ add(26,model)
 def creative(s):
  m=CreativeMarket(); m.add(Creative("hosted",False,("image",),True,True)); m.add(Creative("local",True,("image",),True,True)); s.assertEqual(m.choose(("image",)).id,"local")
 add(27,creative)
-add(28,lambda s:s.assertEqual(len(cold_boot_receipt(s.d/"b")["digest"]),64))
-add(29,lambda s:s.assertEqual(MAIN,"55fd191796327e0b4ab131c0faf2e09a8ad7b575"))
-add(30,lambda s:s.assertEqual((WRITER,FENCE),("F320",320)))
-for n in range(31,61):
+add(28,lambda s:s.assertEqual(len(receipt(s)["digest"]),64))
+add(29,lambda s:s.assertEqual(receipt(s)["source_epoch"]["main_sha"],"a"*40))
+def source_pair(s):
+ r=receipt(s); s.assertEqual((r["source_epoch"]["writer"],r["source_epoch"]["fence"]),("F323",323))
+add(30,source_pair)
+def missing(s):
+ with s.assertRaises(SourceCurrentnessError): cold_boot_receipt(s.d/"missing",environ={})
+add(31,missing)
+def env(s):
+ e={"FUSE_GENESIS_SOURCE_MAIN":"b"*40,"FUSE_GENESIS_SOURCE_WRITER":"F400","FUSE_GENESIS_SOURCE_FENCE":"400","FUSE_GENESIS_MISSION_ID":"M400"}
+ x=cold_boot_receipt(s.d/"env",environ=e); s.assertEqual(x["source_epoch"]["fence"],400); s.assertEqual(x["source_epoch"]["mission_id"],"M400")
+add(32,env)
+def badsha(s):
+ with s.assertRaises(SourceCurrentnessError): SourceEpoch("stale","F1",1)
+add(33,badsha)
+def badfence(s):
+ with s.assertRaises(SourceCurrentnessError): SourceEpoch("a"*40,"F1",0)
+add(34,badfence)
+add(35,lambda s:s.assertEqual(len(E.digest),64))
+for n in range(36,66):
  def make(n):
   def f(s):
-   r=cold_boot_receipt(s.d/f"b{n}")
+   ep=SourceEpoch((f"{n:040x}")[-40:],"F"+str(300+n),300+n,"GENESIS")
+   r=cold_boot_receipt(s.d/f"b{n}",ep)
    s.assertTrue(r["state_chain_valid"] and r["object_verified"] and r["identity_valid"] and r["session_admitted"])
+   s.assertEqual(r["source_epoch"]["main_sha"],ep.main_sha); s.assertEqual(r["source_epoch"]["fence"],ep.fence)
    s.assertEqual(r["unknown_preserved"],"UNKNOWN"); s.assertFalse(r["external_provider_required"])
   return f
  add(n,make(n))
