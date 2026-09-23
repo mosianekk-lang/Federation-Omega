@@ -2,12 +2,14 @@ import {
   createFuseSession,
   enrollOwner,
   FederationGatewayError,
+  fetchMarketResidualStatus,
   fetchVisionContext,
   fetchWorkspaceStatus,
   sendFuseMessage,
   visionImageSource,
   type FuseChatResponse,
   type FuseMessageRequest,
+  type MarketResidualStatus,
   type VisionContext,
   type WorkspaceStatus,
 } from './federation';
@@ -200,4 +202,11 @@ export async function getOwnerVisionImageSource(): Promise<{ uri: string; header
   const session = await ensureOwnerSession();
   const iapIdentityToken = await getIapIdentityToken(false);
   return visionImageSource(iapIdentityToken, session.accessToken);
+}
+
+
+export async function getOwnerMarketResidualStatus(): Promise<MarketResidualStatus> {
+  const session = await ensureOwnerSession();
+  const iapIdentityToken = await getIapIdentityToken(false);
+  return fetchMarketResidualStatus(iapIdentityToken, session.accessToken);
 }
