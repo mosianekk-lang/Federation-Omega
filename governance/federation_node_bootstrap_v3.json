@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -53,6 +53,7 @@
     "FORM_COLLISION_SAFE_WORK_PACKETS",
     "COMPILE_BLOCKER_ENVELOPES_AND_COLLISION_DOMAINS",
     "CLASSIFY_CHAT_TRANSPORT_INTERRUPTION_AND_RECONCILE_UNKNOWN_EFFECTS_BEFORE_RETRY",
+    "APPLY_CHAT_FAILURE_CONTINUITY_MATRIX_AND_CLIENT_EPOCH_FENCING",
     "ASSERT_GLOBAL_STALL_ONLY_IF_READY_SET_EMPTY_AND_ALL_NONTERMINAL_REQUIRED_NODES_SHARE_CAUSAL_BLOCKER",
     "WORK_STEAL_ALL_DISJOINT_READY_NODES",
     "PREPARE_BUILD_TEST_BRANCH_PR_FOR_DISJOINT_SOURCE_WORK_WHILE_MAIN_ADMISSION_IS_HELD",
@@ -273,5 +274,143 @@
     ],
     "owner_action_required_while_safe_route_exists": false,
     "full_runtime_proof_requires": "LIVE_CLIENT_INTERRUPTION_TO_EFFECT_READBACK_TO_REBIND_TO_CONTINUED_MISSION_CANARY"
+  },
+  "chat_failure_continuity_matrix": {
+    "policy_id": "FUSE-CHAT-FAILURE-CONTINUITY-MATRIX-V1",
+    "source_classifier": "EVIDENCEOPS_CHAT_FAILURE_RESILIENCE_CRFRE",
+    "classes": {
+      "TRANSPORT_INTERRUPTION": {
+        "scope": "CLIENT_ROUTE",
+        "effect_rule": "READBACK_BEFORE_REPLAY_IF_ANY_ACTION_MAY_HAVE_EXECUTED",
+        "recovery": [
+          "checkpoint",
+          "effect_readback",
+          "classify_effect_state",
+          "rebind_client_or_durable_executor",
+          "stale_client_fence",
+          "exact_once_fanin"
+        ]
+      },
+      "SERVER_GENERATION_FAILURE": {
+        "scope": "MODEL_OR_ORCHESTRATION_RESPONSE_PATH",
+        "effect_rule": "IF_TOOL_OR_EXTERNAL_ACTION_INFLIGHT_THEN_READBACK_BEFORE_RETRY",
+        "recovery": [
+          "checkpoint",
+          "classify_response_only_vs_effectful",
+          "alternate_qualified_model_or_route_when_safe",
+          "resume_atomic_action_idempotently"
+        ]
+      },
+      "STALL_TIMEOUT": {
+        "scope": "PROGRESS_HEARTBEAT_OR_RESPONSE_PATH",
+        "effect_rule": "BOUNDED_GRACE_THEN_EFFECT_READBACK_IF_INFLIGHT_STATE_UNCERTAIN",
+        "recovery": [
+          "bounded_health_grace",
+          "checkpoint",
+          "progress_readback",
+          "effect_readback_if_needed",
+          "reroute_or_rebind"
+        ]
+      },
+      "CONTEXT_PRESSURE": {
+        "scope": "INTERACTIVE_CONTEXT",
+        "effect_rule": "NO_BLIND_FULL_HISTORY_REPLAY",
+        "recovery": [
+          "durable_checkpoint",
+          "compact_working_set",
+          "idempotent_successor_or_durable_executor",
+          "full_history_external"
+        ]
+      },
+      "TOOL_OR_CONNECTOR_FAILURE": {
+        "scope": "TOOL_PROVIDER_LANE",
+        "effect_rule": "READBACK_TOOL_OUTCOME_BEFORE_RETRY",
+        "recovery": [
+          "checkpoint",
+          "effect_readback",
+          "isolate_tool_lane",
+          "alternate_authorized_route",
+          "continue_disjoint_work"
+        ]
+      },
+      "FILE_OR_ATTACHMENT_FAILURE": {
+        "scope": "ARTIFACT_LANE",
+        "effect_rule": "VERIFY_REFERENCE_AND_DIGEST_BEFORE_REGENERATION",
+        "recovery": [
+          "verify_artifact_pointer",
+          "regenerate_or_reattach_from_canonical",
+          "continue_disjoint_work"
+        ]
+      },
+      "AUTH_OR_SESSION_FAILURE": {
+        "scope": "AUTHORITY_LANE",
+        "effect_rule": "FAIL_CLOSED_NO_AUTHORITY_INFERENCE",
+        "recovery": [
+          "checkpoint",
+          "preserve_pending_action_without_replay",
+          "recheck_authorized_executor",
+          "rebind_only_with_current_authority"
+        ]
+      },
+      "RATE_OR_CAPACITY_LIMIT": {
+        "scope": "PROVIDER_OR_TASK_CAPACITY_LANE",
+        "effect_rule": "NO_GLOBAL_STOP",
+        "recovery": [
+          "checkpoint",
+          "changed_route",
+          "bounded_backoff_only_if_same_route_remains_best_safe_option",
+          "work_steal_other_pools"
+        ]
+      },
+      "CLIENT_RESOURCE_FAILURE": {
+        "scope": "CLIENT_DEVICE_OR_TAB",
+        "effect_rule": "NO_DEVICE_GLOBALITY_INFERENCE",
+        "recovery": [
+          "minimal_checkpoint",
+          "rebind_healthy_client_or_carrier",
+          "continue_external_durable_work"
+        ]
+      },
+      "USER_INTERRUPTION": {
+        "scope": "OWNER_INTENT",
+        "effect_rule": "EXPLICIT_USER_STOP_OR_CANCEL_IS_AUTHORITATIVE_FOR_THAT_INTENT",
+        "recovery": [
+          "preserve_checkpoint",
+          "do_not_auto_resume_cancelled_action",
+          "await_new_owner_intent"
+        ]
+      },
+      "UNKNOWN_CHAT_FAILURE": {
+        "scope": "UNKNOWN_ROUTE",
+        "effect_rule": "FAIL_CLOSED_ON_POSSIBLE_EFFECT_REPLAY",
+        "recovery": [
+          "minimal_telemetry",
+          "checkpoint",
+          "effect_readback_if_possible",
+          "lowest_risk_alternate_route",
+          "continue_disjoint_work"
+        ]
+      }
+    },
+    "cross_tab_takeover": {
+      "mission_client_epoch_required": true,
+      "one_effect_writer_per_mission_effect_lane": true,
+      "verified_takeover_increments_client_epoch": true,
+      "stale_client_auto_send_forbidden": true,
+      "observer_tabs_allowed": true
+    },
+    "partial_response": {
+      "partial_assistant_text_state": "PARTIAL_UNACKED",
+      "visible_tool_call_without_terminal_answer_state": "POSSIBLE_EFFECT_PENDING_READBACK",
+      "partial_text_is_not_terminal_proof": true,
+      "preserve_for_context_not_completion": true
+    },
+    "global_rules": [
+      "CHAT_FAILURE_BLOCKS_ONLY_AFFECTED_CLIENT_ROUTE_OR_EFFECT_LANE",
+      "NO_RESPONSE_NE_NO_EFFECT",
+      "NO_GLOBAL_STALL_WHILE_DISJOINT_READY_WORK_EXISTS",
+      "NO_OWNER_RECAP_WHILE_DURABLE_STATE_EXISTS",
+      "EXPLICIT_USER_STOP_IS_NOT_OVERRIDDEN"
+    ]
   }
 }
