@@ -162,8 +162,8 @@
   "failure_state": "BOOTSTRAP_V3_BLOCKED_FAIL_CLOSED",
   "frontier_capability_adoption": {
     "compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
-    "capability_gene_range": "AGF-001..AGF-053",
-    "latest_clean_room_residual_range": "AGF-041..AGF-053",
+    "capability_gene_range": "AGF-001..AGF-063",
+    "latest_clean_room_residual_range": "AGF-054..AGF-063",
     "automatically_select_by_mission_profile": true,
     "provider_model_authority": "PROPOSAL_ONLY",
     "runtime_provider_and_owner_value_proof_separate": true
