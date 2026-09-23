@@ -140,6 +140,27 @@ Never pause/delete unrelated work merely to free capacity.
 
 ---
 
+## 3A-0. CHAT TRANSPORT INTERRUPTION CONTINUITY
+
+Observed provider/client signature: `Connection interrupted. Waiting for the complete answer`.
+
+Classify as `TRANSPORT_INTERRUPTION` with possible `STALL_TIMEOUT`. This is a client/response-stream failure only.
+
+Hard safety rule: `NO_RESPONSE != NO_EFFECT`.
+
+On detection:
+1. Persist the current mission checkpoint and exact pending action identity.
+2. Do not blindly replay any possibly effectful action.
+3. Read back FDOF/effect/provider/mission receipts for actions that may already have executed.
+4. If the effect committed, continue from the committed result without replay.
+5. If no effect is proven or the interrupted work was response-only, resume the same atomic action under its idempotency identity.
+6. If effect remains unknown, quarantine only that effect lane and work-steal all disjoint READY work.
+7. Rebind/create/reuse a healthy successor or durable client route; do not wait indefinitely on the interrupted tab while another safe route exists.
+8. Once takeover is verified, the stale client is fenced from duplicate commit and semantic fan-in accepts the first verified continuation exactly once.
+
+Owner copy/paste, recap or manual retry is not a required recovery mechanism while durable state and another safe machine route exist.
+
+---
 ## 3A. CHAT-CAPACITY CONTINUITY
 
 Interactive conversation/context/token/weighted-token saturation is a client lifecycle event only.
