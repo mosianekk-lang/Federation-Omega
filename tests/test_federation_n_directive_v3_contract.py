@@ -227,10 +227,15 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         )
         self.assertIn("COMPILE_FRONTIER_CAPABILITY_SUPERSTACK", bootstrap["required_sequence"])
         self.assertTrue(bootstrap["frontier_capability_adoption"]["automatically_select_by_mission_profile"])
+        self.assertEqual(bootstrap["required_contracts"]["frontier_resilience_interop"], "federation/frontier_resilience_interop_v1.py")
+        self.assertEqual(bootstrap["frontier_capability_adoption"]["capability_gene_range"], "AGF-001..AGF-063")
+        self.assertEqual(bootstrap["frontier_capability_adoption"]["latest_clean_room_residual_range"], "AGF-054..AGF-063")
 
         compiler = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
         self.assertTrue(compiler["composition"]["frontier_compile_required_before_packetization"])
         self.assertEqual(compiler["composition"]["frontier_gene_range"], "AGF-001..AGF-063")
+        self.assertEqual(compiler["composition"]["frontier_resilience_interop"], "federation.frontier_resilience_interop_v1")
+        self.assertTrue(compiler["frontier_selection"]["residual_contract_required_for_agf_054_063"])
         self.assertEqual(compiler["frontier_selection"]["external_model_authority"], "PROPOSAL_ONLY")
 
 
