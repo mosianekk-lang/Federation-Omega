@@ -13,7 +13,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
         required = (
             "policy_id: FEDOMEGA-N-DIRECTIVE-V3",
-            "version: 3.3.0",
+            "version: 3.4.0",
             "authority_ceiling: A1_INTERNAL",
             "external_effect_default: false",
             "compile unfinished work into a finite dependency DAG",
@@ -42,7 +42,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
             self.assertIn(required, text)
 
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.3.0")
+        self.assertEqual(bootstrap["version"], "3.4.0")
         self.assertTrue(bootstrap["parallelism"]["blocker_scope_locality_required"])
         self.assertTrue(bootstrap["parallelism"]["global_stall_requires_empty_ready_set_and_universal_causal_dependency"])
         self.assertTrue(bootstrap["parallelism"]["branch_prepare_build_test_pr_may_continue_while_main_admission_is_held"])
@@ -174,6 +174,33 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertTrue(compiler["composition"]["frontier_compile_required_before_packetization"])
         self.assertEqual(compiler["composition"]["frontier_gene_range"], "AGF-001..AGF-053")
         self.assertEqual(compiler["frontier_selection"]["external_model_authority"], "PROPOSAL_ONLY")
+
+
+    def test_estate_resolution_portfolio_v2_and_more_v2_are_bootstrap_bound(self):
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        self.assertEqual(bootstrap["version"], "3.4.0")
+        self.assertEqual(bootstrap["estate_resolution"]["service_id"], "estate.resolve")
+        self.assertFalse(bootstrap["estate_resolution"]["first_route_failure_is_estate_absence"])
+        self.assertIn("BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED", bootstrap["estate_resolution"]["blocker_states"])
+        self.assertEqual(bootstrap["mission_route_portfolio_v2"]["score_id"], "PORTFOLIO_SCORE_V2")
+        self.assertFalse(bootstrap["mission_route_portfolio_v2"]["route_name_diversity_is_failure_independence"])
+        self.assertTrue(bootstrap["mission_route_portfolio_v2"]["portfolio_min_cut_required_for_critical_missions"])
+        self.assertEqual(bootstrap["more_autonomous_convergence_v2"]["semantic_version"], "BOOTSTRAP_MORE_V2")
+        self.assertFalse(bootstrap["more_autonomous_convergence_v2"]["wait_for_another_more_while_safe_ready_work_exists"])
+
+        directive = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn("estate_resolution:", directive)
+        self.assertIn("mission_route_portfolio_v2:", directive)
+        self.assertIn("score: PORTFOLIO_SCORE_V2", directive)
+        self.assertIn("more_trigger:", directive)
+        self.assertIn("semantic_version: BOOTSTRAP_MORE_V2", directive)
+
+        prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("ESTATE RESOLUTION / CAPABILITY REALIZATION", prompt)
+        self.assertIn("MISSION ROUTE PORTFOLIO V2", prompt)
+        self.assertIn("MORE V2 AUTONOMOUS CONVERGENCE", prompt)
+        self.assertIn("route-name diversity is not failure independence", prompt)
+
 
 
 if __name__ == "__main__":
