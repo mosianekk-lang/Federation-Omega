@@ -133,7 +133,7 @@
     "adapter_scope": "effect-free READY read packets only",
     "does_not_create_second_sovereign_scheduler": true,
     "agentic_frontier_compiler": "benchmarking.cfbe_omega.n_omega_agentic_frontier_v1.AgenticFrontierCompiler",
-    "frontier_gene_range": "AGF-001..AGF-053",
+    "frontier_gene_range": "AGF-001..AGF-063",
     "frontier_compile_required_before_packetization": true
   },
   "truth_boundary": {
@@ -144,7 +144,7 @@
   },
   "frontier_selection": {
     "source": "N_OMEGA_AGENTIC_FRONTIER_V1",
-    "latest_clean_room_residuals": "AGF-041..AGF-053",
+    "latest_clean_room_residuals": "AGF-054..AGF-063",
     "automatic_profile_selection": true,
     "one_mutating_lane_preserved": true,
     "external_model_authority": "PROPOSAL_ONLY",
