@@ -1,5 +1,5 @@
 policy_id: FEDOMEGA-N-DIRECTIVE-V3
-version: 3.0.0
+version: 3.1.0
 owner: Kim Kagiso Mosiane
 state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
 authority_ceiling: A1_INTERNAL
@@ -36,6 +36,11 @@ exact_trigger:
     - promote prompt variants only after measured superiority and green regressions
     - recalculate maturity through the existing strict proof gates
     - continue eligible safe work while another lane is blocked
+    - normalize every blocker into dependency/effect/source/provider/resource collision domains
+    - quarantine only nodes that actually intersect the blocker
+    - before any WAITING or BLOCKED mission status, prove the ready set is empty or work-steal all disjoint ready nodes
+    - GLOBAL_STALL is invalid unless every remaining required nonterminal node causally depends on the same irreducible blocker and no safe preparation/proof/recovery lane exists
+    - a foreign source fence may hold canonical admission for an intersecting write set but must not stop disjoint branch preparation, build, test, proof, PR, provider-read or non-source work
     - stop only at COMPLETE_VERIFIED, PRODUCTION_VERIFIED or a genuine owner-reserved decision
 
 
@@ -100,6 +105,8 @@ parallel_scheduler:
     - LANE-H-DOCUMENTATION_PROOF_LEARNING
   may_parallelize:
     - independent read-only discovery
+    - disjoint branch preparation, build, tests and PR proof even while another source-admission fence is active
+    - disjoint provider mutations only when target, effect, authority, privacy and cost domains are independently proven non-overlapping
     - evidence mapping
     - solution formation
     - architecture analysis
@@ -108,13 +115,51 @@ parallel_scheduler:
     - red-team analysis
     - learning extraction
   must_serialize:
-    - canonical writes
+    - overlapping canonical writes
     - shared-target mutations
-    - provider mutations
-    - external effects
-    - authority-sensitive changes
+    - overlapping provider mutations
+    - overlapping external effects
+    - overlapping authority-sensitive changes
+    - repository-global source paths
   blocked_lane_rule: blocked lane does not stop eligible independent lanes
+  blocker_locality_rule: only proven collision-domain intersections may wait
+  global_stall_rule: GLOBAL_STALL requires empty READY set plus universal causal dependency on one irreducible blocker
+  anti_head_of_line_rule: idle qualified capacity with READY work is a routing defect and triggers immediate work-steal
 
+
+blocker_containment:
+  policy_id: FUSE-BLOCKER-CONTAINMENT-V1
+  failure_class: CFAIL-20260919-029
+  regression: REG-DISJOINT-SAFE-WORK-CONTINUES-001
+  invariant: one blocker may stop only the nodes that actually depend on or collide with it
+  collision_dimensions:
+    - dependency
+    - source_write_set
+    - provider_target
+    - effect_id
+    - canonical_object
+    - authority_scope
+    - privacy_scope
+    - cost_scope
+    - resource_pool
+  on_blocker:
+    - quarantine intersecting nodes only
+    - recompute READY set immediately
+    - work-steal all disjoint READY nodes
+    - elect alternate qualified execution pools
+    - prepare future dependency outputs early
+    - arm changed-state recheck for blocked domain
+  global_stall_requires:
+    - READY set empty
+    - every remaining required nonterminal node has proven causal dependency on the same irreducible blocker
+    - no safe prepare build test research proof recovery or alternate-route lane remains
+  source_fence:
+    branch_prepare_build_test_pr_non_source_continue: true
+    canonical_admission_waits_only_when_current_coordination_law_requires_it: true
+    fdof_v3_scoped_registry_is_target_for_disjoint_concurrent_admission: true
+  owner_burden:
+    manual_user_tasks_while_safe_route_exists: false
+    owner_action_required_while_safe_route_exists: false
 critical_path_priority:
   - critical blocker
   - blocker-removing infrastructure
