@@ -11,8 +11,8 @@ from benchmarking.cfbe_omega.n_omega_agentic_frontier_v1 import (
 class NOmegaAgenticFrontierTests(unittest.TestCase):
     def test_frontier_coverage_and_truth_boundary(self):
         s = frontier_summary()
-        self.assertEqual(s["vendor_reference_count"], 17)
-        self.assertEqual(s["capability_gene_count"], 40)
+        self.assertEqual(s["vendor_reference_count"], 22)
+        self.assertEqual(s["capability_gene_count"], 53)
         self.assertEqual(s["domain_count"], 18)
         self.assertTrue(s["zero_unrouted"])
         self.assertTrue(s["one_mutating_lane"])
@@ -68,12 +68,60 @@ class NOmegaAgenticFrontierTests(unittest.TestCase):
         c = AgenticFrontierCompiler()
         c.validate()
         ids = list(c.genes)
-        self.assertEqual(len(ids), 40)
+        self.assertEqual(len(ids), 53)
         self.assertEqual(len(ids), len(set(ids)))
         for gene in c.genes.values():
             self.assertTrue(gene.sources)
             self.assertTrue(gene.binding)
             self.assertTrue(gene.proof_gate)
+
+
+    def test_2026_frontier_residuals_auto_adopt(self):
+        p = AgenticFrontierCompiler().compile(MissionProfile(
+            mission_id="F2026",
+            domains=frozenset({"ORCHESTRATION", "TOOLS", "EXECUTION", "MEMORY", "EVALUATION"}),
+            long_running=True,
+            multi_agent=True,
+            tool_heavy=True,
+            browser_or_computer=True,
+            requires_dynamic_models=True,
+            requires_release=True,
+            requires_artifact_production=True,
+            requires_local_multimodal=True,
+        ))
+        for gene in (
+            "AGF-041","AGF-042","AGF-043","AGF-044","AGF-045","AGF-046",
+            "AGF-047","AGF-048","AGF-049","AGF-050","AGF-051","AGF-052","AGF-053"
+        ):
+            self.assertIn(gene, p.selected_gene_ids)
+        self.assertIn("PROVIDER_IDENTITY", p.proof_required)
+        self.assertIn("SEMANTIC_PROVIDER_READBACK", p.proof_required)
+
+    def test_clean_room_summary_boundary(self):
+        s = frontier_summary()
+        self.assertTrue(s["clean_room_harvest"])
+        self.assertFalse(s["proprietary_weights_imported"])
+        self.assertFalse(s["undocumented_vendor_internals_imported"])
+        self.assertEqual(len(s["frontier_2026_gene_ids"]), 13)
+
+    def test_explicit_residual_flags_select_without_broad_domains(self):
+        p = AgenticFrontierCompiler().compile(MissionProfile(
+            mission_id="R",
+            domains=frozenset({"SPECIFICATION"}),
+            requires_adaptive_effort=True,
+            requires_cross_window_context=True,
+            requires_dynamic_tools=True,
+            requires_portable_skills=True,
+            requires_persistent_agent=True,
+            requires_adaptive_computer_use=True,
+            requires_hypothesis_evolution=True,
+            requires_strict_self_verification=True,
+            requires_harness_simplification=True,
+            requires_artifact_production=True,
+            requires_local_multimodal=True,
+        ))
+        for gene in [f"AGF-{i:03d}" for i in range(41,54)]:
+            self.assertIn(gene, p.selected_gene_ids)
 
 
 if __name__ == "__main__":
