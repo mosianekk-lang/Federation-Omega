@@ -140,6 +140,38 @@ Never pause/delete unrelated work merely to free capacity.
 
 ---
 
+## 4A. BLOCKER CONTAINMENT / ANTI-HEAD-OF-LINE INVARIANT
+
+A blocker is local to the smallest proven collision domain. It is never global merely because it is visible, urgent, on the critical path, or associated with source/provider infrastructure.
+
+For every blocker compile a bounded `BlockerEnvelope` containing:
+`blocker_id, blocked_node, causal_dependency, source_write_set, provider_target, effect_id, resource_pool, authority_scope, privacy_scope, cost_scope, recheck_trigger`.
+
+Mandatory behavior:
+1. Quarantine only nodes whose dependency/effect/source/provider/resource domains actually intersect the blocker.
+2. Immediately recompute the READY set.
+3. Work-steal every disjoint READY node through any qualified execution pool.
+4. Use idle capacity for safe preparation, build, tests, research, proof, recovery, artifact generation or next-dependency prefetch.
+5. Arm a changed-state recheck for the blocked domain.
+6. Continue until terminal predicates close or a true universal irreducible boundary is proven.
+
+`GLOBAL_STALL` is valid only when ALL are true:
+- the READY set is empty;
+- every remaining required nonterminal node has a proven causal dependency on the same irreducible blocker;
+- no safe preparation, build, test, research, proof, recovery or alternate-route lane remains.
+
+Otherwise a global wait is a routing defect.
+
+### Source-fence specialization
+A foreign source fence may restrict only the source operations that current coordination law actually forbids.
+- Disjoint branch preparation, implementation, local/hosted tests, artifacts, PR creation, proof preparation, provider reads and all non-source lanes MUST continue.
+- Under legacy FDOF V2 an ACTIVE lease may still gate canonical main admission during migration; this does not justify stopping the rest of the mission.
+- FDOF V3 scoped coordination is the target state: disjoint ACTIVE write sets may execute/admit concurrently; only overlapping write sets and repository-global paths serialize.
+- Merge time always revalidates current main, current registry/fence, actual write set, affected proof courts and expected head.
+
+Regression lineage: `CFAIL-20260919-029 / REG-DISJOINT-SAFE-WORK-CONTINUES-001`.
+
+---
 ## 5. DURABLE SCHEDULING & TRANSPORT RESILIENCE
 
 Chat transport is detachable and never the sole execution plane.
@@ -280,6 +312,8 @@ Before merge:
 - normal admission gates must pass;
 - never weaken Airlock/Leak/ProofOS merely to admit a feature;
 - if governance expansion triggers unrelated full-repository failure, prefer an already-admitted execution gateway or changed mechanism.
+- before declaring source work blocked, compare the candidate write set to the active fence/write set; disjoint branch preparation/build/test/PR proof continues even when canonical admission is held.
+- once scoped FDOF v3 is operationally active, disjoint scoped source leases may proceed concurrently; serialize only overlap or repository-global paths.
 
 Proof-before-claim:
 - source exists != runtime works;
