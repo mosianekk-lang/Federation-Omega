@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -68,6 +68,7 @@
     "APPLY_CHAT_FAILURE_CONTINUITY_MATRIX_AND_CLIENT_EPOCH_FENCING",
     "START_CLIENT_LIVENESS_SUPERVISOR_AND_DURABLE_REQUEST_JOURNAL",
     "JOURNAL_TERMINAL_RESULT_AND_REQUIRE_OWNER_DELIVERY_ACK",
+    "HYDRATE_PENDING_DELIVERY_DEBT_AND_APPLY_DELIVERY_PROOF_TIERS",
     "ASSERT_GLOBAL_STALL_ONLY_IF_READY_SET_EMPTY_AND_ALL_NONTERMINAL_REQUIRED_NODES_SHARE_CAUSAL_BLOCKER",
     "WORK_STEAL_ALL_DISJOINT_READY_NODES",
     "PREPARE_BUILD_TEST_BRANCH_PR_FOR_DISJOINT_SOURCE_WORK_WHILE_MAIN_ADMISSION_IS_HELD",
@@ -696,6 +697,51 @@
       "duplicate_redelivery_is_idempotent",
       "content_rebinding_under_same_transaction_is_rejected",
       "acknowledged_result_survives_client_restart"
+    ]
+  },
+  "delivery_proof_tiers": {
+    "policy_id": "FUSE-DELIVERY-PROOF-TIERS-V1",
+    "tiers": {
+      "D0_RESULT_READY": "terminal result artifact/pointer exists with immutable identity/hash",
+      "D1_DELIVERY_JOURNALED": "DeliveryJournal transaction exists and exact readback succeeds",
+      "D2_CURRENT_CLIENT_RENDER_VERIFIED": "current authorized client/result surface confirms the identical result/pointer rendered or was made available",
+      "D3_EXPLICIT_OWNER_INTERACTION_CONFIRMED": "explicit owner interaction/acknowledgement references the result"
+    },
+    "default_delivery_complete_tier": "D2_CURRENT_CLIENT_RENDER_VERIFIED",
+    "journal_acknowledged_maps_to": "D2_CURRENT_CLIENT_RENDER_VERIFIED",
+    "human_read_inferred_from_render": false,
+    "D3_required_for_normal_delivery_complete": false,
+    "D3_may_be_required_by_specific_mission_contract": true,
+    "cross_session_hydration": [
+      "after bootstrap currentness and effect reconciliation scan pending ORPHANED_UNACKNOWLEDGED transactions",
+      "compare result hash/pointer against current client visible-result index",
+      "if exact result already rendered on current client, acknowledge same delivery transaction without redelivering",
+      "otherwise deliver highest-priority pending result through authorized current surface",
+      "batch or defer low-value duplicate/noise deliveries without dropping them",
+      "never reopen terminal execution merely to satisfy delivery debt"
+    ],
+    "pending_delivery_priority": [
+      "explicit_owner_requested_result",
+      "critical_or_security_result",
+      "mission_terminal_result",
+      "material_failure_or_hold_result",
+      "high_owner_value_result",
+      "routine_completion_result",
+      "low_value_progress_result"
+    ],
+    "privacy": {
+      "authorized_surface_required": true,
+      "matter_wall_preserved": true,
+      "minimum_necessary_result_payload": true,
+      "large_or_sensitive_artifact_prefer_pointer_hash": true,
+      "cross_provider_delivery_requires_same_authority_and_privacy_eligibility": true
+    },
+    "forbidden": [
+      "claim human read from browser render",
+      "drop a pending terminal result because another result was delivered later",
+      "redeliver identical result repeatedly when exact hash is already current-client visible",
+      "cross a matter wall to clear delivery debt",
+      "expand provider authority merely to deliver a result"
     ]
   }
 }
