@@ -211,8 +211,8 @@ class NDirectiveV3ContractTests(unittest.TestCase):
             "agentic_frontier_compiler: benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
             text,
         )
-        self.assertIn("AGF-001..AGF-053", text)
-        self.assertIn("AGF-041..AGF-053", text)
+        self.assertIn("AGF-001..AGF-063", text)
+        self.assertIn("AGF-054..AGF-063", text)
         self.assertIn("proprietary_weights_imported: false", text)
         self.assertIn("undocumented_vendor_internals_imported: false", text)
 
@@ -230,7 +230,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
 
         compiler = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
         self.assertTrue(compiler["composition"]["frontier_compile_required_before_packetization"])
-        self.assertEqual(compiler["composition"]["frontier_gene_range"], "AGF-001..AGF-053")
+        self.assertEqual(compiler["composition"]["frontier_gene_range"], "AGF-001..AGF-063")
         self.assertEqual(compiler["frontier_selection"]["external_model_authority"], "PROPOSAL_ONLY")
 
 
