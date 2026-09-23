@@ -116,6 +116,7 @@ class NOmegaAgenticFrontierTests(unittest.TestCase):
             requires_adaptive_computer_use=True,
             requires_hypothesis_evolution=True,
             requires_strict_self_verification=True,
+            requires_harness_simplification=True,
             requires_artifact_production=True,
             requires_local_multimodal=True,
         ))
