@@ -17,6 +17,11 @@ from hashlib import sha256
 import json
 from typing import Mapping, Sequence
 
+from benchmarking.cfbe_omega.n_omega_agentic_frontier_v1 import (
+    AgenticFrontierCompiler,
+    MissionProfile as FrontierMissionProfile,
+    SuperstackPlan,
+)
 from federation.action_admission_gate_v1 import (
     ActionAdmissionGate,
     ActionAdmissionReceipt,
@@ -69,6 +74,7 @@ def _digest(value: object) -> str:
 
 class SpineStage(IntEnum):
     INIT = 0
+    FRONTIER_COMPILED = 5
     CAPABILITY_ADMITTED = 10
     TOPOLOGY_READY = 20
     ACTIONS_ADMITTED = 30
@@ -108,6 +114,8 @@ class ActionExecutionBundle:
 class SpineRunReceipt:
     mission_id: str
     snapshots: tuple[SpineSnapshot, ...]
+    frontier_gene_ids: tuple[str, ...]
+    frontier_plan_digest: str
     mission_admission: MissionAdmissionReceipt | None
     topology: ExecutionTopologyReceipt | None
     action_admissions: tuple[ActionAdmissionReceipt, ...]
@@ -124,11 +132,145 @@ class AutonomicMissionSpine:
     """One-way mission progression across the existing FUSE specialist courts."""
 
     def __init__(self) -> None:
+        self.frontier_compiler = AgenticFrontierCompiler()
         self.capability_compiler = MissionCapabilityCompiler()
         self.topology_compiler = ExecutionTopologyCompiler()
         self.action_gate = ActionAdmissionGate()
         self.closure_court = ExecutionReadbackClosure()
         self.outcome_court = MissionOutcomeValueCourt()
+
+
+    @staticmethod
+    def _metadata_flag(mission: MissionIR, key: str) -> bool:
+        value = str(dict(mission.metadata).get(key, "")).strip().casefold()
+        return value in {"1", "true", "yes", "required", "enabled", "on"}
+
+    def _compile_frontier_plan(
+        self,
+        mission: MissionIR,
+        capability_requirements: Sequence[MissionCapabilityRequirement],
+        topology_tasks: Sequence[TopologyTask],
+        *,
+        require_swarm: bool,
+    ) -> SuperstackPlan:
+        """Compile provider-neutral frontier capabilities before mission admission.
+
+        Selection uses only typed mission/task/capability facts already entering the
+        spine. It does not grant authority, invent provider availability, or execute
+        a model/provider.
+        """
+        corpus = " ".join(
+            [
+                mission.domain,
+                mission.objective,
+                mission.outcome_contract,
+                *(item.capability_id for item in capability_requirements),
+                *(task.capability_id for task in topology_tasks),
+                *(task.unit.operation for task in topology_tasks),
+                *(task.unit.surface for task in topology_tasks),
+            ]
+        ).casefold()
+        has = lambda *terms: any(term in corpus for term in terms)
+
+        multi_agent = (
+            require_swarm
+            or len(topology_tasks) > 1
+            or self._metadata_flag(mission, "multi_agent")
+        )
+        tool_heavy = (
+            len(capability_requirements) >= 3
+            or has("tool", "mcp", "api", "browser", "terminal", "connector")
+            or self._metadata_flag(mission, "tool_heavy")
+        )
+        browser_or_computer = (
+            has("browser", "computer", "desktop", "device", "gui", "ui automation")
+            or self._metadata_flag(mission, "browser_or_computer")
+        )
+        code_execution = (
+            has("code", "shell", "terminal", "compile", "test")
+            or self._metadata_flag(mission, "code_execution")
+        )
+        requires_memory = (
+            has("memory", "context", "knowledge", "bible", "kdv")
+            or self._metadata_flag(mission, "requires_memory")
+        )
+        requires_dynamic_models = (
+            has("model", "llm", "reasoning", "gemini", "openai", "claude", "grok", "copilot")
+            or self._metadata_flag(mission, "requires_dynamic_models")
+        )
+        long_running = (
+            self._metadata_flag(mission, "long_running")
+            or self._metadata_flag(mission, "persistent_agent")
+            or self._metadata_flag(mission, "durable")
+        )
+        requires_release = (
+            self._metadata_flag(mission, "requires_release")
+            or has("release", "merge", "deploy", "promotion")
+        )
+        artifact_production = (
+            has("document", "spreadsheet", "presentation", "pdf", "artifact")
+            or self._metadata_flag(mission, "requires_artifact_production")
+        )
+        local_multimodal = (
+            self._metadata_flag(mission, "requires_local_multimodal")
+            or has("local multimodal", "offline multimodal")
+        )
+        consequential = mission.effect_class == "CONSEQUENTIAL_EFFECT"
+
+        domains = {"SPECIFICATION", "CONTROL", "PROOF", "GOVERNANCE", "EVALUATION"}
+        if multi_agent:
+            domains.add("ORCHESTRATION")
+        if tool_heavy:
+            domains.add("TOOLS")
+        if requires_memory:
+            domains.update({"MEMORY", "KNOWLEDGE"})
+        if requires_dynamic_models:
+            domains.add("ROUTING")
+        if mission.value_metrics:
+            domains.add("VALUE")
+        if consequential:
+            domains.add("SECURITY")
+
+        return self.frontier_compiler.compile(
+            FrontierMissionProfile(
+                mission_id=mission.mission_id,
+                domains=frozenset(domains),
+                long_running=long_running,
+                multi_agent=multi_agent,
+                tool_heavy=tool_heavy,
+                code_execution=code_execution,
+                browser_or_computer=browser_or_computer,
+                legacy_ui=self._metadata_flag(mission, "legacy_ui"),
+                customer_facing=self._metadata_flag(mission, "customer_facing"),
+                consequential=consequential,
+                requires_memory=requires_memory,
+                requires_dynamic_models=requires_dynamic_models,
+                requires_release=requires_release,
+                requires_adaptive_effort=True,
+                requires_cross_window_context=long_running,
+                requires_dynamic_tools=tool_heavy,
+                requires_portable_skills=tool_heavy,
+                requires_persistent_agent=long_running,
+                requires_adaptive_computer_use=browser_or_computer,
+                requires_hypothesis_evolution=multi_agent,
+                requires_strict_self_verification=True,
+                requires_harness_simplification=requires_release,
+                requires_artifact_production=artifact_production,
+                requires_local_multimodal=local_multimodal,
+            )
+        )
+
+    @staticmethod
+    def _frontier_digest(plan: SuperstackPlan) -> str:
+        return _digest({
+            "mission_id": plan.mission_id,
+            "selected_gene_ids": plan.selected_gene_ids,
+            "orchestration": plan.orchestration,
+            "max_mutating_lanes": plan.max_mutating_lanes,
+            "external_model_authority": plan.external_model_authority,
+            "proof_required": plan.proof_required,
+            "route_score": plan.route_score,
+        })
 
     @staticmethod
     def _snapshot(
@@ -203,6 +345,22 @@ class AutonomicMissionSpine:
         init = self._snapshot(mission, SpineStage.INIT, "MISSION_INGESTED", predecessor=None, stage_receipt_digest=mission.digest())
         snapshots.append(init)
 
+        frontier_plan = self._compile_frontier_plan(
+            mission,
+            capability_requirements,
+            topology_tasks,
+            require_swarm=require_swarm,
+        )
+        frontier_digest = self._frontier_digest(frontier_plan)
+        snapshots.append(self._snapshot(
+            mission,
+            SpineStage.FRONTIER_COMPILED,
+            "FRONTIER_SUPERSTACK_COMPILED",
+            predecessor=snapshots[-1],
+            stage_receipt_digest=frontier_digest,
+            reasons=frontier_plan.selected_gene_ids,
+        ))
+
         admission = self.capability_compiler.admit(mission, capability_requirements, truth_records)
         if not admission.admitted:
             snapshots.append(self._snapshot(
@@ -210,7 +368,7 @@ class AutonomicMissionSpine:
                 predecessor=snapshots[-1], stage_receipt_digest=admission.receipt_digest,
                 reasons=admission.blocking_capabilities,
             ))
-            return self._run_receipt(mission, snapshots, admission, None, (), (), None)
+            return self._run_receipt(mission, snapshots, admission, None, (), (), None, frontier_plan, frontier_digest)
         snapshots.append(self._snapshot(
             mission, SpineStage.CAPABILITY_ADMITTED, admission.state,
             predecessor=snapshots[-1], stage_receipt_digest=admission.receipt_digest,
@@ -233,7 +391,7 @@ class AutonomicMissionSpine:
                 predecessor=snapshots[-1], stage_receipt_digest=topology.receipt_digest,
                 reasons=topology.blocked_units,
             ))
-            return self._run_receipt(mission, snapshots, admission, topology, (), (), None)
+            return self._run_receipt(mission, snapshots, admission, topology, (), (), None, frontier_plan, frontier_digest)
         snapshots.append(self._snapshot(
             mission, SpineStage.TOPOLOGY_READY, topology.state,
             predecessor=snapshots[-1], stage_receipt_digest=topology.receipt_digest,
@@ -253,7 +411,7 @@ class AutonomicMissionSpine:
                 predecessor=snapshots[-1], stage_receipt_digest=_digest(missing_bundles),
                 reasons=missing_bundles,
             ))
-            return self._run_receipt(mission, snapshots, admission, topology, (), (), None)
+            return self._run_receipt(mission, snapshots, admission, topology, (), (), None, frontier_plan, frontier_digest)
 
         action_admissions: list[ActionAdmissionReceipt] = []
         held_actions: list[str] = []
@@ -277,7 +435,7 @@ class AutonomicMissionSpine:
                 predecessor=snapshots[-1], stage_receipt_digest=action_digest,
                 reasons=sorted(held_actions),
             ))
-            return self._run_receipt(mission, snapshots, admission, topology, tuple(action_admissions), (), None)
+            return self._run_receipt(mission, snapshots, admission, topology, tuple(action_admissions), (), None, frontier_plan, frontier_digest)
         snapshots.append(self._snapshot(
             mission, SpineStage.ACTIONS_ADMITTED, "ALL_ACTIONS_ADMITTED",
             predecessor=snapshots[-1], stage_receipt_digest=action_digest,
@@ -311,7 +469,7 @@ class AutonomicMissionSpine:
                 predecessor=snapshots[-1], stage_receipt_digest=closure_digest,
                 reasons=sorted(nonterminal),
             ))
-            return self._run_receipt(mission, snapshots, admission, topology, tuple(action_admissions), tuple(closures), None)
+            return self._run_receipt(mission, snapshots, admission, topology, tuple(action_admissions), tuple(closures), None, frontier_plan, frontier_digest)
         snapshots.append(self._snapshot(
             mission, SpineStage.EXECUTION_CLOSED, "ALL_ACTIONS_SEMANTICALLY_CLOSED",
             predecessor=snapshots[-1], stage_receipt_digest=closure_digest,
@@ -344,6 +502,7 @@ class AutonomicMissionSpine:
         return self._run_receipt(
             mission, snapshots, admission, topology,
             tuple(action_admissions), tuple(closures), outcome,
+            frontier_plan, frontier_digest,
         )
 
     def _run_receipt(
@@ -355,6 +514,8 @@ class AutonomicMissionSpine:
         action_admissions: tuple[ActionAdmissionReceipt, ...],
         closures: tuple[ExecutionClosureReceipt, ...],
         outcome: MissionOutcomeReceipt | None,
+        frontier_plan: SuperstackPlan,
+        frontier_plan_digest: str,
     ) -> SpineRunReceipt:
         if not self.verify_chain(snapshots):
             raise ValueError("AUTONOMIC_SPINE_CHAIN_INVALID")
@@ -362,6 +523,8 @@ class AutonomicMissionSpine:
             "schema": SCHEMA,
             "version": VERSION,
             "mission": mission.digest(),
+            "frontier_plan_digest": frontier_plan_digest,
+            "frontier_gene_ids": frontier_plan.selected_gene_ids,
             "snapshots": [x.snapshot_digest for x in snapshots],
             "admission": admission.receipt_digest if admission else "",
             "topology": topology.receipt_digest if topology else "",
@@ -372,6 +535,8 @@ class AutonomicMissionSpine:
         return SpineRunReceipt(
             mission_id=mission.mission_id,
             snapshots=tuple(snapshots),
+            frontier_gene_ids=frontier_plan.selected_gene_ids,
+            frontier_plan_digest=frontier_plan_digest,
             mission_admission=admission,
             topology=topology,
             action_admissions=action_admissions,
