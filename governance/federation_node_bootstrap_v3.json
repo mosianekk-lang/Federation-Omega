@@ -27,7 +27,8 @@
     "mission_compiler": "governance/cfbe_parallel_mission_compiler_v4.json",
     "prompt_scientist": "governance/cfbe_prompt_scientist_v1.json",
     "ao_cra": "governance/ao_cra_federation_inheritance_v1.json",
-    "frontier_compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py"
+    "frontier_compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
+    "frontier_resilience_interop": "federation/frontier_resilience_interop_v1.py"
   },
   "required_engines": {
     "formation_engine": "REQUIRED",
@@ -41,7 +42,8 @@
     "agentic_frontier_compiler": "REQUIRED_FOR_NONTRIVIAL_MISSIONS",
     "estate_resolver": "REQUIRED_FOR_MATERIAL_CAPABILITY_ACCESS_AND_NO_ACCESS_DECISIONS",
     "mission_route_portfolio_v2": "REQUIRED_FOR_MATERIAL_NONTRIVIAL_MISSIONS",
-    "more_autonomous_convergence_v2": "REQUIRED_ON_OWNER_MORE_AND_SAFE_POST_RESULT_CONTINUATION"
+    "more_autonomous_convergence_v2": "REQUIRED_ON_OWNER_MORE_AND_SAFE_POST_RESULT_CONTINUATION",
+    "frontier_resilience_interop": "REQUIRED_WHEN_AGF_054_063_SELECTED"
   },
   "required_sequence": [
     "PASS_FEDOMEGA_NODE_BOOTSTRAP_V2",
@@ -166,7 +168,8 @@
     "latest_clean_room_residual_range": "AGF-054..AGF-063",
     "automatically_select_by_mission_profile": true,
     "provider_model_authority": "PROPOSAL_ONLY",
-    "runtime_provider_and_owner_value_proof_separate": true
+    "runtime_provider_and_owner_value_proof_separate": true,
+    "external_resilience_interop_contract": "federation/frontier_resilience_interop_v1.py"
   },
   "blocker_containment": {
     "policy_id": "FUSE-BLOCKER-CONTAINMENT-V1",
