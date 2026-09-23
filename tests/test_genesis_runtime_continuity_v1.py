@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.asymmetric import padding,rsa
 from fuse_genesis.runtime_continuity import (
     ContinuityError,DispatchCollision,DispatchEnvelope,DispatchIngress,DispatchRejected,SignatureRejected,
     EffectCollision,EffectExecutor,EffectJournal,UnknownEffect,EffectFenceLost,RsaDispatchVerifier,
+    ProviderAuthorityReceipt,ProviderAuthorityVerifier,
     assess_runtime,payload_digest
 )
 
@@ -29,7 +30,25 @@ class T(unittest.TestCase):
     def setUp(self):
         self.t=tempfile.TemporaryDirectory()
         self.root=pathlib.Path(self.t.name)
+        self.key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+        pub=self.key.public_key().public_bytes(serialization.Encoding.PEM,serialization.PublicFormat.SubjectPublicKeyInfo)
+        self.signature_verifier=RsaDispatchVerifier({"gas-key-1":pub})
+        self.authority_verifier=ProviderAuthorityVerifier((
+            ProviderAuthorityReceipt("GOOGLE_APPS_SCRIPT:TRIGGER:gasSchedulerRunV3","GAS-EVENT-1"),
+        ))
     def tearDown(self): self.t.cleanup()
+
+    def ingress(self,path=None,*,signature_verifier=None,authority_verifier=None):
+        return DispatchIngress(
+            path or (self.root/"i.db"),
+            signature_verifier=signature_verifier or self.signature_verifier,
+            authority_verifier=authority_verifier or self.authority_verifier,
+        )
+
+    def signed(self,**kw):
+        e=envelope(signature_b64="",**kw)
+        sig=self.key.sign(e.signing_bytes,padding.PKCS1v15(),hashes.SHA256())
+        return replace(e,signature_b64=base64.b64encode(sig).decode())
 
     def test_01_payload_digest_stable(self):
         self.assertEqual(payload_digest({"a":1,"b":2}),payload_digest({"b":2,"a":1}))
@@ -41,45 +60,45 @@ class T(unittest.TestCase):
     def test_04_bad_epoch_rejected(self):
         with self.assertRaises(ContinuityError): envelope(source_epoch_digest="bad").validate()
     def test_05_expired_dispatch_rejected(self):
-        d=DispatchIngress(self.root/"i.db")
+        d=self.ingress()
         with self.assertRaisesRegex(DispatchRejected,"EXPIRED"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=200,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+            d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=200)
         d.close()
     def test_06_stale_epoch_rejected(self):
-        d=DispatchIngress(self.root/"i.db")
+        d=self.ingress()
         with self.assertRaisesRegex(DispatchRejected,"STALE_SOURCE_EPOCH"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest="b"*64,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+            d.accept(self.signed(),PAYLOAD,current_epoch_digest="b"*64,now=120)
         d.close()
     def test_07_payload_mismatch_rejected(self):
-        d=DispatchIngress(self.root/"i.db")
+        d=self.ingress()
         with self.assertRaisesRegex(DispatchRejected,"PAYLOAD_HASH_MISMATCH"):
-            d.accept(envelope(),{"kind":"other"},current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+            d.accept(self.signed(),{"kind":"other"},current_epoch_digest=EPOCH,now=120)
         d.close()
     def test_08_authority_readback_required(self):
-        d=DispatchIngress(self.root/"i.db")
+        d=self.ingress(authority_verifier=ProviderAuthorityVerifier(()))
         with self.assertRaisesRegex(DispatchRejected,"AUTHORITY_READBACK"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:False,signature_verifier=lambda e:True)
+            d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=120)
         d.close()
     def test_09_accept_success(self):
-        d=DispatchIngress(self.root/"i.db")
-        row=d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+        d=self.ingress()
+        row=d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=120)
         self.assertEqual(row["task_id"],"TASK-1"); d.close()
     def test_10_dispatch_replay_idempotent(self):
-        d=DispatchIngress(self.root/"i.db"); e=envelope()
-        a=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
-        b=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=121,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+        d=self.ingress(); e=self.signed()
+        a=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=120)
+        b=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=121)
         self.assertEqual(a["semantic_sha256"],b["semantic_sha256"]); d.close()
     def test_11_dispatch_collision(self):
-        d=DispatchIngress(self.root/"i.db")
-        d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+        d=self.ingress()
+        d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=120)
         p2={"kind":"noop","value":2}
         with self.assertRaises(DispatchCollision):
-            d.accept(envelope(dispatch_id="DISPATCH-2",payload_sha256=payload_digest(p2)),p2,current_epoch_digest=EPOCH,now=121,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+            d.accept(self.signed(dispatch_id="DISPATCH-2",payload_sha256=payload_digest(p2)),p2,current_epoch_digest=EPOCH,now=121)
         d.close()
     def test_12_dispatch_persists_restart(self):
-        p=self.root/"i.db"; d=DispatchIngress(p)
-        d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True); d.close()
-        d=DispatchIngress(p); self.assertEqual(d.row("DISPATCH-1")["scheduler_id"],"GOOGLE_APPS_SCRIPT"); d.close()
+        p=self.root/"i.db"; d=self.ingress(p)
+        d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=120); d.close()
+        d=self.ingress(p); self.assertEqual(d.row("DISPATCH-1")["scheduler_id"],"GOOGLE_APPS_SCRIPT"); d.close()
 
     def test_13_effect_prepare(self):
         j=EffectJournal(self.root/"e.db"); self.assertEqual(j.prepare("E1","K1",{"x":1},1)["state"],"PREPARED"); j.close()
@@ -157,25 +176,22 @@ class T(unittest.TestCase):
 
 
     def test_33_unsigned_dispatch_rejected(self):
-        d=DispatchIngress(self.root/"i.db")
+        d=self.ingress()
         with self.assertRaisesRegex(SignatureRejected,"SIGNED_GAS_DISPATCH_REQUIRED"):
-            d.accept(envelope(signature_b64=""),PAYLOAD,current_epoch_digest=EPOCH,now=120,
-                     authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+            d.accept(envelope(signature_b64=""),PAYLOAD,current_epoch_digest=EPOCH,now=120)
         d.close()
 
-    def test_34_signature_verifier_must_return_exact_true(self):
-        d=DispatchIngress(self.root/"i.db")
-        with self.assertRaisesRegex(SignatureRejected,"DISPATCH_SIGNATURE_INVALID"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,
-                     authority_verifier=lambda a,e:True,signature_verifier=lambda e:"truthy")
-        d.close()
+    def test_34_per_call_signature_callback_injection_removed(self):
+        import inspect
+        params=inspect.signature(DispatchIngress.accept).parameters
+        self.assertNotIn("signature_verifier",params)
+        self.assertNotIn("authority_verifier",params)
 
-    def test_35_authority_verifier_must_return_exact_true(self):
-        d=DispatchIngress(self.root/"i.db")
-        with self.assertRaisesRegex(DispatchRejected,"AUTHORITY_READBACK"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,
-                     authority_verifier=lambda a,e:"truthy",signature_verifier=lambda e:True)
-        d.close()
+    def test_35_constructor_rejects_arbitrary_verifier_callbacks(self):
+        with self.assertRaisesRegex(ContinuityError,"RSA_DISPATCH_VERIFIER_REQUIRED"):
+            DispatchIngress(self.root/"i.db",signature_verifier=lambda e:True,authority_verifier=self.authority_verifier)
+        with self.assertRaisesRegex(ContinuityError,"PROVIDER_AUTHORITY_VERIFIER_REQUIRED"):
+            DispatchIngress(self.root/"i2.db",signature_verifier=self.signature_verifier,authority_verifier=lambda a,e:True)
 
     def test_36_rsa_dispatch_signature_valid(self):
         key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
@@ -234,5 +250,24 @@ class T(unittest.TestCase):
              execution_guard=guard,require_execution_guard=True)
         self.assertEqual(r["state"],"READBACK_RECOVERED_AFTER_FENCE_LOSS")
         self.assertEqual(calls,[1]); self.assertEqual(j.row("E1")["state"],"READBACK_VERIFIED"); j.close()
+
+
+    def test_43_authority_receipt_exact_pair_required(self):
+        d=self.ingress(authority_verifier=ProviderAuthorityVerifier((
+            ProviderAuthorityReceipt("GOOGLE_APPS_SCRIPT:TRIGGER:gasSchedulerRunV3","OTHER-EVENT"),
+        )))
+        with self.assertRaisesRegex(DispatchRejected,"AUTHORITY_READBACK"):
+            d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=120)
+        d.close()
+
+    def test_44_unverified_authority_receipt_rejected_at_construction(self):
+        with self.assertRaisesRegex(ContinuityError,"RECEIPT_NOT_VERIFIED"):
+            ProviderAuthorityReceipt("A","E",verified=False)
+
+    def test_45_constructor_bound_trust_accepts_valid_signed_exact_receipt(self):
+        d=self.ingress()
+        row=d.accept(self.signed(),PAYLOAD,current_epoch_digest=EPOCH,now=120)
+        self.assertEqual(row["scheduler_id"],"GOOGLE_APPS_SCRIPT")
+        d.close()
 
 if __name__=="__main__": unittest.main(verbosity=2)
