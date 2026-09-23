@@ -13,7 +13,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
         required = (
             "policy_id: FEDOMEGA-N-DIRECTIVE-V3",
-            "version: 3.0.0",
+            "version: 3.1.0",
             "authority_ceiling: A1_INTERNAL",
             "external_effect_default: false",
             "compile unfinished work into a finite dependency DAG",
@@ -29,6 +29,30 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         )
         for marker in required:
             self.assertIn(marker, text)
+
+    def test_blocker_containment_prevents_single_lane_global_stall(self):
+        text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        for required in (
+            "policy_id: FUSE-BLOCKER-CONTAINMENT-V1",
+            "GLOBAL_STALL requires empty READY set plus universal causal dependency",
+            "work-steal all disjoint READY nodes",
+            "disjoint branch preparation, build, tests and PR proof",
+            "fdof_v3_scoped_registry_is_target_for_disjoint_concurrent_admission: true",
+        ):
+            self.assertIn(required, text)
+
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        self.assertEqual(bootstrap["version"], "3.1.0")
+        self.assertTrue(bootstrap["parallelism"]["blocker_scope_locality_required"])
+        self.assertTrue(bootstrap["parallelism"]["global_stall_requires_empty_ready_set_and_universal_causal_dependency"])
+        self.assertTrue(bootstrap["parallelism"]["branch_prepare_build_test_pr_may_continue_while_main_admission_is_held"])
+        self.assertEqual(bootstrap["blocker_containment"]["failure_class"], "CFAIL-20260919-029")
+        self.assertEqual(bootstrap["source_concurrency"]["v3_registry_ref"], "refs/heads/locks/fdof-v3-scoped-registry")
+
+        finality = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("BLOCKER CONTAINMENT / ANTI-HEAD-OF-LINE INVARIANT", finality)
+        self.assertIn("GLOBAL_STALL", finality)
+        self.assertIn("Disjoint branch preparation", finality)
 
     def test_compiler_contract_is_safe_by_default(self):
         contract = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
