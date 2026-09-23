@@ -1,5 +1,5 @@
 from __future__ import annotations
-import argparse, sqlite3, json, hashlib, os, time, socket, uuid
+import argparse, sqlite3, json, hashlib, os, time, socket, uuid, threading
 from pathlib import Path
 from contextlib import contextmanager
 from .currentness import SourceEpoch, resolve_source_epoch
@@ -130,12 +130,51 @@ class HostState:
         ticks=[dict(x) for x in self.db.execute("SELECT * FROM ticks ORDER BY at,tick_id")]
         return {"host":dict(host) if host else None,"source_epoch":self.epoch(),"tasks":tasks,"ticks":ticks}
 
+class HostHeartbeatGuard:
+    """Independent heartbeat while a task handler may block the main worker loop."""
+    def __init__(self, root, instance_id, fence, interval=5.0, now_fn=time.time):
+        self.root=Path(root); self.instance_id=instance_id; self.fence=int(fence)
+        self.interval=float(interval); self.now_fn=now_fn
+        if self.interval <= 0:
+            raise ValueError("HEARTBEAT_GUARD_INTERVAL_INVALID")
+        self._stop=threading.Event(); self._thread=None; self.error=None
+
+    def _run(self):
+        state=HostState(self.root)
+        try:
+            while not self._stop.wait(self.interval):
+                state.heartbeat(self.instance_id,self.fence,self.now_fn())
+        except Exception as exc:
+            self.error=exc
+        finally:
+            state.close()
+
+    def start(self):
+        if self._thread is not None:
+            raise RuntimeError("HEARTBEAT_GUARD_ALREADY_STARTED")
+        self._thread=threading.Thread(target=self._run,name="fuse-genesis-heartbeat",daemon=True)
+        self._thread.start()
+        return self
+
+    def stop(self):
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=max(1.0,self.interval*3))
+        return self
+
+    def assert_healthy(self):
+        if self.error is not None:
+            raise RuntimeError("HEARTBEAT_GUARD_FAILED") from self.error
+
 class ResidentHost:
     """Long-running executor only. Scheduling remains external (for this estate: Google Apps Script)."""
-    def __init__(self, root, epoch: SourceEpoch, interval=1.0):
+    def __init__(self, root, epoch: SourceEpoch, interval=1.0, task_heartbeat_interval=5.0):
         self.root=Path(root); self.epoch=resolve_source_epoch(epoch); self.fence=self.epoch.fence; self.interval=float(interval)
+        self.task_heartbeat_interval=float(task_heartbeat_interval)
         if self.interval < 0:
             raise ValueError("INTERVAL_INVALID")
+        if self.task_heartbeat_interval <= 0:
+            raise ValueError("TASK_HEARTBEAT_INTERVAL_INVALID")
         self.instance_id=f"{socket.gethostname()}-{uuid.uuid4().hex[:12]}"
         self.state=HostState(root)
         self._started=False
@@ -158,8 +197,13 @@ class ResidentHost:
         t=now if now is not None else time.time()
         payload=json.loads(row["payload_json"])
         self.state.checkpoint(row["task_id"],{"source_epoch_digest":self.epoch.digest,"resident_instance":self.instance_id},t)
-        result=handler(payload)
-        self.state.complete(row["task_id"],result,t)
+        guard=HostHeartbeatGuard(self.root,self.instance_id,self.fence,self.task_heartbeat_interval).start()
+        try:
+            result=handler(payload)
+        finally:
+            guard.stop()
+        guard.assert_healthy()
+        self.state.complete(row["task_id"],result,time.time() if now is None else now)
         return row["task_id"]
 
     def run(self, *, handler=None, max_ticks=None, stop_when=None, now_fn=time.time, sleep_fn=time.sleep, release_on_exit=True):
