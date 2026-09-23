@@ -28,7 +28,7 @@ class T(unittest.TestCase):
     def test_01_payload_digest_stable(self):
         self.assertEqual(payload_digest({"a":1,"b":2}),payload_digest({"b":2,"a":1}))
     def test_02_gas_envelope_valid(self):
-        self.assertIs(envelope().validate(),envelope().validate().__class__ and envelope().validate())
+        e=envelope(); self.assertIs(e.validate(),e)
     def test_03_non_gas_scheduler_rejected(self):
         with self.assertRaisesRegex(DispatchRejected,"GOOGLE_APPS_SCRIPT"):
             envelope(scheduler_id="CHATGPT").validate()
