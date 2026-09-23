@@ -1,6 +1,8 @@
 import unittest,tempfile,shutil,pathlib
 from fuse_genesis.resident_host import HostState,ResidentHost
+from fuse_genesis.currentness import SourceEpoch
 
+E=SourceEpoch("a"*40,"F323",323,"GENESIS")
 class T(unittest.TestCase):
  def setUp(self): self.d=pathlib.Path(tempfile.mkdtemp())
  def tearDown(self): shutil.rmtree(self.d,ignore_errors=True)
@@ -50,9 +52,34 @@ class T(unittest.TestCase):
   s=HostState(self.d); s.claim_host("a",1,1)
   for x in range(2,7): s.heartbeat("a",1,x)
   self.assertEqual(len(s.snapshot()["ticks"]),5); s.close()
- def test_19_resident_direct(self):
-  h=ResidentHost(self.d,1); h.start(1); h.tick(2); h.state.release(h.instance_id,1,3); self.assertEqual(h.state.snapshot()["host"]["state"],"RELEASED"); h.close()
- def test_20_fence_advance_restart(self):
-  s=HostState(self.d); s.claim_host("a",1,1); s.release("a",1,2); s.close(); s=HostState(self.d); s.claim_host("b",2,3); self.assertEqual(s.snapshot()["host"]["fence"],2); s.close()
-
+ def test_19_epoch_bind(self):
+  s=HostState(self.d); s.bind_epoch(E,1); self.assertEqual(s.epoch()["digest"],E.digest); s.close()
+ def test_20_epoch_collision(self):
+  s=HostState(self.d); s.bind_epoch(E,1)
+  with self.assertRaises(RuntimeError): s.bind_epoch(SourceEpoch("b"*40,"F323",323,"GENESIS"),2)
+  s.close()
+ def test_21_stale_epoch(self):
+  s=HostState(self.d); s.bind_epoch(E,1)
+  with self.assertRaises(RuntimeError): s.bind_epoch(SourceEpoch("b"*40,"F322",322,"GENESIS"),2)
+  s.close()
+ def test_22_resident_direct(self):
+  h=ResidentHost(self.d,E,interval=0); h.start(1); h.tick(2); h.state.release(h.instance_id,323,3); self.assertEqual(h.state.snapshot()["host"]["state"],"RELEASED"); h.close()
+ def test_23_run_three_ticks(self):
+  times=iter(range(1,20)); h=ResidentHost(self.d,E,interval=0); r=h.run(max_ticks=3,now_fn=lambda:next(times),sleep_fn=lambda _:None); self.assertEqual(r["ticks"],3); self.assertEqual(len(h.state.snapshot()["ticks"]),3); self.assertEqual(r["host_state"],"RELEASED"); h.close()
+ def test_24_process_external_task(self):
+  times=iter(range(1,30)); h=ResidentHost(self.d,E,interval=0); h.state.enqueue("t","k",{"x":2},0); r=h.run(handler=lambda p:{"y":p["x"]+1},max_ticks=1,now_fn=lambda:next(times),sleep_fn=lambda _:None); self.assertEqual(r["processed"],1); self.assertEqual(h.state.task("t")["state"],"COMPLETE"); h.close()
+ def test_25_no_handler_no_self_execution(self):
+  times=iter(range(1,30)); h=ResidentHost(self.d,E,interval=0); h.state.enqueue("t","k",{"x":2},0); r=h.run(max_ticks=1,now_fn=lambda:next(times),sleep_fn=lambda _:None); self.assertEqual(r["processed"],0); self.assertEqual(h.state.task("t")["state"],"PENDING"); h.close()
+ def test_26_epoch_persisted_with_ticks(self):
+  times=iter(range(1,30)); h=ResidentHost(self.d,E,interval=0); h.run(max_ticks=2,now_fn=lambda:next(times),sleep_fn=lambda _:None); self.assertEqual(h.state.snapshot()["source_epoch"]["digest"],E.digest); h.close()
+ def test_27_no_release_on_exit_option(self):
+  times=iter(range(1,30)); h=ResidentHost(self.d,E,interval=0); h.run(max_ticks=1,now_fn=lambda:next(times),sleep_fn=lambda _:None,release_on_exit=False); self.assertEqual(h.state.snapshot()["host"]["state"],"ACTIVE"); h.state.release(h.instance_id,323,next(times)); h.close()
+ def test_28_negative_interval(self):
+  with self.assertRaises(ValueError): ResidentHost(self.d,E,interval=-1)
+ def test_29_invalid_max_ticks(self):
+  h=ResidentHost(self.d,E,interval=0)
+  with self.assertRaises(ValueError): h.run(max_ticks=0,now_fn=lambda:1,sleep_fn=lambda _:None)
+  h.close()
+ def test_30_source_fence_equals_host_fence(self):
+  h=ResidentHost(self.d,E,interval=0); self.assertEqual(h.fence,E.fence); h.close()
 if __name__=="__main__": unittest.main(verbosity=2)
