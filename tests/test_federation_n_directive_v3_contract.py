@@ -13,7 +13,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
         required = (
             "policy_id: FEDOMEGA-N-DIRECTIVE-V3",
-            "version: 3.2.0",
+            "version: 3.3.0",
             "authority_ceiling: A1_INTERNAL",
             "external_effect_default: false",
             "compile unfinished work into a finite dependency DAG",
@@ -42,7 +42,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
             self.assertIn(required, text)
 
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.2.0")
+        self.assertEqual(bootstrap["version"], "3.3.0")
         self.assertTrue(bootstrap["parallelism"]["blocker_scope_locality_required"])
         self.assertTrue(bootstrap["parallelism"]["global_stall_requires_empty_ready_set_and_universal_causal_dependency"])
         self.assertTrue(bootstrap["parallelism"]["branch_prepare_build_test_pr_may_continue_while_main_admission_is_held"])
@@ -87,6 +87,26 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertIn("CHAT TRANSPORT INTERRUPTION CONTINUITY", prompt)
         self.assertIn("NO_RESPONSE != NO_EFFECT", prompt)
         self.assertIn("Connection interrupted. Waiting for the complete answer", prompt)
+
+    def test_chat_failure_matrix_preserves_user_stop_and_cross_tab_fencing(self):
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        matrix = bootstrap["chat_failure_continuity_matrix"]
+        self.assertIn("USER_INTERRUPTION", matrix["classes"])
+        self.assertEqual(matrix["classes"]["USER_INTERRUPTION"]["effect_rule"], "EXPLICIT_USER_STOP_OR_CANCEL_IS_AUTHORITATIVE_FOR_THAT_INTENT")
+        self.assertTrue(matrix["cross_tab_takeover"]["mission_client_epoch_required"])
+        self.assertTrue(matrix["cross_tab_takeover"]["stale_client_auto_send_forbidden"])
+        self.assertEqual(matrix["partial_response"]["visible_tool_call_without_terminal_answer_state"], "POSSIBLE_EFFECT_PENDING_READBACK")
+        self.assertTrue(matrix["partial_response"]["partial_text_is_not_terminal_proof"])
+
+        directive = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn("chat_failure_continuity_matrix:", directive)
+        self.assertIn("stale_client_auto_send_forbidden: true", directive)
+        self.assertIn("explicit owner stop/cancel is authoritative", directive)
+
+        prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("CHAT/CLIENT FAILURE CONTINUITY MATRIX", prompt)
+        self.assertIn("Cross-tab writer fencing", prompt)
+        self.assertIn("PARTIAL_UNACKED", prompt)
 
     def test_compiler_contract_is_safe_by_default(self):
         contract = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
