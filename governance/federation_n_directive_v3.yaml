@@ -1,5 +1,5 @@
 policy_id: FEDOMEGA-N-DIRECTIVE-V3
-version: 3.5.0
+version: 3.6.0
 owner: Kim Kagiso Mosiane
 state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
 authority_ceiling: A1_INTERNAL
@@ -131,6 +131,31 @@ parallel_scheduler:
 
 
 
+
+
+terminal_delivery_assurance:
+  policy_id: FUSE-TERMINAL-DELIVERY-ASSURANCE-V1
+  existing_primitive: CFRE DeliveryJournal
+  invariant: EXECUTION_COMPLETE is not OWNER_DELIVERY_ACKNOWLEDGED
+  states:
+    - RESULT_READY
+    - ORPHANED_UNACKNOWLEDGED
+    - ACKNOWLEDGED
+  transaction_identity_immutable: true
+  artifact_identity_and_hash_immutable: true
+  on_missing_ack:
+    - mark ORPHANED_UNACKNOWLEDGED
+    - do not rerun underlying mission effects
+    - retain identical terminal artifact or reconstructable pointer
+    - redeliver under same transaction identity through a healthy current client
+    - transition same transaction to ACKNOWLEDGED after verified owner-visible delivery
+  bootstrap_scan_pending_orphans: true
+  owner_delivery_complete_requires_journal_readback: true
+  forbidden:
+    - execution success alone treated as owner delivery
+    - effect replay solely because final response was lost
+    - new transaction identity used to bypass an existing orphan
+    - acknowledged transaction rebound to different content
 
 client_liveness_supervisor:
   policy_id: FUSE-CLIENT-LIVENESS-SUPERVISOR-V1
