@@ -82,6 +82,16 @@
 
   async function openSuccessorForCapture(captured, reason) {
     if (!captured || !captured.packet) throw new Error("CAPTURE_REQUIRED");
+    let durableEgress = null;
+    try {
+      durableEgress = await chrome.runtime.sendMessage({
+        type: "CHATBRIDGE_EDGE_EGRESS_STATUS",
+        conversationKey: captured.packet.conversationKey,
+        reason: "CAPACITY_HANDOFF_PREDETACH"
+      });
+    } catch (_) {
+      durableEgress = {ok: false, state: "EDGE_EGRESS_CALL_FAILED"};
+    }
     const result = await chrome.runtime.sendMessage({
       type: "CHATBRIDGE_OPEN",
       conversationKey: captured.packet.conversationKey,
@@ -93,7 +103,7 @@
       "ready",
       10000
     );
-    return result;
+    return Object.assign({}, result, {durableEgress});
   }
 
   async function triggerAutomaticHandoff(captured, reason) {
@@ -114,7 +124,7 @@
   async function startSuccessor() {
     const captured = await checkpoint("SUCCESSOR_REQUEST", {suppressAuto: true});
     if (!captured) throw new Error("CAPTURE_BUSY");
-    return openSuccessorForCapture(captured, "MANUAL_FALLBACK");
+    return openSuccessorForCapture(captured, "CAPACITY_HANDOFF_MANUAL_RETRY");
   }
 
   function decorateLimitBanner() {
