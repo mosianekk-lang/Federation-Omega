@@ -54,6 +54,21 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertIn("GLOBAL_STALL", finality)
         self.assertIn("Disjoint branch preparation", finality)
 
+    def test_chat_capacity_and_bible_fleet_are_bound_without_global_stall(self):
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        self.assertFalse(bootstrap["chat_capacity_continuity"]["owner_click_copy_paste_required"])
+        self.assertTrue(bootstrap["bible_fleet_completion"]["future_registered_owning_bibles_auto_inherit"])
+        self.assertEqual(bootstrap["bible_fleet_completion"]["semantic_dedupe"], "JOIN_REUSE_EXISTING_WORKPLANE_MISSION_BUS_FDOF")
+
+        directive = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn("chat_capacity_continuity:", directive)
+        self.assertIn("bible_fleet_completion:", directive)
+        self.assertIn("future_owning_bibles_auto_inherit: true", directive)
+
+        prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("CHAT-CAPACITY CONTINUITY", prompt)
+        self.assertIn("FEDERATION BIBLE FLEET COMPLETION", prompt)
+
     def test_compiler_contract_is_safe_by_default(self):
         contract = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
         self.assertEqual(contract["authority_ceiling"], "A1_INTERNAL")
