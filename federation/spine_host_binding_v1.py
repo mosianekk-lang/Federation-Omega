@@ -69,6 +69,8 @@ class SpineHostBindingCourt:
             "schema": "FUSE-AUTONOMIC-MISSION-SPINE-V1",
             "version": "1.0.0",
             "mission": mission.digest(),
+            "frontier_plan_digest": run.frontier_plan_digest,
+            "frontier_gene_ids": run.frontier_gene_ids,
             "snapshots": [x.snapshot_digest for x in run.snapshots],
             "admission": run.mission_admission.receipt_digest if run.mission_admission else "",
             "topology": run.topology.receipt_digest if run.topology else "",
