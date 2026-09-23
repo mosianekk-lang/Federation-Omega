@@ -69,5 +69,34 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertFalse(contract["truth_boundary"]["autonomous_model_weight_retraining_claimed"])
 
 
+    def test_frontier_capability_compiler_is_inherited_and_required(self):
+        text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn(
+            "agentic_frontier_compiler: benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
+            text,
+        )
+        self.assertIn("AGF-001..AGF-053", text)
+        self.assertIn("AGF-041..AGF-053", text)
+        self.assertIn("proprietary_weights_imported: false", text)
+        self.assertIn("undocumented_vendor_internals_imported: false", text)
+
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        self.assertEqual(
+            bootstrap["required_contracts"]["frontier_compiler"],
+            "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
+        )
+        self.assertEqual(
+            bootstrap["required_engines"]["agentic_frontier_compiler"],
+            "REQUIRED_FOR_NONTRIVIAL_MISSIONS",
+        )
+        self.assertIn("COMPILE_FRONTIER_CAPABILITY_SUPERSTACK", bootstrap["required_sequence"])
+        self.assertTrue(bootstrap["frontier_capability_adoption"]["automatically_select_by_mission_profile"])
+
+        compiler = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
+        self.assertTrue(compiler["composition"]["frontier_compile_required_before_packetization"])
+        self.assertEqual(compiler["composition"]["frontier_gene_range"], "AGF-001..AGF-053")
+        self.assertEqual(compiler["frontier_selection"]["external_model_authority"], "PROPOSAL_ONLY")
+
+
 if __name__ == "__main__":
     unittest.main()
