@@ -43,7 +43,7 @@ test("extension retains a narrow ChatGPT-only permission surface", () => {
   assert.deepEqual(manifest.permissions.sort(), ["downloads", "storage", "unlimitedStorage"].sort());
   assert.deepEqual(manifest.host_permissions, ["https://chatgpt.com/*"]);
   assert.equal(manifest.manifest_version, 3);
-  assert.equal(manifest.version, "0.3.0");
+  assert.equal(manifest.version, "0.3.1");
 });
 
 test("enterprise handoff fails closed on identity and deployment proof", () => {
