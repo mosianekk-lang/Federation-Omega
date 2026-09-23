@@ -13,7 +13,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
         required = (
             "policy_id: FEDOMEGA-N-DIRECTIVE-V3",
-            "version: 3.5.0",
+            "version: 3.6.0",
             "authority_ceiling: A1_INTERNAL",
             "external_effect_default: false",
             "compile unfinished work into a finite dependency DAG",
@@ -42,7 +42,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
             self.assertIn(required, text)
 
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.5.0")
+        self.assertEqual(bootstrap["version"], "3.6.0")
         self.assertTrue(bootstrap["parallelism"]["blocker_scope_locality_required"])
         self.assertTrue(bootstrap["parallelism"]["global_stall_requires_empty_ready_set_and_universal_causal_dependency"])
         self.assertTrue(bootstrap["parallelism"]["branch_prepare_build_test_pr_may_continue_while_main_admission_is_held"])
@@ -129,6 +129,24 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertIn("SUSPECT_NO_PROGRESS", prompt)
         self.assertIn("RESULT_PRESENT_RESPONSE_ORPHANED", prompt)
 
+    def test_terminal_delivery_assurance_separates_execution_from_owner_ack(self):
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        delivery = bootstrap["terminal_delivery_assurance"]
+        self.assertEqual(delivery["existing_primitive"], "evidenceops.build_system.runtime_controls.DeliveryJournal")
+        self.assertEqual(delivery["invariant"], "EXECUTION_COMPLETE != OWNER_DELIVERY_ACKNOWLEDGED")
+        self.assertTrue(delivery["result_transaction"]["immutable_transaction_id"])
+        self.assertIn("mark ORPHANED_UNACKNOWLEDGED", delivery["on_missing_ack"])
+        self.assertIn("do not rerun mission effects", delivery["on_missing_ack"])
+
+        directive = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn("terminal_delivery_assurance:", directive)
+        self.assertIn("bootstrap_scan_pending_orphans: true", directive)
+
+        prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("TERMINAL DELIVERY ASSURANCE", prompt)
+        self.assertIn("ORPHANED_UNACKNOWLEDGED", prompt)
+        self.assertIn("delivery debt, not execution debt", prompt)
+
     def test_compiler_contract_is_safe_by_default(self):
         contract = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
         self.assertEqual(contract["authority_ceiling"], "A1_INTERNAL")
@@ -199,7 +217,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
 
     def test_estate_resolution_portfolio_v2_and_more_v2_are_bootstrap_bound(self):
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.5.0")
+        self.assertEqual(bootstrap["version"], "3.6.0")
         self.assertEqual(bootstrap["estate_resolution"]["service_id"], "estate.resolve")
         self.assertFalse(bootstrap["estate_resolution"]["first_route_failure_is_estate_absence"])
         self.assertIn("BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED", bootstrap["estate_resolution"]["blocker_states"])
