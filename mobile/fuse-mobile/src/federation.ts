@@ -55,6 +55,16 @@ export type WorkspaceStatus = {
   truth_boundary: string;
 };
 
+export type MarketResidualStatus = {
+  schema: 'FUSE-WORKSPACE-MARKET-RESIDUAL-V1';
+  version: string;
+  state_roots_added: number;
+  authority_roots_added: number;
+  capabilities: string[];
+  truth_boundary: string;
+  subject?: string;
+};
+
 export type VisionContext = {
   subject: string;
   available: boolean;
@@ -231,4 +241,18 @@ export function visionImageSource(
     uri: `${gatewayUrl()}/v1/vision/latest/image`,
     headers: transportHeaders(iapIdentityToken, accessToken),
   };
+}
+
+
+export async function fetchMarketResidualStatus(
+  iapIdentityToken: string,
+  accessToken: string,
+): Promise<MarketResidualStatus> {
+  return fetchJson<MarketResidualStatus>(
+    '/v1/workspace/market-residual/status',
+    iapIdentityToken,
+    {},
+    accessToken,
+    10_000,
+  );
 }

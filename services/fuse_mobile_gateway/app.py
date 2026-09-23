@@ -17,6 +17,7 @@ from services.fuse_mobile_gateway.runtime import (
     effect_from_string,
 )
 from services.fuse_mobile_gateway.observation import ObservationCache, classify_ui_signal
+from services.fuse_mobile_gateway.market_residual import market_residual_status
 
 
 class ChatRequestBody(BaseModel):
@@ -253,6 +254,14 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
             "observation_cache": observations.status(),
             "truth_boundary": "OBSERVATION_CACHE_IS_EPHEMERAL_AND_NEVER_A_MISSION_STATE_OR_AUTHORITY_ROOT",
         }
+
+    @app.get("/v1/workspace/market-residual/status")
+    async def workspace_market_residual_status(
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict:
+        identity = await session_identity(x_fuse_authorization, authorization)
+        return {"subject": identity.subject, **market_residual_status()}
 
     @app.post("/v1/observation/ui-signal")
     async def observation_ui_signal(
