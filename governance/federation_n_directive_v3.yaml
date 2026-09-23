@@ -1,5 +1,5 @@
 policy_id: FEDOMEGA-N-DIRECTIVE-V3
-version: 3.2.0
+version: 3.3.0
 owner: Kim Kagiso Mosiane
 state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
 authority_ceiling: A1_INTERNAL
@@ -129,6 +129,34 @@ parallel_scheduler:
   anti_head_of_line_rule: idle qualified capacity with READY work is a routing defect and triggers immediate work-steal
 
 
+
+
+chat_failure_continuity_matrix:
+  policy_id: FUSE-CHAT-FAILURE-CONTINUITY-MATRIX-V1
+  source_classifier: existing CFRE
+  classes:
+    TRANSPORT_INTERRUPTION: checkpoint -> effect readback if needed -> rebind -> stale-client fence -> exact-once fan-in
+    SERVER_GENERATION_FAILURE: distinguish response-only from in-flight tool/effect work before retry; alternate qualified model/route when safe
+    STALL_TIMEOUT: bounded health grace -> checkpoint/progress readback -> effect readback if uncertain -> reroute/rebind
+    CONTEXT_PRESSURE: durable checkpoint -> compact working set -> idempotent successor/durable executor; full history stays external
+    TOOL_OR_CONNECTOR_FAILURE: tool outcome readback before retry -> isolate tool lane -> alternate authorized route -> continue disjoint work
+    FILE_OR_ATTACHMENT_FAILURE: verify pointer/digest -> regenerate or reattach from canonical -> continue disjoint work
+    AUTH_OR_SESSION_FAILURE: preserve pending action -> fail closed -> recheck authorized executor; never infer authority
+    RATE_OR_CAPACITY_LIMIT: changed route/work-steal; no global stop
+    CLIENT_RESOURCE_FAILURE: minimal checkpoint -> healthy client/carrier rebind; never infer device-global failure
+    USER_INTERRUPTION: explicit owner stop/cancel is authoritative for that intent; do not auto-resume
+    UNKNOWN_CHAT_FAILURE: checkpoint/minimal telemetry -> effect readback when possible -> lowest-risk alternate route; no blind effect replay
+  cross_tab_takeover:
+    mission_client_epoch_required: true
+    one_effect_writer_per_mission_effect_lane: true
+    verified_takeover_increments_client_epoch: true
+    stale_client_auto_send_forbidden: true
+    observer_tabs_allowed: true
+  partial_response:
+    partial_assistant_text_state: PARTIAL_UNACKED
+    visible_tool_call_without_terminal_answer_state: POSSIBLE_EFFECT_PENDING_READBACK
+    partial_text_is_not_terminal_proof: true
+    preserve_for_context_not_completion: true
 
 chat_transport_continuity:
   policy_id: FUSE-CHAT-TRANSPORT-CONTINUITY-V1
