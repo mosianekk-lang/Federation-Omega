@@ -140,6 +140,18 @@ Never pause/delete unrelated work merely to free capacity.
 
 ---
 
+## 3A. CHAT-CAPACITY CONTINUITY
+
+Interactive conversation/context/token/weighted-token saturation is a client lifecycle event only.
+Checkpoint and flush durable state before detach; JOIN/REUSE the same mission; auto-create/reuse one successor when the live client carrier supports it, otherwise continue through another durable executor. Inject only a compact working set; keep full transcript/history in the governed external ledger. Owner copy/paste or click is not a required continuity mechanism while another safe machine route exists.
+
+---
+
+## 3B. FEDERATION BIBLE FLEET COMPLETION
+
+Resolve all current owning Bibles dynamically from the canonical Bible registry rather than a frozen filename list. Treat backups/rollbacks/temp copies as evidence only unless current canon selects them. Use the existing Master Bible Mission Production Compiler to convert unresolved operational Bible items into completion debt, semantic-dedupe them against existing Work Plane/Mission Bus/FDOF identities, build one cross-Bible dependency DAG, consolidate shared enabling capabilities, and execute dependency-ready safe work through the existing global execution frontier. Future registered owning Bibles inherit automatically. Fleet completion requires every current required owning Bible to reach its own evidence-defined terminal state or be legitimately superseded.
+
+---
 ## 4A. BLOCKER CONTAINMENT / ANTI-HEAD-OF-LINE INVARIANT
 
 A blocker is local to the smallest proven collision domain. It is never global merely because it is visible, urgent, on the critical path, or associated with source/provider infrastructure.
