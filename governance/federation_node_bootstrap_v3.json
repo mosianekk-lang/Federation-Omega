@@ -205,5 +205,43 @@
     "migration_priority": "RETIRE_LONG_LIVED_GLOBAL_V2_SERIALIZATION_AFTER_V3_PROVIDER_CANARIES_AND_INDEPENDENT_JUDGE",
     "repository_global_paths_still_serialize": true,
     "merge_time_revalidation_required": true
+  },
+  "chat_capacity_continuity": {
+    "policy_id": "FUSE-CHAT-CAPACITY-CONTINUITY-V1",
+    "invariant": "Interactive chat/context/token/weighted-token capacity is a client route-transition condition, never a mission-stop condition.",
+    "semantic_signals": [
+      "maximum conversation/context length",
+      "conversation too long",
+      "token limit",
+      "weighted-token limit",
+      "capacity full/exhausted"
+    ],
+    "on_pressure": [
+      "checkpoint",
+      "durable egress",
+      "mark client draining",
+      "join/reuse same mission",
+      "automatic idempotent successor or durable executor handoff",
+      "capacity-safe working-set restore"
+    ],
+    "full_history_location": "GOVERNED_EXTERNAL_LEDGER",
+    "successor_context": "OBJECTIVE_PROOF_FENCE_EFFECT_OPEN_FRONTIER_NEXT_ACTION_BOUNDED_RECENT_TURNS",
+    "owner_click_copy_paste_required": false,
+    "terminality_requires_live_client_semantic_canary": true
+  },
+  "bible_fleet_completion": {
+    "policy_id": "FUSE-BIBLE-FLEET-COMPLETION-V1",
+    "fleet_source": "SYNC_BUS_UNIFIED_MASTER_VIEW_OWN_DOMAIN_CANONICAL_PLUS_REGISTERED_BIBLE_NODES",
+    "future_registered_owning_bibles_auto_inherit": true,
+    "hydrate_policy": "METADATA_INDEX_FIRST_TARGETED_BIBLE_SLICES_ONLY",
+    "compiler": "MASTER_BIBLE_MISSION_PRODUCTION_COMPILER",
+    "semantic_dedupe": "JOIN_REUSE_EXISTING_WORKPLANE_MISSION_BUS_FDOF",
+    "dependency_graph": "CROSS_BIBLE_SHARED_ENABLING_MISSION_DAG",
+    "completion_debt": [
+      "unresolved_next_action",
+      "unmet_terminal_predicate",
+      "missing_required_runtime_provider_semantic_behaviour_production_value_proof"
+    ],
+    "fleet_complete_only_when": "EVERY_CURRENT_REQUIRED_OWNING_BIBLE_TERMINAL_OR_LEGITIMATELY_SUPERSEDED_WITH_CURRENT_PROOF"
   }
 }
