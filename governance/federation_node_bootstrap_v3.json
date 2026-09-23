@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -66,6 +66,7 @@
     "COMPILE_BLOCKER_ENVELOPES_AND_COLLISION_DOMAINS",
     "CLASSIFY_CHAT_TRANSPORT_INTERRUPTION_AND_RECONCILE_UNKNOWN_EFFECTS_BEFORE_RETRY",
     "APPLY_CHAT_FAILURE_CONTINUITY_MATRIX_AND_CLIENT_EPOCH_FENCING",
+    "START_CLIENT_LIVENESS_SUPERVISOR_AND_DURABLE_REQUEST_JOURNAL",
     "ASSERT_GLOBAL_STALL_ONLY_IF_READY_SET_EMPTY_AND_ALL_NONTERMINAL_REQUIRED_NODES_SHARE_CAUSAL_BLOCKER",
     "WORK_STEAL_ALL_DISJOINT_READY_NODES",
     "PREPARE_BUILD_TEST_BRANCH_PR_FOR_DISJOINT_SOURCE_WORK_WHILE_MAIN_ADMISSION_IS_HELD",
@@ -546,5 +547,100 @@
       "NO_POSITIVE_VALUE_ACTION"
     ],
     "owner_action_required_while_safe_machine_route_exists": false
+  },
+  "client_liveness_supervisor": {
+    "policy_id": "FUSE-CLIENT-LIVENESS-SUPERVISOR-V1",
+    "purpose": "Detect silent/orphaned chat-client failure without depending on provider banner wording, while preventing false takeover and duplicate effects.",
+    "request_lifecycle_states": [
+      "IDLE",
+      "REQUEST_ACCEPTED",
+      "STREAM_OPEN",
+      "RESPONSE_PROGRESS",
+      "TOOL_INFLIGHT",
+      "TOOL_RESULT_SEEN",
+      "RESPONSE_PARTIAL",
+      "TERMINAL_ACKED",
+      "SUSPECT_NO_PROGRESS",
+      "CONFIRMED_STALL",
+      "POSSIBLE_EFFECT_PENDING_READBACK",
+      "DETACHING",
+      "TAKEOVER_PENDING",
+      "TAKEN_OVER",
+      "OBSERVER_STALE"
+    ],
+    "durable_request_journal_fields": [
+      "mission_id",
+      "conversation_id",
+      "request_id",
+      "client_id",
+      "client_epoch",
+      "atomic_action_id",
+      "idempotency_key",
+      "effect_class",
+      "request_started_at",
+      "last_progress_at",
+      "last_dom_progress_digest",
+      "last_tool_marker_digest",
+      "last_tool_result_digest",
+      "terminal_ack_at",
+      "checkpoint_hash",
+      "effect_state",
+      "recovery_state"
+    ],
+    "progress_signals": [
+      "new_or_changed_assistant_rendered_content",
+      "tool_call_marker_change",
+      "tool_result_marker_change",
+      "request_control_state_change",
+      "provider_client_reconnect_or_error_signal",
+      "terminal_response_observation"
+    ],
+    "stall_detection": {
+      "pure_elapsed_time_is_not_terminal_failure": true,
+      "state_specific_grace_policy_required": true,
+      "suspect_requires_no_meaningful_progress": true,
+      "confirmed_stall_requires_independent_supporting_signal_or_hard_runtime_policy_boundary": true,
+      "suspect_action": "CHECKPOINT_AND_PREPARE_ALTERNATE_ROUTE_WITHOUT_DUPLICATE_REPLAY",
+      "confirmed_action": "EFFECT_READBACK_THEN_TAKEOVER_OR_REROUTE",
+      "long_running_reasoning_may_remain_active_when_progress_or_generation_liveness_is_observed": true
+    },
+    "takeover": {
+      "expiry_ne_release": true,
+      "stale_heartbeat_makes_client_suspect_not_released": true,
+      "current_epoch_cas_required": true,
+      "possible_effect_readback_required_before_new_writer_commit": true,
+      "takeover_receipt_required": true,
+      "previous_epoch_becomes_observer_stale": true,
+      "stale_epoch_auto_send_forbidden": true,
+      "late_stale_response_is_reconciliation_evidence_only": true
+    },
+    "terminal_ack": {
+      "terminal_text_alone_is_insufficient_when_effectful_tool_state_is_unknown": true,
+      "terminal_ack_requires_client_observation_plus_effect_state_consistency": true,
+      "response_only_terminal_may_ack_without_provider_effect_receipt": true,
+      "effectful_terminal_requires_corresponding_effect_or_provider_readback": true
+    },
+    "orphan_detection": {
+      "request_without_terminal_ack_remains_nonterminal": true,
+      "interrupted_tool_marker_without_result": "POSSIBLE_EFFECT_PENDING_READBACK",
+      "tool_result_without_terminal_assistant_response": "RESULT_PRESENT_RESPONSE_ORPHANED",
+      "late_terminal_after_takeover": "STALE_EPOCH_RECONCILE_ONLY"
+    },
+    "global_rules": [
+      "NO_BANNER_REQUIRED_FOR_LIVENESS_FAILURE_DETECTION",
+      "NO_PROGRESS_NE_NO_EFFECT",
+      "NO_HEARTBEAT_NE_RELEASE",
+      "TAKEOVER_NE_PERMISSION_EXPANSION",
+      "ONE_CURRENT_AUTO_SEND_WRITER_PER_MISSION_EFFECT_LANE",
+      "UNRELATED_READY_WORK_CONTINUES_DURING_CLIENT_SUSPECT_OR_STALL"
+    ],
+    "runtime_proof_required": [
+      "silent_response_stall_canary",
+      "long_reasoning_no_false_takeover_canary",
+      "tool_inflight_interruption_no_duplicate_effect_canary",
+      "cross_tab_epoch_takeover_canary",
+      "late_stale_response_reconciliation_canary",
+      "response_only_recovery_canary"
+    ]
   }
 }
