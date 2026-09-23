@@ -13,7 +13,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
         required = (
             "policy_id: FEDOMEGA-N-DIRECTIVE-V3",
-            "version: 3.4.0",
+            "version: 3.5.0",
             "authority_ceiling: A1_INTERNAL",
             "external_effect_default: false",
             "compile unfinished work into a finite dependency DAG",
@@ -42,7 +42,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
             self.assertIn(required, text)
 
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.4.0")
+        self.assertEqual(bootstrap["version"], "3.5.0")
         self.assertTrue(bootstrap["parallelism"]["blocker_scope_locality_required"])
         self.assertTrue(bootstrap["parallelism"]["global_stall_requires_empty_ready_set_and_universal_causal_dependency"])
         self.assertTrue(bootstrap["parallelism"]["branch_prepare_build_test_pr_may_continue_while_main_admission_is_held"])
@@ -107,6 +107,27 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertIn("CHAT/CLIENT FAILURE CONTINUITY MATRIX", prompt)
         self.assertIn("Cross-tab writer fencing", prompt)
         self.assertIn("PARTIAL_UNACKED", prompt)
+
+    def test_client_liveness_supervisor_handles_silent_stall_without_false_takeover(self):
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        live = bootstrap["client_liveness_supervisor"]
+        self.assertTrue(live["stall_detection"]["pure_elapsed_time_is_not_terminal_failure"])
+        self.assertTrue(live["stall_detection"]["confirmed_stall_requires_independent_supporting_signal_or_hard_runtime_policy_boundary"])
+        self.assertTrue(live["takeover"]["expiry_ne_release"])
+        self.assertTrue(live["takeover"]["current_epoch_cas_required"])
+        self.assertTrue(live["takeover"]["possible_effect_readback_required_before_new_writer_commit"])
+        self.assertEqual(live["orphan_detection"]["interrupted_tool_marker_without_result"], "POSSIBLE_EFFECT_PENDING_READBACK")
+        self.assertEqual(live["orphan_detection"]["late_terminal_after_takeover"], "STALE_EPOCH_RECONCILE_ONLY")
+
+        directive = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn("client_liveness_supervisor:", directive)
+        self.assertIn("banner_required_for_detection: false", directive)
+        self.assertIn("stale_heartbeat_ne_release: true", directive)
+
+        prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("CLIENT LIVENESS SUPERVISOR / SILENT FAILURE", prompt)
+        self.assertIn("SUSPECT_NO_PROGRESS", prompt)
+        self.assertIn("RESULT_PRESENT_RESPONSE_ORPHANED", prompt)
 
     def test_compiler_contract_is_safe_by_default(self):
         contract = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
@@ -178,7 +199,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
 
     def test_estate_resolution_portfolio_v2_and_more_v2_are_bootstrap_bound(self):
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.4.0")
+        self.assertEqual(bootstrap["version"], "3.5.0")
         self.assertEqual(bootstrap["estate_resolution"]["service_id"], "estate.resolve")
         self.assertFalse(bootstrap["estate_resolution"]["first_route_failure_is_estate_absence"])
         self.assertIn("BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED", bootstrap["estate_resolution"]["blocker_states"])
