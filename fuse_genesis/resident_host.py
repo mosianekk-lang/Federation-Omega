@@ -2,9 +2,10 @@ from __future__ import annotations
 import argparse, sqlite3, json, hashlib, os, time, socket, uuid
 from pathlib import Path
 from contextlib import contextmanager
+from .currentness import SourceEpoch, resolve_source_epoch
 
-SCHEMA="FUSE-GENESIS-RESIDENT-HOST-V1"
-VERSION="1.0.1"
+SCHEMA="FUSE-GENESIS-RESIDENT-HOST-V2"
+VERSION="2.0.0"
 
 def canon(x): return json.dumps(x,sort_keys=True,separators=(",",":"))
 def sha(x): return hashlib.sha256(canon(x).encode()).hexdigest()
@@ -20,6 +21,9 @@ class HostState:
         CREATE TABLE IF NOT EXISTS host(
           id INTEGER PRIMARY KEY CHECK(id=1), instance_id TEXT NOT NULL, fence INTEGER NOT NULL,
           started_at REAL NOT NULL, last_heartbeat REAL NOT NULL, state TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS source_epoch(
+          id INTEGER PRIMARY KEY CHECK(id=1), main_sha TEXT NOT NULL, writer TEXT NOT NULL,
+          fence INTEGER NOT NULL, mission_id TEXT NOT NULL, digest TEXT NOT NULL, bound_at REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS tasks(
           task_id TEXT PRIMARY KEY, idempotency_key TEXT UNIQUE NOT NULL, payload_json TEXT NOT NULL,
           state TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, checkpoint_json TEXT,
@@ -38,6 +42,27 @@ class HostState:
         except Exception:
             self.db.execute("ROLLBACK"); raise
 
+    def bind_epoch(self, epoch: SourceEpoch, now):
+        with self.tx():
+            current=self.db.execute("SELECT * FROM source_epoch WHERE id=1").fetchone()
+            if current:
+                if epoch.fence < int(current["fence"]):
+                    raise RuntimeError("STALE_SOURCE_EPOCH")
+                if epoch.fence == int(current["fence"]):
+                    same=(epoch.main_sha==current["main_sha"] and epoch.writer==current["writer"] and epoch.mission_id==current["mission_id"] and epoch.digest==current["digest"])
+                    if not same:
+                        raise RuntimeError("SOURCE_EPOCH_COLLISION")
+            self.db.execute("""INSERT INTO source_epoch(id,main_sha,writer,fence,mission_id,digest,bound_at)
+                             VALUES(1,?,?,?,?,?,?)
+                             ON CONFLICT(id) DO UPDATE SET main_sha=excluded.main_sha,writer=excluded.writer,
+                             fence=excluded.fence,mission_id=excluded.mission_id,digest=excluded.digest,bound_at=excluded.bound_at""",
+                            (epoch.main_sha,epoch.writer,epoch.fence,epoch.mission_id,epoch.digest,now))
+        return self.epoch()
+
+    def epoch(self):
+        r=self.db.execute("SELECT * FROM source_epoch WHERE id=1").fetchone()
+        return dict(r) if r else None
+
     def claim_host(self, instance_id, fence, now):
         with self.tx():
             cur=self.db.execute("SELECT * FROM host WHERE id=1").fetchone()
@@ -55,7 +80,8 @@ class HostState:
             if not cur or cur["instance_id"]!=instance_id or cur["fence"]!=fence or cur["state"]!="ACTIVE":
                 raise RuntimeError("HOST_FENCE_LOST")
             self.db.execute("UPDATE host SET last_heartbeat=? WHERE id=1",(now,))
-            body={"instance_id":instance_id,"fence":fence,"at":now}
+            epoch=self.epoch()
+            body={"instance_id":instance_id,"fence":fence,"at":now,"source_epoch_digest":epoch["digest"] if epoch else None}
             tid=f"{instance_id}:{fence}:{now:.6f}"
             self.db.execute("INSERT INTO ticks(tick_id,fence,at,digest) VALUES(?,?,?,?)",
                             (tid,fence,now,sha(body)))
@@ -102,31 +128,101 @@ class HostState:
         host=self.db.execute("SELECT * FROM host WHERE id=1").fetchone()
         tasks=[dict(x) for x in self.db.execute("SELECT * FROM tasks ORDER BY task_id")]
         ticks=[dict(x) for x in self.db.execute("SELECT * FROM ticks ORDER BY at,tick_id")]
-        return {"host":dict(host) if host else None,"tasks":tasks,"ticks":ticks}
+        return {"host":dict(host) if host else None,"source_epoch":self.epoch(),"tasks":tasks,"ticks":ticks}
 
 class ResidentHost:
-    def __init__(self, root, fence, interval=1.0):
-        self.root=Path(root); self.fence=int(fence); self.interval=float(interval)
+    """Long-running executor only. Scheduling remains external (for this estate: Google Apps Script)."""
+    def __init__(self, root, epoch: SourceEpoch, interval=1.0):
+        self.root=Path(root); self.epoch=resolve_source_epoch(epoch); self.fence=self.epoch.fence; self.interval=float(interval)
+        if self.interval < 0:
+            raise ValueError("INTERVAL_INVALID")
         self.instance_id=f"{socket.gethostname()}-{uuid.uuid4().hex[:12]}"
         self.state=HostState(root)
+        self._started=False
+
     def start(self, now=None):
-        self.state.claim_host(self.instance_id,self.fence,now if now is not None else time.time())
+        t=now if now is not None else time.time()
+        self.state.bind_epoch(self.epoch,t)
+        self.state.claim_host(self.instance_id,self.fence,t)
+        self._started=True
+
     def tick(self, now=None):
         return self.state.heartbeat(self.instance_id,self.fence,now if now is not None else time.time())
+
+    def process_next(self, handler, now=None):
+        row=self.state.next_task()
+        if row is None:
+            return None
+        if handler is None:
+            return None
+        t=now if now is not None else time.time()
+        payload=json.loads(row["payload_json"])
+        self.state.checkpoint(row["task_id"],{"source_epoch_digest":self.epoch.digest,"resident_instance":self.instance_id},t)
+        result=handler(payload)
+        self.state.complete(row["task_id"],result,t)
+        return row["task_id"]
+
+    def run(self, *, handler=None, max_ticks=None, stop_when=None, now_fn=time.time, sleep_fn=time.sleep, release_on_exit=True):
+        if max_ticks is not None and (isinstance(max_ticks,bool) or int(max_ticks)<1):
+            raise ValueError("MAX_TICKS_INVALID")
+        if not self._started:
+            self.start(now_fn())
+        ticks=0; processed=0
+        try:
+            while True:
+                self.tick(now_fn()); ticks+=1
+                if self.process_next(handler,now_fn()) is not None:
+                    processed+=1
+                if max_ticks is not None and ticks>=int(max_ticks):
+                    break
+                if stop_when is not None and stop_when():
+                    break
+                sleep_fn(self.interval)
+        finally:
+            if release_on_exit:
+                self.state.release(self.instance_id,self.fence,now_fn())
+                self._started=False
+        snap=self.state.snapshot()
+        return {"ticks":ticks,"processed":processed,"host_state":snap["host"]["state"],"source_epoch_digest":self.epoch.digest}
+
     def close(self): self.state.close()
+
+def _epoch_from_args(args):
+    if args.source_main or args.writer or args.fence is not None:
+        if not (args.source_main and args.writer and args.fence is not None):
+            raise SystemExit("--source-main, --writer and --fence must be supplied together")
+        return SourceEpoch(args.source_main,args.writer,args.fence,args.mission_id)
+    return resolve_source_epoch()
 
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--root",default=os.environ.get("FUSE_GENESIS_HOST_ROOT","./fuse-host-state"))
-    p.add_argument("--fence",type=int,default=int(os.environ.get("FUSE_GENESIS_HOST_FENCE","1")))
-    p.add_argument("--once",action="store_true")
+    p.add_argument("--source-main",default=None)
+    p.add_argument("--writer",default=None)
+    p.add_argument("--fence",type=int,default=None)
+    p.add_argument("--mission-id",default=os.environ.get("FUSE_GENESIS_MISSION_ID","GENESIS"))
+    p.add_argument("--interval",type=float,default=float(os.environ.get("FUSE_GENESIS_HOST_INTERVAL","1")))
+    p.add_argument("--once",action="store_true",help="One heartbeat canary, then release. Default is resident execution.")
+    p.add_argument("--max-ticks",type=int,default=None,help="Bounded court/debug mode only; omitted means resident until interrupted.")
     args=p.parse_args()
-    h=ResidentHost(args.root,args.fence)
+    epoch=_epoch_from_args(args)
+    h=ResidentHost(args.root,epoch,args.interval)
     try:
-        h.start()
-        tid=h.tick()
-        print(json.dumps({"state":"TICK_OK","tick_id":tid,"instance_id":h.instance_id}))
-        h.state.release(h.instance_id,h.fence,time.time())
+        if args.once:
+            h.start()
+            tid=h.tick()
+            h.state.release(h.instance_id,h.fence,time.time())
+            h._started=False
+            print(json.dumps({"state":"ONCE_OK","tick_id":tid,"instance_id":h.instance_id,"source_epoch_digest":epoch.digest}))
+        else:
+            try:
+                receipt=h.run(max_ticks=args.max_ticks)
+                print(json.dumps({"state":"RESIDENT_STOPPED",**receipt}))
+            except KeyboardInterrupt:
+                if h._started:
+                    h.state.release(h.instance_id,h.fence,time.time())
+                    h._started=False
+                print(json.dumps({"state":"RESIDENT_STOPPED","reason":"INTERRUPT","source_epoch_digest":epoch.digest}))
     finally:
         h.close()
 if __name__=="__main__": main()
