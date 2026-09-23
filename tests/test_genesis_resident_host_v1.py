@@ -1,4 +1,4 @@
-import unittest,tempfile,shutil,pathlib
+import unittest,tempfile,shutil,pathlib,time
 from fuse_genesis.resident_host import HostState,ResidentHost
 from fuse_genesis.currentness import SourceEpoch
 
@@ -82,4 +82,13 @@ class T(unittest.TestCase):
   h.close()
  def test_30_source_fence_equals_host_fence(self):
   h=ResidentHost(self.d,E,interval=0); self.assertEqual(h.fence,E.fence); h.close()
+ def test_31_long_task_keeps_heartbeat_alive(self):
+  h=ResidentHost(self.d,E,interval=0,task_heartbeat_interval=0.01); h.state.enqueue("t","k",{"x":1},0)
+  h.start()
+  before=len(h.state.snapshot()["ticks"])
+  h.process_next(lambda p:(time.sleep(0.06) or {"ok":p["x"]}))
+  after=len(h.state.snapshot()["ticks"])
+  self.assertGreaterEqual(after-before,3)
+  self.assertEqual(h.state.task("t")["state"],"COMPLETE")
+  h.state.release(h.instance_id,h.fence,time.time()); h.close()
 if __name__=="__main__": unittest.main(verbosity=2)
