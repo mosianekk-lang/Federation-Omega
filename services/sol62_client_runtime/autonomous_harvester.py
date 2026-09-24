@@ -13,6 +13,7 @@ from superior_logic.hypercube_bottleneck_resolver import (
 from sol_61_runtime.sol_62_complete_client_runtime import HarvestOutcome
 from services.sol62_client_runtime.runtime_upgrade_genome import genome_summary, select_upgrade_genes
 from services.sol62_client_runtime.asia_frontier_p0 import compile_p0_plan
+from services.sol62_client_runtime.asia_frontier_p1_p2 import compile_p1_p2_plan
 from services.sol62_client_runtime.alpha_omega_formation_binding import (
     Sol62AlphaOmegaFormationBinding,
     receipt_to_dict as alpha_omega_formation_receipt_to_dict,
@@ -172,6 +173,7 @@ class FuseAutonomousHarvester:
             ),
         )
         asia_frontier_p0 = compile_p0_plan(objective=objective, reason=reason)
+        asia_frontier_p1_p2 = compile_p1_p2_plan(objective=objective, reason=reason)
         build_packet: dict[str, Any] = {
             "schema": "SOL62_FUSE_AUTOBUILD_PACKET_V1",
             "task_type": "SOL62_CLIENT_BUILD",
@@ -209,6 +211,7 @@ class FuseAutonomousHarvester:
             },
             "alpha_omega_formation": alpha_omega_formation_receipt_to_dict(strategy_receipt),
             "asia_frontier_p0": asia_frontier_p0,
+            "asia_frontier_p1_p2": asia_frontier_p1_p2,
             "runtime_upgrade_genome": {
                 "summary": genome_summary(),
                 "selected": [
