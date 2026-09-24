@@ -23,6 +23,9 @@ class FuseAutonomousHarvesterTests(unittest.TestCase):
         self.assertIn("hypercube", result.build_packet)
         self.assertIn("codeforge", result.build_packet)
         self.assertIn("idea_system", result.build_packet)
+        self.assertIn("asia_frontier_p0", result.build_packet)
+        self.assertEqual(result.build_packet["asia_frontier_p0"]["mechanism_count"], 6)
+        self.assertFalse(result.build_packet["asia_frontier_p0"]["market_superiority_proven"])
         self.assertFalse(result.build_packet["authority_boundary"]["source_mutation_authority_granted"])
         self.assertFalse(result.build_packet["authority_boundary"]["provider_effect_authority_granted"])
 
