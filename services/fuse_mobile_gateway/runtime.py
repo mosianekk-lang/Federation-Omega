@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -233,6 +234,17 @@ class GatewayRuntime:
     model_scopes: tuple[str, ...] = ("AUTO", "GOOGLE_AI_STUDIO", "GEMINI_VERTEX", "OPENROUTER")
     agent_scopes: tuple[str, ...] = ("FUSE", "FIO", "SOVARA", "BUBBLES")
     tool_scopes: tuple[str, ...] = ("KDV", "PROOFOS", "ARTIFACTS")
+    capability_cache_ttl_cap_seconds: float = 30.0
+    _capability_cache: dict[str, tuple[float, tuple[Capability, ...]]] = field(default_factory=dict, init=False, repr=False)
+    _capability_inflight: dict[str, asyncio.Task[tuple[Capability, ...]]] = field(default_factory=dict, init=False, repr=False)
+    _capability_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
+    _perf_capability_provider_reads: int = field(default=0, init=False, repr=False)
+    _perf_capability_cache_hits: int = field(default=0, init=False, repr=False)
+    _perf_capability_singleflight_joins: int = field(default=0, init=False, repr=False)
+    _session_inflight: dict[str, asyncio.Task[VerifiedIdentity]] = field(default_factory=dict, init=False, repr=False)
+    _session_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
+    _perf_session_backend_reads: int = field(default=0, init=False, repr=False)
+    _perf_session_singleflight_joins: int = field(default=0, init=False, repr=False)
 
     @property
     def _session_backend_ready(self) -> bool:
@@ -325,15 +337,105 @@ class GatewayRuntime:
         await self.device_manager.revoke(credential, expected_subject=identity.subject)
 
     async def verify_session(self, token: str) -> VerifiedIdentity:
-        if self.session_manager is not None:
-            return await self.session_manager.verify(token)
-        if self.session_codec is not None:
-            return self.session_codec.verify(token)
-        raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
+        if self.session_manager is None:
+            if self.session_codec is not None:
+                return self.session_codec.verify(token)
+            raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
+
+        key = hashlib.sha256(token.encode()).hexdigest()
+        leader = False
+        async with self._session_lock:
+            task = self._session_inflight.get(key)
+            if task is None:
+                task = asyncio.create_task(self.session_manager.verify(token))
+                self._session_inflight[key] = task
+                self._perf_session_backend_reads += 1
+                leader = True
+            else:
+                self._perf_session_singleflight_joins += 1
+        try:
+            return await asyncio.shield(task)
+        finally:
+            if leader:
+                async with self._session_lock:
+                    if self._session_inflight.get(key) is task:
+                        self._session_inflight.pop(key, None)
+
+    def _capability_cache_key(self, identity: VerifiedIdentity) -> str:
+        payload = json.dumps(
+            {"subject": identity.subject, "claims": identity.claims},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+        return hashlib.sha256(payload).hexdigest()
+
+    async def _capabilities_for_identity(self, identity: VerifiedIdentity) -> tuple[Capability, ...]:
+        """Return one current capability snapshot per identity/claims epoch.
+
+        Concurrent identical reads are coalesced (single-flight). Sequential reuse
+        is permitted only inside the provider-advertised freshness TTL; any zero-TTL
+        capability disables sequential caching for the whole manifest.
+        """
+        key = self._capability_cache_key(identity)
+        now_mono = time.monotonic()
+        cached = self._capability_cache.get(key)
+        if cached is not None and now_mono < cached[0]:
+            self._perf_capability_cache_hits += 1
+            return cached[1]
+
+        leader = False
+        async with self._capability_lock:
+            now_mono = time.monotonic()
+            cached = self._capability_cache.get(key)
+            if cached is not None and now_mono < cached[0]:
+                self._perf_capability_cache_hits += 1
+                return cached[1]
+            task = self._capability_inflight.get(key)
+            if task is None:
+                task = asyncio.create_task(self.health_provider.capabilities(identity))
+                self._capability_inflight[key] = task
+                self._perf_capability_provider_reads += 1
+                leader = True
+            else:
+                self._perf_capability_singleflight_joins += 1
+
+        try:
+            capabilities = tuple(await asyncio.shield(task))
+        finally:
+            if leader:
+                async with self._capability_lock:
+                    if self._capability_inflight.get(key) is task:
+                        self._capability_inflight.pop(key, None)
+
+        if leader and capabilities:
+            ttl_values = [int(cap.freshness_ttl_seconds or 0) for cap in capabilities]
+            ttl_seconds = min(ttl_values) if ttl_values and min(ttl_values) > 0 else 0
+            if ttl_seconds > 0:
+                ttl_seconds = min(float(ttl_seconds), max(0.0, float(self.capability_cache_ttl_cap_seconds)))
+                if ttl_seconds > 0:
+                    async with self._capability_lock:
+                        self._capability_cache[key] = (time.monotonic() + ttl_seconds, capabilities)
+        return capabilities
+
+    def performance_snapshot(self) -> dict[str, int | float | str]:
+        """Redacted fast-path counters; no subjects, claims, credentials, or cache keys."""
+        return {
+            "schema": "SOL62_GATEWAY_FASTPATH_METRICS_V1",
+            "target_speedup": 10.0,
+            "proof_state": "TARGET_NOT_LIVE_VERIFIED",
+            "capability_provider_reads": self._perf_capability_provider_reads,
+            "capability_cache_hits": self._perf_capability_cache_hits,
+            "capability_singleflight_joins": self._perf_capability_singleflight_joins,
+            "session_backend_reads": self._perf_session_backend_reads,
+            "session_singleflight_joins": self._perf_session_singleflight_joins,
+            "cache_entries": len(self._capability_cache),
+            "inflight_reads": len(self._capability_inflight),
+            "ttl_cap_seconds": float(self.capability_cache_ttl_cap_seconds),
+        }
 
     async def manifest(self, identity: VerifiedIdentity) -> FederationCapabilityManifest:
         now = int(time.time())
-        capabilities = await self.health_provider.capabilities(identity)
+        capabilities = await self._capabilities_for_identity(identity)
         return FederationCapabilityManifest(
             subject=identity.subject,
             issued_at=datetime.fromtimestamp(now, tz=timezone.utc).isoformat(),

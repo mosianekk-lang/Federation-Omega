@@ -272,6 +272,7 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "fuse_executor_route_id": ctx.gateway.execution_route_id,
             "fuse_executor_provider": ctx.gateway.execution_provider,
             "worker_identity_ready": ctx.worker_identity.ready,
+            "sol62_tenx_fastpath": ctx.gateway.performance_snapshot(),
             "sovereign_plane": ctx.sovereign_plane.status(),
             "sovereign_meta_intelligence": ctx.meta_intelligence.status(),
             "sol_role": "TRANSACTIONAL_MISSION_TRUTH_AND_VERIFIED_TRANSITION_KERNEL",
