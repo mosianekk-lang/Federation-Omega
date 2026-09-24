@@ -6,7 +6,7 @@
     "control": "START:FUSE_ONE v4.43",
     "sol62_snapshot": "c78419c3ff91a50af54253a062be4484b7bd197a",
     "admission_pr": 1688,
-    "successor_branch": "f335-sol62-asia-frontier-composite-v1"
+    "successor_branch": "f336-sol62-asia-frontier-composite-v1"
   },
   "gene_count": 24,
   "benchmark_dimension_count": 32,
