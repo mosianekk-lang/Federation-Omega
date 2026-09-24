@@ -16,7 +16,7 @@ class Sol62RuntimeUpgradeGenomeTests(unittest.TestCase):
     def test_genome_is_124_unique_monotonic_genes(self):
         ids = [gene.gene_id for gene in UPGRADE_GENOME]
         self.assertEqual(len(ids), 124)
-        self.assertEqual(len(set(ids)), 100)
+        self.assertEqual(len(set(ids)), 124)
         self.assertEqual(ids[0], "HG-SOL62-101")
         self.assertEqual(ids[-1], "HG-SOL62-224")
         self.assertEqual(genome_summary()["schema"], GENOME_SCHEMA)
