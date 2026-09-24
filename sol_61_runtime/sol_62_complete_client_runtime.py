@@ -51,6 +51,12 @@ ROUTE_LOCAL_CODES = frozenset(
         "SERVICE_UNAVAILABLE",
         "CAPACITY",
         "PROVIDER_RESTRICTION",
+        "CHATGPT_CONVERSATION_LOAD_FAILED",
+        "CHATGPT_CHAT_LOAD_FAILED",
+        "CHATGPT_UI_UNAVAILABLE",
+        "BROWSER_TAB_CRASHED",
+        "BROWSER_RENDER_FAILED",
+        "CLIENT_SESSION_LOST",
     }
 )
 AUTHORITY_CODES = frozenset(
@@ -199,6 +205,10 @@ def classify_provider_constraint(code: str, message: str = "") -> ProviderConstr
             "MODEL UNAVAILABLE",
             "TOOL UNAVAILABLE",
             "SERVICE UNAVAILABLE",
+            "COULD NOT LOAD THIS CHATGPT CONVERSATION",
+            "CONVERSATION LOAD FAILED",
+            "BROWSER RENDER FAILED",
+            "CLIENT SESSION LOST",
         )
     ):
         return ProviderConstraint(
