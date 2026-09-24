@@ -22,3 +22,20 @@ The opaque FUSE bearer token belongs in `chrome.storage.session`, not source, pa
 Default development runtime is `http://127.0.0.1:8762`. Production packaging should replace host permissions with the exact FUSE runtime origin.
 
 Truth boundary: extension source != installed extension != authenticated runtime binding != live browser failover verified.
+
+
+## New-chat tab resilience
+
+Some ChatGPT builds render **New chat** as an application control instead of a normal anchor. Chromium/Edge then has no link target, so its built-in context menu cannot offer **Open link in new tab**.
+
+The companion treats this as a route-local browser capability gap rather than mission failure:
+
+- capture-phase semantic target scoring uses accessible label, title, visible text, test-id, role and safe root-href signals instead of a single brittle selector;
+- a persistent browser context-menu action, **FUSE — Open New Chat in New Tab**, is available on ChatGPT pages;
+- Ctrl/Cmd-click and middle-click gain new-tab semantics when the target is a non-link New Chat control;
+- if ChatGPT exposes a real anchor later, modified-click interception self-disables and native browser behavior wins;
+- candidate URLs are constrained to HTTPS `chatgpt.com` and conversation/share URLs are collapsed to the new-chat root;
+- duplicate openings inside a short idempotency window are suppressed;
+- this capability opens a detachable client only; it grants no FUSE mission, provider, source, or effect authority.
+
+Truth boundary: source implementation != installed extension != observed context-menu item != successful tab creation != FUSE mission hydration.
