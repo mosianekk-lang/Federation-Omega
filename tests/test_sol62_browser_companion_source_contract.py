@@ -22,6 +22,24 @@ class Sol62BrowserCompanionSourceContractTests(unittest.TestCase):
         self.assertNotIn(".click(", content)
         self.assertNotIn("Retry", content)
 
+    def test_stream_cache_expiry_is_detected_without_ui_retry_click(self):
+        content = (COMPANION / "content.js").read_text(encoding="utf-8")
+        self.assertIn("Stream cache expired", content)
+        self.assertIn("STREAM_CACHE_EXPIRED", content)
+        self.assertIn("Connection interrupted. Waiting for the complete answer", content)
+        self.assertIn("CHATGPT_STREAM_INTERRUPTED", content)
+        self.assertNotIn(".click(", content)
+
+    def test_stream_failure_can_enqueue_durable_sol_wake(self):
+        worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
+        self.assertIn("enqueueDurableWake", worker)
+        self.assertIn('"/wake"', worker)
+        self.assertIn("AUTO_DURABLE_MISSION_WAKE", worker)
+        self.assertIn("STREAM_CACHE_FAILURE_RECOVERY", worker)
+        self.assertIn("durableWakeTaskId", worker)
+        self.assertIn("ownerRetryRequired", worker)
+        self.assertIn("uiRetryRequired", worker)
+
     def test_companion_never_embeds_provider_or_fuse_credentials(self):
         worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
         manifest = (COMPANION / "manifest.json").read_text(encoding="utf-8")
