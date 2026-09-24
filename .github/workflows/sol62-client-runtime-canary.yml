@@ -114,7 +114,10 @@ jobs:
           d=json.load(open('/tmp/sol62-local-health.json',encoding='utf-8'))
           assert d.get('ok') is True, d
           assert d.get('schema') == 'SOL62_COMPLETE_FUSE_CLIENT_RUNTIME_V1', d
-          assert d.get('sol_integrity') is True, d
+          integrity=d.get('sol_integrity') or {}
+          assert integrity.get('version') == '6.2', integrity
+          assert integrity.get('event_chain_valid') is True, integrity
+          assert integrity.get('inflight_effects') == [], integrity
           assert d.get('chatgpt_ui_required') is False, d
           assert d.get('provider_specific_limits_are_mission_terminal') is False, d
           meta=d.get('sovereign_meta_intelligence') or {}
@@ -153,7 +156,10 @@ jobs:
           import json
           d=json.load(open('/tmp/sol62-provider-health.json',encoding='utf-8'))
           assert d.get('ok') is True, d
-          assert d.get('sol_integrity') is True, d
+          integrity=d.get('sol_integrity') or {}
+          assert integrity.get('version') == '6.2', integrity
+          assert integrity.get('event_chain_valid') is True, integrity
+          assert integrity.get('inflight_effects') == [], integrity
           assert d.get('chatgpt_ui_required') is False, d
           meta=d.get('sovereign_meta_intelligence') or {}
           assert meta.get('owner_label') == 'Kim Kagiso Mosiane', meta
