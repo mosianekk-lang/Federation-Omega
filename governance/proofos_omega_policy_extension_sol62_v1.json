@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "risk_rules": [
     {
       "risk": "R4_CORE",
@@ -18,7 +18,8 @@
         "services/fuse_mobile_gateway/bindings.py",
         "services/fuse_mobile_gateway/runtime.py",
         "docs/architecture/SOL_6_2_COMPLETE_FUSE_CLIENT_RUNTIME_V1.md",
-        "tests/test_sol62_*.py"
+        "tests/test_sol62_*.py",
+        "benchmarks/sol62_tenx_gateway_fastpath.py"
       ],
       "reason": "SOL62_TRANSACTIONAL_AND_COMPLETE_CLIENT_RUNTIME_MISSION_REALITY_CORE"
     }
@@ -41,7 +42,8 @@
         "services/fuse_mobile_gateway/bindings.py",
         "services/fuse_mobile_gateway/runtime.py",
         "docs/architecture/SOL_6_2_COMPLETE_FUSE_CLIENT_RUNTIME_V1.md",
-        "tests/test_sol62_*.py"
+        "tests/test_sol62_*.py",
+        "benchmarks/sol62_tenx_gateway_fastpath.py"
       ],
       "depends_on": [
         "FEDERATION_CORE",
@@ -70,7 +72,8 @@
         "services/fuse_mobile_gateway/bindings.py",
         "services/fuse_mobile_gateway/runtime.py",
         "docs/architecture/SOL_6_2_COMPLETE_FUSE_CLIENT_RUNTIME_V1.md",
-        "tests/test_sol62_*.py"
+        "tests/test_sol62_*.py",
+        "benchmarks/sol62_tenx_gateway_fastpath.py"
       ],
       "subsystems": [
         "SOL62"
@@ -89,7 +92,8 @@
         "services/fuse_mobile_gateway/bindings.py",
         "services/fuse_mobile_gateway/runtime.py",
         "docs/architecture/SOL_6_2_COMPLETE_FUSE_CLIENT_RUNTIME_V1.md",
-        "tests/test_sol62_*.py"
+        "tests/test_sol62_*.py",
+        "benchmarks/sol62_tenx_gateway_fastpath.py"
       ],
       "subsystems": [
         "SOL62"

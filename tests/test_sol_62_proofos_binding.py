@@ -34,6 +34,7 @@ class Sol62ProofOSBindingTests(unittest.TestCase):
             "tests/test_sol_62_proofos_binding.py",
             "tests/test_sol62_resident_worker_v1.py",
             "tests/test_sol62_container_contract_v1.py",
+            "benchmarks/sol62_tenx_gateway_fastpath.py",
         ]
         impact = ImpactCompiler(policy).assess(changed)
         manifest = ProofSelector(policy).compile_manifest(
