@@ -54,5 +54,23 @@ class Sol62BrowserCompanionSourceContractTests(unittest.TestCase):
         self.assertIn("READBACK FIRST", readme)
 
 
+    def test_failover_hydration_receipt_is_checkpoint_bound_and_redacted(self):
+        worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
+        for marker in (
+            'pendingMissionHydration',
+            'durabilityCheckpointSha256',
+            'replayGuardVerified',
+            'eventHistoryHead',
+            'inflightEffectIds',
+            'providerCredentialsIncluded: false',
+            'transcriptIncluded: false',
+            'SOL62_GET_PENDING_HYDRATION',
+            'SOL62_ACK_PENDING_HYDRATION',
+            'HYDRATION_CHECKPOINT_MISMATCH',
+        ):
+            self.assertIn(marker, worker)
+        self.assertNotIn('fuseAccessToken: receipt', worker)
+
+
 if __name__ == "__main__":
     unittest.main()
