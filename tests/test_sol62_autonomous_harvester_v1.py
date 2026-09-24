@@ -26,6 +26,10 @@ class FuseAutonomousHarvesterTests(unittest.TestCase):
         self.assertIn("asia_frontier_p0", result.build_packet)
         self.assertEqual(result.build_packet["asia_frontier_p0"]["mechanism_count"], 6)
         self.assertFalse(result.build_packet["asia_frontier_p0"]["market_superiority_proven"])
+        self.assertIn("asia_frontier_p1_p2", result.build_packet)
+        self.assertEqual(result.build_packet["asia_frontier_p1_p2"]["p1_count"], 11)
+        self.assertEqual(result.build_packet["asia_frontier_p1_p2"]["p2_count"], 7)
+        self.assertFalse(result.build_packet["asia_frontier_p1_p2"]["market_superiority_proven"])
         self.assertFalse(result.build_packet["authority_boundary"]["source_mutation_authority_granted"])
         self.assertFalse(result.build_packet["authority_boundary"]["provider_effect_authority_granted"])
 
