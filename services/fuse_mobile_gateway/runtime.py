@@ -95,6 +95,9 @@ class DisabledOwnerIdentityVerifier:
 
 
 class DisabledChatExecutor:
+    route_id = "UNBOUND"
+    provider = "NONE"
+
     async def execute(
         self,
         *,
@@ -250,6 +253,20 @@ class GatewayRuntime:
     @property
     def execution_ready(self) -> bool:
         return not isinstance(self.chat_executor, DisabledChatExecutor)
+
+    @property
+    def execution_route_id(self) -> str:
+        if not self.execution_ready:
+            return ""
+        value = str(getattr(self.chat_executor, "route_id", "FUSE-AUTO") or "").strip()
+        return value or "FUSE-AUTO"
+
+    @property
+    def execution_provider(self) -> str:
+        if not self.execution_ready:
+            return ""
+        value = str(getattr(self.chat_executor, "provider", "FUSE_GATEWAY") or "").strip()
+        return value or "FUSE_GATEWAY"
 
     async def _session_response(self, identity: VerifiedIdentity) -> dict:
         if self.session_manager is not None:
