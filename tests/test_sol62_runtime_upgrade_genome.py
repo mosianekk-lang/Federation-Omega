@@ -13,12 +13,12 @@ from services.sol62_client_runtime.runtime_upgrade_genome import (
 
 
 class Sol62RuntimeUpgradeGenomeTests(unittest.TestCase):
-    def test_genome_is_exactly_100_unique_monotonic_genes(self):
+    def test_genome_is_124_unique_monotonic_genes(self):
         ids = [gene.gene_id for gene in UPGRADE_GENOME]
-        self.assertEqual(len(ids), 100)
+        self.assertEqual(len(ids), 124)
         self.assertEqual(len(set(ids)), 100)
         self.assertEqual(ids[0], "HG-SOL62-101")
-        self.assertEqual(ids[-1], "HG-SOL62-200")
+        self.assertEqual(ids[-1], "HG-SOL62-224")
         self.assertEqual(genome_summary()["schema"], GENOME_SCHEMA)
 
     def test_genes_are_candidate_residuals_not_maturity_promotions(self):
@@ -57,12 +57,21 @@ class Sol62RuntimeUpgradeGenomeTests(unittest.TestCase):
             )
         ).build_packet
         genome = packet["runtime_upgrade_genome"]
-        self.assertEqual(genome["summary"]["count"], 100)
+        self.assertEqual(genome["summary"]["count"], 124)
         self.assertGreater(len(genome["selected"]), 0)
         self.assertLessEqual(len(genome["selected"]), 12)
         self.assertEqual(genome["selection_semantic"], "RANKED_CANDIDATE_RESIDUALS_ONLY")
         self.assertFalse(packet["authority_boundary"]["source_mutation_authority_granted"])
         self.assertFalse(packet["authority_boundary"]["provider_effect_authority_granted"])
+
+
+    def test_frontier_residuals_include_stream_survival_and_private_tool_bridging(self):
+        by_id = {gene.gene_id: gene for gene in UPGRADE_GENOME}
+        self.assertEqual(by_id["HG-SOL62-201"].mechanism, "detached_background_response_execution")
+        self.assertEqual(by_id["HG-SOL62-211"].mechanism, "secure_mcp_tunnel_private_bridge")
+        self.assertEqual(by_id["HG-SOL62-217"].mechanism, "reliable_stream_broker_checkpoint_cursor")
+        self.assertEqual(by_id["HG-SOL62-224"].mechanism, "framework_agnostic_agent_runtime_binding")
+
 
 
 if __name__ == "__main__":
