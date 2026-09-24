@@ -241,5 +241,36 @@ class BrowserCarrierResilienceTests(unittest.TestCase):
         self.assertFalse(failure.goal_mutation_allowed)
 
 
+    def test_stream_cache_expired_is_route_local_not_mission_terminal(self):
+        failure = classify_carrier_failure("STREAM_CACHE_EXPIRED")
+        self.assertEqual(failure.disposition, FailureDisposition.ROUTE_LOCAL)
+        self.assertFalse(failure.mission_terminal)
+        self.assertFalse(failure.retry_same_carrier)
+
+    def test_no_replacement_browser_requests_durable_sol_continuation(self):
+        self.register("c1", at=self.now)
+        self.supervisor.attach_mission(
+            "m1",
+            owner_subject="owner",
+            carrier_id="c1",
+            now_epoch=self.now,
+        )
+        result = self.supervisor.failover(
+            "m1",
+            owner_subject="owner",
+            failed_carrier_id="c1",
+            failure_code="STREAM_CACHE_EXPIRED",
+            event_id="stream-cache-1",
+            now_epoch=self.now,
+        )
+        self.assertEqual(result["state"], "DURABLE_CONTINUATION_READY")
+        self.assertTrue(result["durable_continuation_required"])
+        self.assertEqual(result["continuation_mode"], "SOL62_GENESIS_WAKE")
+        self.assertFalse(result["owner_retry_required"])
+        self.assertFalse(result["ui_retry_required"])
+        self.assertTrue(result["resume_packet"]["replay_guard_verified"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
