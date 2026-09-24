@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.37",
+  "version": "2.9.38",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -66,7 +66,8 @@
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
     ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
-    ".github/workflows/work-plane-private-gcp-canary-v1.yml"
+    ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+    ".github/workflows/sol62-client-runtime-canary.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -240,6 +241,9 @@
     ],
     ".github/workflows/work-plane-private-gcp-canary-v1.yml": [
       "issues"
+    ],
+    ".github/workflows/sol62-client-runtime-canary.yml": [
+      "issues"
     ]
   },
   "required_push_branches": {
@@ -317,7 +321,8 @@
     ".github/workflows/aegis-omega-zero-traffic-v1.yml",
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
-    ".github/workflows/work-plane-private-gcp-canary-v1.yml"
+    ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+    ".github/workflows/sol62-client-runtime-canary.yml"
   ],
   "attestations_write_workflow_allowlist": [
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
@@ -333,7 +338,8 @@
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
     ".github/workflows/seb-omega.yml",
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
-    ".github/workflows/work-plane-private-gcp-canary-v1.yml"
+    ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+    ".github/workflows/sol62-client-runtime-canary.yml"
   ],
   "provider_mutation_exact_issue_titles": {
     ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901",
@@ -345,7 +351,8 @@
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": "[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1",
     ".github/workflows/seb-omega.yml": "MACHINE_DISPATCH_ONLY__NO_ISSUE_TRIGGER",
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": "MACHINE_DISPATCH_ONLY__NO_ISSUE_TRIGGER",
-    ".github/workflows/work-plane-private-gcp-canary-v1.yml": "[FO-DISPATCH] WORK_PLANE_PRIVATE_GCP_CANARY_V1"
+    ".github/workflows/work-plane-private-gcp-canary-v1.yml": "[FO-DISPATCH] WORK_PLANE_PRIVATE_GCP_CANARY_V1",
+    ".github/workflows/sol62-client-runtime-canary.yml": "[FO-DISPATCH] SOL62_CLIENT_RUNTIME_CANARY_V1"
   },
   "provider_mutation_required_markers": {
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
@@ -429,6 +436,16 @@
       "runtime_service_account",
       "cross_revision_projection_verified",
       "stale_actor_rejected"
+    ],
+    ".github/workflows/sol62-client-runtime-canary.yml": [
+      "--min 0",
+      "--max 1",
+      "get-iam-policy",
+      "print-identity-token",
+      "provider_mutation_performed",
+      "production_traffic_changed",
+      "sovereign_meta_intelligence",
+      "SOL62_CLIENT_PORT=8080"
     ]
   },
   "provider_mutation_forbidden_markers": {
@@ -490,6 +507,11 @@
       "gcloud run services add-iam-policy-binding",
       "gcloud services enable",
       "gcloud secrets versions access"
+    ],
+    ".github/workflows/sol62-client-runtime-canary.yml": [
+      "--allow-unauthenticated",
+      "update-traffic",
+      "--to-revisions"
     ]
   },
   "actions_write_workflow_allowlist": [
@@ -642,7 +664,8 @@
       ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
       ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
       ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
-      ".github/workflows/work-plane-private-gcp-canary-v1.yml"
+      ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+      ".github/workflows/sol62-client-runtime-canary.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
