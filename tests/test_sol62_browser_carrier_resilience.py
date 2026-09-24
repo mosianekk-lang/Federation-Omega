@@ -48,15 +48,24 @@ class BrowserCarrierResilienceTests(unittest.TestCase):
         self.runtime.close()
         self.tmp.cleanup()
 
-    def register(self, carrier_id: str, *, priority: int = 50, at: int | None = None):
+    def register(
+        self,
+        carrier_id: str,
+        *,
+        priority: int = 50,
+        at: int | None = None,
+        client_kind: str = "CHATGPT_BROWSER",
+        failure_domain: str = "CHATGPT_BROWSER",
+    ):
         return self.supervisor.register(
             CarrierRegistration(
                 carrier_id=carrier_id,
                 owner_subject="owner",
                 session_id="session-" + carrier_id,
-                client_kind="CHATGPT_BROWSER",
+                client_kind=client_kind,
                 priority=priority,
                 conversation_ref_hash="hash-" + carrier_id,
+                failure_domain=failure_domain,
             ),
             now_epoch=self.now if at is None else at,
         )
@@ -100,6 +109,56 @@ class BrowserCarrierResilienceTests(unittest.TestCase):
         self.register("fresh", priority=10, at=self.now)
         elected = self.supervisor.elect(owner_subject="owner", now_epoch=self.now)
         self.assertEqual(elected["carrier_id"], "fresh")
+    def test_cross_domain_carrier_beats_same_domain_higher_priority(self):
+        self.register("dead", priority=100, failure_domain="CHATGPT_BROWSER")
+        self.register("same-domain", priority=99, failure_domain="CHATGPT_BROWSER")
+        self.register(
+            "fuse-web",
+            priority=10,
+            client_kind="FUSE_WEB",
+            failure_domain="FUSE_OWNED_WEB",
+        )
+        self.supervisor.attach_mission(
+            "m1",
+            owner_subject="owner",
+            carrier_id="dead",
+            now_epoch=self.now,
+        )
+        result = self.supervisor.failover(
+            "m1",
+            owner_subject="owner",
+            failed_carrier_id="dead",
+            failure_code="CHATGPT_CONVERSATION_LOAD_FAILED",
+            now_epoch=self.now + 1,
+        )
+        self.assertEqual(result["replacement_carrier_id"], "fuse-web")
+
+    def test_same_domain_fallback_remains_available_when_no_independent_carrier_exists(self):
+        self.register("dead", priority=100, failure_domain="CHATGPT_BROWSER")
+        self.register("same-domain", priority=50, failure_domain="CHATGPT_BROWSER")
+        selected = self.supervisor.elect(
+            owner_subject="owner",
+            now_epoch=self.now,
+            exclude_carrier_id="dead",
+            avoid_failure_domain="CHATGPT_BROWSER",
+        )
+        self.assertEqual(selected["carrier_id"], "same-domain")
+
+    def test_federation_status_reports_failure_domain_redundancy(self):
+        self.register("edge", failure_domain="CHATGPT_BROWSER")
+        self.register(
+            "windows",
+            client_kind="WINDOWS_COMPANION",
+            failure_domain="WINDOWS_NATIVE",
+        )
+        status = self.supervisor.federation_status(
+            owner_subject="owner",
+            now_epoch=self.now,
+        )
+        self.assertEqual(status["live_failure_domains"], 2)
+        self.assertTrue(status["cross_domain_failover_ready"])
+        self.assertFalse(status["mission_authority_in_carrier"])
+        self.assertFalse(status["provider_authority_in_carrier"])
 
     def test_carrier_epoch_increases_on_rebind_to_reject_stale_tab(self):
         first = self.register("tab-a")
