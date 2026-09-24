@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import tempfile
 import unittest
-from pathlib import Path
 
-from fastapi.testclient import TestClient
+import httpx
+from pathlib import Path
 
 from fuse_genesis.currentness import SourceEpoch
 from fuse_genesis.resident_host import HostState, ResidentHost
@@ -34,13 +35,21 @@ class Sol62SovereignAttachmentCanaryContractTests(unittest.TestCase):
         )
 
     def test_status_exposes_subordinate_transactional_contract_without_authority_widening(self):
-        with TestClient(app) as client:
-            health = client.get("/health")
-            self.assertEqual(health.status_code, 200)
-            self.assertTrue(health.json()["ok"])
-            status = client.get("/api/status")
-            self.assertEqual(status.status_code, 200)
-            body = status.json()
+        async def read_status():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport,
+                base_url="http://sol62.test",
+            ) as client:
+                health = await client.get("/health")
+                status = await client.get("/api/status")
+                return health, status
+
+        health, status = asyncio.run(read_status())
+        self.assertEqual(health.status_code, 200)
+        self.assertTrue(health.json()["ok"])
+        self.assertEqual(status.status_code, 200)
+        body = status.json()
         self.assertEqual(body["service_id"], "runtime.transactional")
         self.assertEqual(body["capability_id"], "CAP-SOL62-TRANSACTIONAL-RUNTIME-V1")
         self.assertEqual(body["ecp_id"], "ECP-SOL62-SOVEREIGN-PLANE-START438-001")
