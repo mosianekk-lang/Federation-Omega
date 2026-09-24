@@ -1,0 +1,70 @@
+{
+  "schema": "SOL62_ASIA_FRONTIER_WORKLOAD_MANIFEST_V1",
+  "frozen_at": "2026-09-24",
+  "comparator": "ASIA_FRONTIER_COMPOSITE_V1",
+  "dimensions": [
+    "REPOSITORY_LEVEL_SOFTWARE_ENGINEERING",
+    "LONG_HORIZON_TASK_COMPLETION",
+    "TOOL_USE_RELIABILITY",
+    "BROWSER_COMPUTER_USE",
+    "MULTIMODAL_UNDERSTANDING",
+    "SWARM_PARALLELISM",
+    "CONTEXT_CONTINUITY",
+    "DEEP_RETRIEVAL",
+    "SPECIFICATION_AND_PLANNING",
+    "TEST_DEBUG_VALIDATE_LOOP",
+    "SANDBOX_AND_PRIVILEGE_CONTROL",
+    "CRASH_RECOVERY_AND_RESUME",
+    "CROSS_CARRIER_FAILOVER",
+    "DURABLE_EXECUTION",
+    "COST_PER_SUCCESSFUL_TASK",
+    "LATENCY_TO_ACCEPTED_RESULT",
+    "LOCAL_PRIVATE_OPERATION",
+    "SOVEREIGN_DEPLOYMENT",
+    "SECURITY_AND_SAFETY",
+    "OBSERVABILITY_AND_PROVENANCE",
+    "MEMORY_CURRENTNESS",
+    "SELF_IMPROVEMENT_WITH_FALSIFICATION",
+    "AUTONOMOUS_RESEARCH",
+    "MODEL_ORCHESTRATION",
+    "PROVIDER_PORTABILITY",
+    "OWNER_INTERVENTION",
+    "REGIONAL_LANGUAGE_LOCALIZATION",
+    "ENTERPRISE_INTEGRATION",
+    "FALSE_GREEN_RESISTANCE",
+    "ENERGY_RESOURCE_EFFICIENCY",
+    "VALUE_PER_COST",
+    "TERMINAL_RESULT_DELIVERY"
+  ],
+  "sampling": {
+    "minimum_matched_samples_per_dimension": 12,
+    "minimum_natural_samples_per_dimension": 6,
+    "synthetic_only_cannot_prove_noninferiority": true,
+    "same_workload_pairing_required": true,
+    "sample_custody_required": true
+  },
+  "statistics": {
+    "normalized_score_range": [0.0, 1.0],
+    "noninferiority_margin": 0.02,
+    "significant_delta_floor": 0.03,
+    "significance_alpha": 0.05,
+    "paired_win_test": "ONE_SIDED_EXACT_BINOMIAL_SIGN_TEST_TIES_EXCLUDED",
+    "minimum_significant_dimension_wins": 8,
+    "critical_regressions_allowed": 0
+  },
+  "operational_metrics_preserved": [
+    "owner_interventions",
+    "wall_time_ms",
+    "cost",
+    "tool_calls",
+    "critical_regression",
+    "evidence_ref"
+  ],
+  "promotion": {
+    "all_dimensions_noninferior_required": true,
+    "independent_reality_judge_required": true,
+    "builder_self_certification_allowed": false,
+    "material_frontier_change_requires_refreeze": true
+  },
+  "truth_boundary": "WORKLOAD_MANIFEST_FROZEN != SAMPLES_COLLECTED != COURT_PASS != JUDGE_ACK != MARKET_SUPERIORITY"
+}
