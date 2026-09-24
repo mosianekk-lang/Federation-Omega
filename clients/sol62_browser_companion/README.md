@@ -1,10 +1,10 @@
 # FUSE Sol 6.2 Browser Carrier Companion
 
-This is a FUSE-owned, detachable browser carrier observer for the SOL 6.2 runtime.
+This is a FUSE-owned, detachable browser carrier and scoped browser-control client for the SOL 6.2 runtime.
 
 ## Boundary
 
-It does **not** inject a runtime into ChatGPT, bypass ChatGPT permissions, automate Retry, evade policy, or treat the ChatGPT conversation as canonical state. It only observes carrier liveness and reports route-local UI failure to an authenticated SOL 6.2 runtime.
+It does **not** inject a runtime into ChatGPT, bypass ChatGPT permissions, automate provider Retry, evade policy, or treat the ChatGPT conversation as canonical state. It observes carrier liveness and can execute typed, origin-bounded browser commands from an authenticated SOL 6.2 runtime. Website-state commands require a separately consumed action-bound authority lease before execution.
 
 A failed ChatGPT conversation is therefore handled as:
 
@@ -39,3 +39,35 @@ The companion treats this as a route-local browser capability gap rather than mi
 - this capability opens a detachable client only; it grants no FUSE mission, provider, source, or effect authority.
 
 Truth boundary: source implementation != installed extension != observed context-menu item != successful tab creation != FUSE mission hydration.
+
+
+## Typed browser control
+
+The companion can execute a bounded command vocabulary received from the local SOL 6.2 Browser Control Plane:
+
+- read/list ChatGPT tabs;
+- create/open/activate/close/reload ChatGPT tabs;
+- browser history back/forward;
+- navigate only to HTTPS \`chatgpt.com\`;
+- produce accessibility/DOM semantic snapshots;
+- focus or scroll semantic targets;
+- click or fill semantic targets only after runtime authority preflight.
+
+The extension does not accept arbitrary JavaScript, selectors, eval strings, or cross-origin navigation commands. Semantic targets are resolved from stable identifiers, role, accessible name, text, href and ambiguity thresholds.
+
+A mutating command is not considered verified merely because a Chrome API call returned. The command must produce semantic readback, and website-state effects require exact FDOF/SOL authority consumption before the extension receives \`authority_bound=true\`.
+
+## Browser-control truth boundary
+
+\`\`\`
+CONTROL_SOURCE
+!= EXTENSION_INSTALLED
+!= AUTHENTICATED_RUNTIME_BINDING
+!= COMMAND_LEASED
+!= ACTION_AUTHORIZED
+!= ACTION_OBSERVED
+!= SEMANTIC_READBACK_VERIFIED
+!= OWNER_VALUE_VERIFIED
+\`\`\`
+
+ChatGPT remains a replaceable browser/provider surface. Mission identity, authority, effect truth and durable state remain outside the page.
