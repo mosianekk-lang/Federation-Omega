@@ -45,6 +45,28 @@ export type FederationHealth = {
   checked_at?: string;
 };
 
+export type WorkspaceStatus = {
+  schema: 'FUSE-WORKSPACE-STATUS-V1';
+  version: string;
+  subject: string;
+  mission_state_root: 'MISSION_BUS_WORK_PLANE';
+  chat_is_detachable_client: boolean;
+  observation_cache: Record<string, unknown>;
+  truth_boundary: string;
+};
+
+export type VisionContext = {
+  subject: string;
+  available: boolean;
+  fresh: boolean;
+  sha256?: string;
+  content_type?: string;
+  source?: string;
+  mission_id?: string;
+  age_seconds?: number;
+  truth_boundary: string;
+};
+
 export type FuseSessionResponse = {
   access_token: string;
   token_type: string;
@@ -184,4 +206,29 @@ export async function sendFuseMessage(
     120_000,
     signal,
   );
+}
+
+
+export async function fetchWorkspaceStatus(
+  iapIdentityToken: string,
+  accessToken: string,
+): Promise<WorkspaceStatus> {
+  return fetchJson<WorkspaceStatus>('/v1/workspace/status', iapIdentityToken, {}, accessToken, 10_000);
+}
+
+export async function fetchVisionContext(
+  iapIdentityToken: string,
+  accessToken: string,
+): Promise<VisionContext> {
+  return fetchJson<VisionContext>('/v1/vision/context', iapIdentityToken, {}, accessToken, 10_000);
+}
+
+export function visionImageSource(
+  iapIdentityToken: string,
+  accessToken: string,
+): { uri: string; headers: Record<string, string> } {
+  return {
+    uri: `${gatewayUrl()}/v1/vision/latest/image`,
+    headers: transportHeaders(iapIdentityToken, accessToken),
+  };
 }
