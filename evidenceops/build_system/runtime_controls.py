@@ -360,7 +360,7 @@ class DeliveryJournal:
     ) -> dict[str, Any]:
         if not transaction_id or not artifact_id or not artifact_sha256:
             raise ValueError("transaction_id, artifact_id and artifact_sha256 are required")
-        state = ACKNOWLEDGED if acknowledgement else ORPHANED_UNACKNOWLEDGED
+        requested_state = ACKNOWLEDGED if acknowledgement else ORPHANED_UNACKNOWLEDGED
         with _connect(self.database) as connection:
             connection.execute("BEGIN IMMEDIATE")
             prior = connection.execute(
@@ -368,10 +368,7 @@ class DeliveryJournal:
                 "WHERE transaction_id=?",
                 (transaction_id,),
             ).fetchone()
-            expected = (artifact_id, artifact_sha256, acknowledgement, state)
-            if prior is not None and tuple(prior) != expected:
-                connection.rollback()
-                raise IntegrityError("transaction identity was reused with different delivery content")
+
             if prior is None:
                 connection.execute(
                     "INSERT INTO deliveries VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -381,7 +378,7 @@ class DeliveryJournal:
                         artifact_id,
                         artifact_sha256,
                         acknowledgement,
-                        state,
+                        requested_state,
                         _utc_now(),
                     ),
                 )
@@ -389,10 +386,73 @@ class DeliveryJournal:
                     connection,
                     transaction_id,
                     "TERMINAL_DELIVERY",
-                    {"artifact_id": artifact_id, "artifact_sha256": artifact_sha256, "state": state},
+                    {
+                        "artifact_id": artifact_id,
+                        "artifact_sha256": artifact_sha256,
+                        "state": requested_state,
+                    },
                 )
+            else:
+                prior_artifact_id, prior_sha256, prior_ack, prior_state = prior
+                if prior_artifact_id != artifact_id or prior_sha256 != artifact_sha256:
+                    connection.rollback()
+                    raise IntegrityError("transaction identity was reused with different delivery content")
+
+                if prior_state == ACKNOWLEDGED:
+                    if acknowledgement and prior_ack != acknowledgement:
+                        connection.rollback()
+                        raise IntegrityError("acknowledged delivery cannot be rebound to a different acknowledgement")
+                    connection.commit()
+                    return self.readback(transaction_id)
+
+                if prior_state != ORPHANED_UNACKNOWLEDGED:
+                    connection.rollback()
+                    raise IntegrityError(f"unknown delivery state: {prior_state}")
+
+                if acknowledgement:
+                    connection.execute(
+                        "UPDATE deliveries SET acknowledgement=?, state=?, updated_at=? WHERE transaction_id=?",
+                        (acknowledgement, ACKNOWLEDGED, _utc_now(), transaction_id),
+                    )
+                    self._append_event(
+                        connection,
+                        transaction_id,
+                        "DELIVERY_ACKNOWLEDGED",
+                        {
+                            "artifact_id": artifact_id,
+                            "artifact_sha256": artifact_sha256,
+                            "prior_state": ORPHANED_UNACKNOWLEDGED,
+                            "state": ACKNOWLEDGED,
+                        },
+                    )
+                elif requested_state != ORPHANED_UNACKNOWLEDGED:
+                    connection.rollback()
+                    raise IntegrityError("invalid orphan redelivery transition")
+
             connection.commit()
         return self.readback(transaction_id)
+
+    def acknowledge(self, transaction_id: str, acknowledgement: str) -> dict[str, Any]:
+        if not acknowledgement.strip():
+            raise ValueError("acknowledgement is required")
+        prior = self.readback(transaction_id)
+        return self.deliver(
+            transaction_id,
+            prior["artifact_id"],
+            prior["artifact_sha256"],
+            acknowledgement=acknowledgement,
+        )
+
+    def pending_unacknowledged(self, limit: int = 100) -> list[dict[str, Any]]:
+        if limit <= 0:
+            raise ValueError("limit must be positive")
+        with _connect(self.database) as connection:
+            rows = connection.execute(
+                "SELECT transaction_id FROM deliveries WHERE state=? "
+                "ORDER BY updated_at ASC, transaction_id ASC LIMIT ?",
+                (ORPHANED_UNACKNOWLEDGED, int(limit)),
+            ).fetchall()
+        return [self.readback(row[0]) for row in rows]
 
     def readback(self, transaction_id: str) -> dict[str, Any]:
         with _connect(self.database) as connection:
