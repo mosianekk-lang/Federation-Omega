@@ -38,14 +38,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Authenticate canonical keyless deployer
+      - name: Authenticate canonical keyless deployer and mint private-service ID token
+        id: auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOYER_SA }}
-          create_credentials_file: true
-          export_environment_variables: true
+          token_format: id_token
+          id_token_audience: https://fuse-sol62-client-canary-257649435135.africa-south1.run.app
 
       - name: Install pinned gcloud client
         uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
@@ -130,14 +131,18 @@ jobs:
 
       - name: Deploy authenticated isolated Cloud Run canary
         shell: bash
+        env:
+          ID_TOKEN: ${{ steps.auth.outputs.id_token }}
         run: |
           set -euo pipefail
           echo 'CLOUD_RUN_DEPLOY_ATTEMPTED=true' >> "$GITHUB_ENV"
           gcloud run deploy "$SERVICE"             --project "$PROJECT_ID"             --region "$REGION"             --image "$IMAGE_DIGEST_URI"             --service-account "$RUNTIME_SA"             --platform managed             --port 8080             --cpu 1             --memory 512Mi             --min 0             --max 1             --concurrency 20             --ingress all             --set-env-vars='SOL62_CLIENT_HOST=0.0.0.0,SOL62_CLIENT_PORT=8080'             --quiet
           URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
           REVISION="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')"
-          test -n "$URL" && test -n "$REVISION"
+          CANONICAL_URL="https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          test -n "$URL" && test -n "$REVISION" && test -n "$CANONICAL_URL"
           echo "CANARY_URL=$URL" >> "$GITHUB_ENV"
+          echo "CANARY_AUDIENCE_URL=$CANONICAL_URL" >> "$GITHUB_ENV"
           echo "CANARY_REVISION=$REVISION" >> "$GITHUB_ENV"
 
           gcloud run services get-iam-policy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/sol62-iam.json
@@ -150,8 +155,12 @@ jobs:
           PY
           echo 'PUBLIC_INVOCATION=false' >> "$GITHUB_ENV"
 
-          TOKEN="$(gcloud auth print-identity-token --audiences="$URL")"
-          curl --fail --silent --show-error             -H "Authorization: Bearer $TOKEN" "$URL/health" > /tmp/sol62-provider-health.json
+          TOKEN="$ID_TOKEN"
+          if [[ -z "$TOKEN" ]]; then
+            TOKEN="$(gcloud auth print-identity-token --impersonate-service-account="$DEPLOYER_SA" --audiences="$CANONICAL_URL")"
+          fi
+          test -n "$TOKEN"
+          curl --fail --silent --show-error             -H "Authorization: Bearer $TOKEN" "$CANONICAL_URL/health" > /tmp/sol62-provider-health.json
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/sol62-provider-health.json',encoding='utf-8'))
@@ -190,6 +199,7 @@ jobs:
             'image_digest_uri':os.environ.get('IMAGE_DIGEST_URI'),
             'verified_image_digest':os.environ.get('VERIFIED_IMAGE_DIGEST'),
             'canary_url':os.environ.get('CANARY_URL'),
+            'canary_audience_url':os.environ.get('CANARY_AUDIENCE_URL'),
             'canary_revision':os.environ.get('CANARY_REVISION'),
             'provider_prereqs_qualified':truth('PROVIDER_PREREQS_QUALIFIED'),
             'artifact_registry_push_performed':truth('ARTIFACT_REGISTRY_PUSH_PERFORMED'),
