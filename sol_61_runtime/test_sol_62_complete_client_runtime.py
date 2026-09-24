@@ -9,8 +9,10 @@ from pathlib import Path
 from sol_61_runtime.sol_62 import GatewayPolicy, MissionSpec, TransitionSpec, WorkloadIdentityPolicy
 from sol_61_runtime.sol_62_complete_client_runtime import (
     ClientRuntimePolicy,
+    DurabilityMode,
     ExecutionResponse,
     HarvestOutcome,
+    InterruptionKind,
     RouteCandidate,
     Sol62CompleteClientRuntime,
     TransitionBinding,
@@ -322,6 +324,115 @@ class Sol62CompleteClientRuntimeTests(unittest.TestCase):
         second = bridge.enqueue(packet, now_epoch=self.now + 1)
         self.assertEqual(first["task_id"], second["task_id"])
         self.assertEqual(first["executor"], "FUSE_GENESIS_RESIDENT_EXECUTOR_V2")
+
+
+    def test_durable_resume_packet_binds_checkpoint_and_canonical_history(self):
+        self.register()
+        status = self.client.durability_status("m1")
+        self.assertEqual(status["policy"]["mode"], DurabilityMode.EFFECT_BOUNDARY.value)
+        self.assertEqual(status["event_truth_root"], "SOL62_CONTROL_EVENTS")
+        self.assertEqual(status["effect_truth_root"], "SOL62_EFFECT_INTENT")
+        self.assertFalse(status["history"]["payloads_included"])
+        self.assertGreaterEqual(status["history"]["event_count_total"], 1)
+
+        packet = self.client.resume_packet("m1", reason="TEST_DURABLE_HANDOFF")
+        self.assertEqual(packet["schema"], "SOL62_CLIENT_RESUME_PACKET_V1")
+        self.assertEqual(packet["schema_version"], 2)
+        self.assertTrue(packet["durability_checkpoint_key"].startswith("m1|"))
+        self.assertEqual(len(packet["durability_checkpoint_sha256"]), 64)
+        latest = self.client._get("sol62.durable.checkpoint_latest", "m1")
+        self.assertEqual(latest["value"]["checkpoint_key"], packet["durability_checkpoint_key"])
+
+    def test_durable_interrupt_pauses_wake_and_resume_packet_binds_checkpoint(self):
+        self.register()
+        opened = self.client.interrupt_mission(
+            "m1",
+            interruption_id="int-approval-1",
+            kind=InterruptionKind.APPROVAL,
+            reason="bounded approval required",
+            transition_id="t1",
+            payload={"scope": "review"},
+            now_epoch=self.now,
+        )
+        self.assertEqual(opened["value"]["state"], "OPEN")
+        self.assertFalse(opened["value"]["effect_authorized_by_decision"])
+
+        class NeverExecute:
+            calls = 0
+            async def execute(inner_self, request):
+                inner_self.calls += 1
+                raise AssertionError("execution must remain paused while interruption is open")
+
+        adapter = NeverExecute()
+        result = asyncio.run(
+            self.client.wake_until_terminal(
+                "m1",
+                adapter=adapter,
+                gateway_request={},
+                identity_claims={},
+                worker="test",
+                now_epoch=self.now,
+            )
+        )
+        self.assertEqual(result["state"], "WAITING_INTERRUPT")
+        self.assertEqual(adapter.calls, 0)
+        self.assertIn("int-approval-1", result["resume_packet"]["open_interruption_ids"])
+
+        resolved = self.client.resolve_interruption(
+            "m1",
+            interruption_id="int-approval-1",
+            decision="APPROVE",
+            actor="owner-authenticated-client",
+            proof_refs=("approval-receipt-1",),
+            now_epoch=self.now + 1,
+        )
+        self.assertEqual(resolved["value"]["state"], "RESOLVED")
+        self.assertFalse(resolved["value"]["effect_authorized_by_decision"])
+        self.assertEqual(self.client.open_interruptions("m1"), [])
+
+    def test_durable_interruption_is_idempotent_and_collision_fails_closed(self):
+        self.register()
+        first = self.client.interrupt_mission(
+            "m1",
+            interruption_id="int-input-1",
+            kind=InterruptionKind.EXTERNAL_INPUT,
+            reason="need external input",
+            payload={"field": "x"},
+            now_epoch=self.now,
+        )
+        second = self.client.interrupt_mission(
+            "m1",
+            interruption_id="int-input-1",
+            kind=InterruptionKind.EXTERNAL_INPUT,
+            reason="need external input",
+            payload={"field": "x"},
+            now_epoch=self.now + 3,
+        )
+        self.assertEqual(first["value"]["identity_sha256"], second["value"]["identity_sha256"])
+        with self.assertRaisesRegex(Exception, "INTERRUPTION_ID_COLLISION"):
+            self.client.interrupt_mission(
+                "m1",
+                interruption_id="int-input-1",
+                kind=InterruptionKind.EXTERNAL_INPUT,
+                reason="different input request",
+                payload={"field": "y"},
+                now_epoch=self.now + 4,
+            )
+
+    def test_event_history_manifest_is_hash_only_and_detects_change(self):
+        self.register()
+        before = self.client.event_history_manifest("m1")
+        self.client.interrupt_mission(
+            "m1",
+            interruption_id="int-history-1",
+            kind=InterruptionKind.MANUAL_PAUSE,
+            reason="history-change",
+            now_epoch=self.now,
+        )
+        after = self.client.event_history_manifest("m1")
+        self.assertNotEqual(before["history_sha256"], after["history_sha256"])
+        self.assertGreater(after["event_count_total"], before["event_count_total"])
+        self.assertNotIn("payload", after["events"][0])
 
 
 if __name__ == "__main__":
