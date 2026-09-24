@@ -499,7 +499,7 @@ class SQLiteControlPlane:
     def transition_effect(self, effect_id: str, *, expected_state: str, next_state: str, provider_ref: str | None = None, result: Mapping[str, Any] | None = None) -> dict[str, Any]:
         allowed = {
             "PREPARED": {"DISPATCHING", "CANCELLED"},
-            "DISPATCHING": {"DISPATCHED", "FAILED_UNCERTAIN"},
+            "DISPATCHING": {"DISPATCHED", "CANCELLED", "FAILED_UNCERTAIN"},
             "DISPATCHED": {"OBSERVED", "FAILED_UNCERTAIN"},
             "OBSERVED": {"VERIFIED", "COMPENSATING"},
             "COMPENSATING": {"COMPENSATED", "FAILED_UNCERTAIN"},
