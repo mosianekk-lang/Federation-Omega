@@ -40,7 +40,7 @@ test("assessor checks the material Edge and Chrome enterprise policy families", 
 });
 
 test("extension retains a narrow ChatGPT-only permission surface", () => {
-  assert.deepEqual(manifest.permissions.sort(), ["downloads", "storage", "unlimitedStorage"].sort());
+  assert.deepEqual(manifest.permissions.sort(), ["alarms", "downloads", "storage", "unlimitedStorage"].sort());
   assert.deepEqual(manifest.host_permissions, ["https://chatgpt.com/*"]);
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.version, "0.3.1");
