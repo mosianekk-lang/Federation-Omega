@@ -30,7 +30,7 @@ jobs:
       github.event.issue.title == '[FO-DISPATCH] SOL62_CLIENT_RUNTIME_CANARY_V1' &&
       github.event.issue.author_association == 'OWNER'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout exact source without write credentials
@@ -78,6 +78,17 @@ jobs:
           echo "VERIFIED_IMAGE_DIGEST=$DIGEST" >> "$GITHUB_ENV"
           echo 'ARTIFACT_REGISTRY_PUSH_PERFORMED=true' >> "$GITHUB_ENV"
 
+      - name: Exact-image sovereign durability and failover court
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull "$IMAGE_DIGEST_URI"
+          docker run --rm --entrypoint python "$IMAGE_DIGEST_URI" -m unittest \
+            tests.test_sol62_sovereign_attachment_canary_contract \
+            sol_61_runtime.test_sol_62_complete_client_runtime \
+            tests.test_sol62_browser_carrier_resilience
+          echo 'DURABLE_SEMANTIC_COURT=PASS' >> "$GITHUB_ENV"
+
       - name: Exact-image local semantic canary
         shell: bash
         run: |
@@ -93,10 +104,17 @@ jobs:
           cleanup() { capture_local || true; docker rm --force "$LOCAL_CONTAINER" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           docker pull "$IMAGE_DIGEST_URI"
-          docker run --detach --name "$LOCAL_CONTAINER"             --publish 127.0.0.1:18762:8762             --env SOL62_CLIENT_HOST=0.0.0.0             --env SOL62_CLIENT_PORT=8762             "$IMAGE_DIGEST_URI" >/dev/null
+          docker run --detach --name "$LOCAL_CONTAINER" \
+            --publish 127.0.0.1:18762:8762 \
+            --env SOL62_CLIENT_HOST=0.0.0.0 \
+            --env SOL62_CLIENT_PORT=8762 \
+            --env SOL62_SOURCE_FRONTIER="$GITHUB_SHA" \
+            "$IMAGE_DIGEST_URI" >/dev/null
           CODE='000'
           for attempt in $(seq 1 30); do
-            CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5               --output /tmp/sol62-local-health.json --write-out '%{http_code}'               http://127.0.0.1:18762/health || true)"
+            CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 \
+              --output /tmp/sol62-local-health.json --write-out '%{http_code}' \
+              http://127.0.0.1:18762/health || true)"
             [[ "$CODE" == '200' ]] && break
             docker inspect --format='{{.State.Running}}' "$LOCAL_CONTAINER" | grep -Fx true >/dev/null || break
             sleep 1
@@ -107,12 +125,14 @@ jobs:
             cat /tmp/sol62-canary-receipt/local-startup.log >&2 || true
             exit 72
           fi
+          curl --fail --silent --show-error http://127.0.0.1:18762/api/status > /tmp/sol62-local-status.json
           capture_local
           echo "LOCAL_STARTUP_LOG_SHA256=$(sha256sum /tmp/sol62-canary-receipt/local-startup.log | cut -d' ' -f1)" >> "$GITHUB_ENV"
           echo "LOCAL_CONTAINER_INSPECT_SHA256=$(sha256sum /tmp/sol62-canary-receipt/local-container-inspect.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
           python3 - <<'PY'
-          import json
+          import json,os
           d=json.load(open('/tmp/sol62-local-health.json',encoding='utf-8'))
+          s=json.load(open('/tmp/sol62-local-status.json',encoding='utf-8'))
           assert d.get('ok') is True, d
           assert d.get('schema') == 'SOL62_COMPLETE_FUSE_CLIENT_RUNTIME_V1', d
           integrity=d.get('sol_integrity') or {}
@@ -126,8 +146,26 @@ jobs:
           assert meta.get('auto_repair_control') is True, meta
           assert meta.get('auto_protect_control') is True, meta
           assert meta.get('provider_authority_created') is False, meta
+          assert s.get('ok') is True, s
+          assert s.get('service_id') == 'runtime.transactional', s
+          assert s.get('capability_id') == 'CAP-SOL62-TRANSACTIONAL-RUNTIME-V1', s
+          assert s.get('ecp_id') == 'ECP-SOL62-SOVEREIGN-PLANE-START438-001', s
+          assert s.get('sol_role') == 'transactional_execution_state_spine', s
+          assert s.get('orchestration_plane') == 'FUSE_SOVEREIGN_PLANE_R59', s
+          assert s.get('truth_root') == 'SOL_6_2', s
+          assert s.get('resident_executor') == 'FUSE_GENESIS_RESIDENT_EXECUTOR_V2', s
+          assert s.get('source_arbiter') == 'FDOF', s
+          assert s.get('state_integrity') == 'SICF', s
+          assert s.get('proof_plane') == 'PROOFOS_REALITY_JUDGE', s
+          assert s.get('source_frontier') == os.environ['GITHUB_SHA'], s
+          assert s.get('authority_expansion') is False, s
+          assert s.get('provider_effect_authorized') is False, s
+          assert s.get('scheduler_ownership') is False, s
+          assert s.get('independent_finality') is False, s
+          assert (s.get('capability_registry') or {}).get('schema') == 'SOL62_CAPABILITY_REGISTRY_V1', s
           PY
           echo 'LOCAL_SEMANTIC_CANARY=PASS' >> "$GITHUB_ENV"
+          echo 'LOCAL_STATUS_CANARY=PASS' >> "$GITHUB_ENV"
 
       - name: Deploy authenticated isolated Cloud Run canary
         shell: bash
@@ -136,7 +174,21 @@ jobs:
         run: |
           set -euo pipefail
           echo 'CLOUD_RUN_DEPLOY_ATTEMPTED=true' >> "$GITHUB_ENV"
-          gcloud run deploy "$SERVICE"             --project "$PROJECT_ID"             --region "$REGION"             --image "$IMAGE_DIGEST_URI"             --service-account "$RUNTIME_SA"             --platform managed             --port 8080             --cpu 1             --memory 512Mi             --min 0             --max 1             --concurrency 20             --ingress all             --set-env-vars='SOL62_CLIENT_HOST=0.0.0.0,SOL62_CLIENT_PORT=8080'             --quiet
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE_DIGEST_URI" \
+            --service-account "$RUNTIME_SA" \
+            --platform managed \
+            --port 8080 \
+            --cpu 1 \
+            --memory 512Mi \
+            --min 0 \
+            --max 1 \
+            --concurrency 20 \
+            --ingress all \
+            --set-env-vars="SOL62_CLIENT_HOST=0.0.0.0,SOL62_CLIENT_PORT=8080,SOL62_SOURCE_FRONTIER=$GITHUB_SHA" \
+            --quiet
           URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
           REVISION="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')"
           CANONICAL_URL="https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
@@ -160,10 +212,14 @@ jobs:
             TOKEN="$(gcloud auth print-identity-token --impersonate-service-account="$DEPLOYER_SA" --audiences="$CANONICAL_URL")"
           fi
           test -n "$TOKEN"
-          curl --fail --silent --show-error             -H "Authorization: Bearer $TOKEN" "$CANONICAL_URL/health" > /tmp/sol62-provider-health.json
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $TOKEN" "$CANONICAL_URL/health" > /tmp/sol62-provider-health.json
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $TOKEN" "$CANONICAL_URL/api/status" > /tmp/sol62-provider-status.json
           python3 - <<'PY'
-          import json
+          import json,os
           d=json.load(open('/tmp/sol62-provider-health.json',encoding='utf-8'))
+          s=json.load(open('/tmp/sol62-provider-status.json',encoding='utf-8'))
           assert d.get('ok') is True, d
           integrity=d.get('sol_integrity') or {}
           assert integrity.get('version') == '6.2', integrity
@@ -176,8 +232,26 @@ jobs:
           assert meta.get('auto_protect_control') is True, meta
           assert meta.get('untrusted_content_has_instruction_authority') is False, meta
           assert meta.get('provider_authority_created') is False, meta
+          assert s.get('ok') is True, s
+          assert s.get('service_id') == 'runtime.transactional', s
+          assert s.get('capability_id') == 'CAP-SOL62-TRANSACTIONAL-RUNTIME-V1', s
+          assert s.get('ecp_id') == 'ECP-SOL62-SOVEREIGN-PLANE-START438-001', s
+          assert s.get('sol_role') == 'transactional_execution_state_spine', s
+          assert s.get('orchestration_plane') == 'FUSE_SOVEREIGN_PLANE_R59', s
+          assert s.get('truth_root') == 'SOL_6_2', s
+          assert s.get('resident_executor') == 'FUSE_GENESIS_RESIDENT_EXECUTOR_V2', s
+          assert s.get('source_arbiter') == 'FDOF', s
+          assert s.get('state_integrity') == 'SICF', s
+          assert s.get('proof_plane') == 'PROOFOS_REALITY_JUDGE', s
+          assert s.get('source_frontier') == os.environ['GITHUB_SHA'], s
+          assert s.get('authority_expansion') is False, s
+          assert s.get('provider_effect_authorized') is False, s
+          assert s.get('scheduler_ownership') is False, s
+          assert s.get('independent_finality') is False, s
+          assert (s.get('capability_registry') or {}).get('schema') == 'SOL62_CAPABILITY_REGISTRY_V1', s
           PY
           echo 'PROVIDER_SEMANTIC_CANARY=PASS' >> "$GITHUB_ENV"
+          echo 'PROVIDER_STATUS_CANARY=PASS' >> "$GITHUB_ENV"
           echo 'PRODUCTION_TRAFFIC_CHANGED=false' >> "$GITHUB_ENV"
 
       - name: Emit redacted deployment receipt
@@ -191,7 +265,7 @@ jobs:
           from datetime import datetime,timezone
           truth=lambda n: os.environ.get(n,'').lower()=='true'
           body={
-            'schema':'SOL62_CLIENT_RUNTIME_CANARY_RECEIPT_V1',
+            'schema':'SOL62_CLIENT_RUNTIME_CANARY_RECEIPT_V2',
             'source_sha':os.environ.get('GITHUB_SHA'),
             'project_id':os.environ.get('PROJECT_ID'),
             'region':os.environ.get('REGION'),
@@ -204,13 +278,25 @@ jobs:
             'provider_prereqs_qualified':truth('PROVIDER_PREREQS_QUALIFIED'),
             'artifact_registry_push_performed':truth('ARTIFACT_REGISTRY_PUSH_PERFORMED'),
             'cloud_run_deploy_attempted':truth('CLOUD_RUN_DEPLOY_ATTEMPTED'),
+            'durable_semantic_court':os.environ.get('DURABLE_SEMANTIC_COURT'),
             'local_semantic_canary':os.environ.get('LOCAL_SEMANTIC_CANARY'),
+            'local_status_canary':os.environ.get('LOCAL_STATUS_CANARY'),
             'local_startup_log_sha256':os.environ.get('LOCAL_STARTUP_LOG_SHA256'),
             'local_container_inspect_sha256':os.environ.get('LOCAL_CONTAINER_INSPECT_SHA256'),
             'provider_semantic_canary':os.environ.get('PROVIDER_SEMANTIC_CANARY'),
+            'provider_status_canary':os.environ.get('PROVIDER_STATUS_CANARY'),
             'provider_mutation_performed':truth('ARTIFACT_REGISTRY_PUSH_PERFORMED') or truth('CLOUD_RUN_DEPLOY_ATTEMPTED'),
             'production_traffic_changed':truth('PRODUCTION_TRAFFIC_CHANGED'),
             'public_invocation':truth('PUBLIC_INVOCATION'),
+            'service_id':'runtime.transactional',
+            'capability_id':'CAP-SOL62-TRANSACTIONAL-RUNTIME-V1',
+            'ecp_id':'ECP-SOL62-SOVEREIGN-PLANE-START438-001',
+            'sol_role':'transactional_execution_state_spine',
+            'orchestration_plane':'FUSE_SOVEREIGN_PLANE_R59',
+            'truth_root':'SOL_6_2',
+            'resident_executor':'FUSE_GENESIS_RESIDENT_EXECUTOR_V2',
+            'authority_expansion':False,
+            'independent_finality':False,
             'secret_value_recorded':False,
             'oauth_value_recorded':False,
             'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
