@@ -278,7 +278,10 @@ async function registerIfConfigured() {
         "DURABLE_LOCAL_OUTBOX",
         "IDEMPOTENT_REPLAY",
         "STREAM_CACHE_FAILURE_RECOVERY",
-        "AUTO_DURABLE_MISSION_WAKE"
+        "AUTO_DURABLE_MISSION_WAKE",
+        "SEMANTIC_NEW_CHAT_TARGETING",
+        "CONTEXT_MENU_NEW_CHAT_TAB",
+        "MODIFIED_CLICK_NEW_CHAT_TAB"
       ],
       failure_domain: "CHATGPT_BROWSER"
     }),
