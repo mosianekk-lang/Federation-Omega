@@ -12,6 +12,8 @@ from sol_61_runtime.sol_62_complete_client_runtime import Sol62CompleteClientRun
 SCHEMA = "SOL62_BROWSER_CONTROL_PLANE_V1"
 COMMAND_SCHEMA = "SOL62_BROWSER_COMMAND_V1"
 ACK_SCHEMA = "SOL62_BROWSER_COMMAND_ACK_V1"
+AUTHORITY_ACTOR = "sol62-browser-control"
+AUTHORITY_SOURCE_VERSION = "SOL62_BROWSER_CONTROL_PLANE_V1"
 
 
 class BrowserEffectClass(str, Enum):
@@ -305,6 +307,67 @@ class BrowserControlPlane:
                 raise ConstraintError("STRING_FILL_VALUE_REQUIRED")
         return body
 
+    def _authority_target(self, operation: str, args: Mapping[str, Any]) -> str:
+        target = args.get("target")
+        if isinstance(target, Mapping):
+            identity = (
+                str(target.get("stable_id") or "")
+                or str(target.get("name") or "")
+                or str(target.get("text") or "")
+                or str(target.get("role") or "")
+            )
+        else:
+            identity = ""
+        return "chatgpt.com:" + operation + (":" + identity if identity else "")
+
+    def authorize_command(
+        self,
+        command_id: str,
+        *,
+        owner_subject: str,
+        carrier_id: str,
+        now_epoch: int | None = None,
+    ) -> dict[str, Any]:
+        now = self._now(now_epoch)
+        row = self.client._get("sol62.browser.command", command_id)
+        if not row:
+            raise KeyError(command_id)
+        body = dict(row["value"])
+        if body.get("owner_subject") != owner_subject or body.get("carrier_id") != carrier_id:
+            raise ConstraintError("BROWSER_COMMAND_OWNER_OR_CARRIER_MISMATCH")
+        if body.get("effect_class") != BrowserEffectClass.WEBSITE_STATE.value:
+            body["authority_bound"] = True
+            return self.client._put("sol62.browser.command", command_id, body)
+        if body.get("state") != BrowserCommandState.LEASED.value:
+            raise ConstraintError("BROWSER_COMMAND_MUST_BE_LEASED_BEFORE_AUTHORITY")
+        lease_id = str(body.get("authority_ref") or "")
+        if not lease_id:
+            raise ConstraintError("WEBSITE_STATE_AUTHORITY_REFERENCE_REQUIRED")
+        requirements = dict(body.get("authority_requirements") or {})
+        receipt = self.client.runtime.control.consume_authority_lease(
+            lease_id,
+            action=str(requirements["action"]),
+            target=str(requirements["target"]),
+            actor=str(requirements["actor"]),
+            source_version=str(requirements["source_version"]),
+            now_epoch=now,
+        )
+        body["authority_bound"] = True
+        body["authority_consumed_epoch"] = now
+        body["authority_receipt"] = receipt
+        stored = self.client._put("sol62.browser.command", command_id, body)
+        self.client.runtime.control.append_event(
+            command_id,
+            "SOL62_BROWSER_COMMAND_AUTHORIZED",
+            {
+                "carrier_id": carrier_id,
+                "operation": body["operation"],
+                "lease_id": lease_id,
+                "uses": receipt.get("uses"),
+            },
+        )
+        return stored
+
     def enqueue(
         self,
         *,
@@ -354,9 +417,13 @@ class BrowserControlPlane:
             "effect_class": intent.effect_class.value,
             "expected_readback": dict(intent.expected_readback),
             "authority_ref": intent.authority_ref,
-            "authority_bound": bool(intent.authority_ref)
-            if expected_class == BrowserEffectClass.WEBSITE_STATE
-            else True,
+            "authority_bound": expected_class != BrowserEffectClass.WEBSITE_STATE,
+            "authority_requirements": {
+                "action": intent.operation,
+                "target": self._authority_target(intent.operation, args),
+                "actor": AUTHORITY_ACTOR,
+                "source_version": AUTHORITY_SOURCE_VERSION,
+            } if expected_class == BrowserEffectClass.WEBSITE_STATE else {},
             "state": BrowserCommandState.QUEUED.value,
             "created_epoch": now,
             "expires_epoch": now + self.command_ttl_seconds,
@@ -449,9 +516,13 @@ class BrowserControlPlane:
         actual = dict(readback or {})
         expected = dict(body.get("expected_readback", {}))
         readback_ok = all(actual.get(key) == value for key, value in expected.items())
-        if normalized_status == "VERIFIED" and not readback_ok:
+        requires_observation = body.get("effect_class") != BrowserEffectClass.READ_ONLY.value
+        action_observed_ok = (not requires_observation) or actual.get("action_observed") is True
+        if normalized_status == "VERIFIED" and (not readback_ok or not action_observed_ok):
             normalized_status = "FAILED"
-            error_code = error_code or "BROWSER_READBACK_MISMATCH"
+            error_code = error_code or (
+                "BROWSER_ACTION_NOT_OBSERVED" if not action_observed_ok else "BROWSER_READBACK_MISMATCH"
+            )
 
         body["state"] = normalized_status
         body["ack_epoch"] = now
@@ -468,13 +539,14 @@ class BrowserControlPlane:
                 "carrier_id": carrier_id,
                 "status": normalized_status,
                 "readback_match": readback_ok,
+                "action_observed": action_observed_ok,
                 "error_code": error_code,
             },
         )
         return {
             "schema": ACK_SCHEMA,
             "command": dict(stored["value"]),
-            "browser_action_verified": normalized_status == "VERIFIED" and readback_ok,
+            "browser_action_verified": normalized_status == "VERIFIED" and readback_ok and action_observed_ok,
             "mission_authority_granted": False,
             "provider_authority_granted": False,
         }
