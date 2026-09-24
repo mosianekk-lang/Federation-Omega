@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Mapping, Sequence
 
 SCHEMA = "SOL62_INTELLIGENCE_AMPLIFIER_V1"
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 
 
 class ReasoningMode(str, Enum):
@@ -199,9 +199,13 @@ def compile_intelligence_plan(
         "UNCERTAINTY_CALIBRATION",
         "COUNTERFACTUAL_OR_FALSIFIER",
         "PROOF_BEFORE_PROMOTION",
+        "VALUE_OF_INFORMATION_NEXT_ACTION",
+        "EVIDENCE_DIVERSITY_CONFIDENCE_CAP",
     ]
     if profile.multi_domain:
         checks.append("CROSS_DOMAIN_CONSISTENCY")
+    if profile.complexity >= 0.65 or profile.uncertainty >= 0.65:
+        checks.extend(("ROBUSTNESS_SENSITIVITY_GATE", "STAGNATION_MUTATION_GUARD"))
     if high_assurance:
         checks.extend(("INDEPENDENT_VERIFIER", "FAIL_CLOSED_ON_AMBIGUITY"))
 
@@ -243,6 +247,11 @@ def module_summary() -> Mapping[str, object]:
         "causal_falsification": True,
         "uncertainty_calibration": True,
         "adversarial_proof": True,
+        "value_of_information": True,
+        "hypothesis_tournament": True,
+        "robustness_sensitivity_gate": True,
+        "stagnation_mutation_guard": True,
+        "confidence_calibration": True,
         "external_algorithm_cohort": "HG-EXTALG-001..100",
         "authority_expansion": False,
         "provider_effect_authorized": False,
@@ -250,3 +259,268 @@ def module_summary() -> Mapping[str, object]:
         "truth_root_replacement_allowed": False,
         "chain_of_thought_exposure_allowed": False,
     }
+
+
+# ---- v2 metacognitive residuals ---------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class EvidenceSignal:
+    signal_id: str
+    hypothesis_id: str
+    direction: str
+    source_domain: str
+    reliability: float
+    independence: float
+    currentness: float
+
+    def __post_init__(self) -> None:
+        if self.direction not in {"SUPPORT", "CONTRADICT"}:
+            raise ValueError("direction must be SUPPORT or CONTRADICT")
+        for name in ("reliability", "independence", "currentness"):
+            value = float(getattr(self, name))
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must be between 0 and 1")
+
+
+@dataclass(frozen=True, slots=True)
+class Hypothesis:
+    hypothesis_id: str
+    prior_score: float = 0.5
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= float(self.prior_score) <= 1.0:
+            raise ValueError("prior_score must be between 0 and 1")
+
+
+@dataclass(frozen=True, slots=True)
+class HypothesisAssessment:
+    hypothesis_id: str
+    evidence_score: float
+    support_mass: float
+    contradiction_mass: float
+    independent_domains: int
+    confidence_cap: float
+    unresolved_contradiction: bool
+
+
+def assess_hypotheses(
+    hypotheses: Sequence[Hypothesis],
+    evidence: Sequence[EvidenceSignal],
+) -> tuple[HypothesisAssessment, ...]:
+    """Evidence-weighted tournament; scores are decision aids, not probabilities."""
+    out: list[HypothesisAssessment] = []
+    for hypothesis in hypotheses:
+        relevant = [e for e in evidence if e.hypothesis_id == hypothesis.hypothesis_id]
+        support = sum(
+            e.reliability * e.independence * e.currentness
+            for e in relevant if e.direction == "SUPPORT"
+        )
+        contradict = sum(
+            e.reliability * e.independence * e.currentness
+            for e in relevant if e.direction == "CONTRADICT"
+        )
+        domains = {e.source_domain for e in relevant if e.source_domain}
+        diversity = min(1.0, len(domains) / 3.0)
+        score = max(0.0, min(1.0, hypothesis.prior_score + 0.18 * (support - contradict)))
+        contradiction_ratio = contradict / max(1e-9, support + contradict)
+        cap = min(0.98, 0.60 + 0.30 * diversity + 0.08 * min(1.0, support / 2.0))
+        cap *= max(0.35, 1.0 - 0.65 * contradiction_ratio)
+        score = min(score, cap)
+        out.append(HypothesisAssessment(
+            hypothesis_id=hypothesis.hypothesis_id,
+            evidence_score=round(score, 8),
+            support_mass=round(support, 8),
+            contradiction_mass=round(contradict, 8),
+            independent_domains=len(domains),
+            confidence_cap=round(cap, 8),
+            unresolved_contradiction=contradict >= 0.25,
+        ))
+    return tuple(sorted(out, key=lambda x: (-x.evidence_score, x.hypothesis_id)))
+
+
+@dataclass(frozen=True, slots=True)
+class InvestigationAction:
+    action_id: str
+    expected_information_gain: float
+    discrimination_power: float
+    reversibility: float
+    cost: float
+    latency: float
+    risk: float
+
+    def __post_init__(self) -> None:
+        for name in (
+            "expected_information_gain", "discrimination_power",
+            "reversibility", "cost", "latency", "risk",
+        ):
+            value = float(getattr(self, name))
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must be between 0 and 1")
+
+    def value_of_information_score(self) -> float:
+        return round(
+            0.43 * self.expected_information_gain
+            + 0.29 * self.discrimination_power
+            + 0.13 * self.reversibility
+            - 0.06 * self.cost
+            - 0.05 * self.latency
+            - 0.04 * self.risk,
+            8,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class InvestigationDecision:
+    action_id: str | None
+    score: float
+    continue_investigation: bool
+    reason: str
+
+
+def choose_next_investigation(
+    actions: Sequence[InvestigationAction],
+    *,
+    minimum_information_gain: float = 0.08,
+) -> InvestigationDecision:
+    if not actions:
+        return InvestigationDecision(None, 0.0, False, "NO_CANDIDATE_INVESTIGATION")
+    ranked = sorted(actions, key=lambda a: (-a.value_of_information_score(), a.action_id))
+    best = ranked[0]
+    if best.expected_information_gain < minimum_information_gain:
+        return InvestigationDecision(
+            None,
+            best.value_of_information_score(),
+            False,
+            "MARGINAL_INFORMATION_GAIN_BELOW_THRESHOLD",
+        )
+    return InvestigationDecision(
+        best.action_id,
+        best.value_of_information_score(),
+        True,
+        "HIGHEST_VALUE_OF_INFORMATION",
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class DecisionOption:
+    option_id: str
+    expected_value: float
+    uncertainty: float
+    downside: float
+    reversibility: float
+
+    def __post_init__(self) -> None:
+        for name in ("expected_value", "uncertainty", "downside", "reversibility"):
+            value = float(getattr(self, name))
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must be between 0 and 1")
+
+
+@dataclass(frozen=True, slots=True)
+class RobustDecision:
+    selected_option_id: str | None
+    margin: float
+    stable: bool
+    scores: Mapping[str, float]
+    reason: str
+
+
+def robust_choice(
+    options: Sequence[DecisionOption],
+    *,
+    perturbation: float = 0.10,
+    minimum_margin: float = 0.06,
+) -> RobustDecision:
+    if not options:
+        return RobustDecision(None, 0.0, False, {}, "NO_OPTIONS")
+    if not 0.0 <= perturbation <= 1.0:
+        raise ValueError("perturbation must be between 0 and 1")
+    scores: dict[str, float] = {}
+    for option in options:
+        score = (
+            option.expected_value
+            - (0.55 + perturbation) * option.uncertainty
+            - (0.35 + 0.5 * perturbation) * option.downside
+            + 0.15 * option.reversibility
+        )
+        scores[option.option_id] = round(score, 8)
+    ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+    if len(ranked) == 1:
+        return RobustDecision(ranked[0][0], 1.0, True, scores, "SINGLE_OPTION")
+    margin = ranked[0][1] - ranked[1][1]
+    stable = margin >= minimum_margin
+    return RobustDecision(
+        ranked[0][0] if stable else None,
+        round(margin, 8),
+        stable,
+        scores,
+        "ROBUST_MARGIN_PASS" if stable else "FRAGILE_WINNER_HOLD",
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class AttemptTrace:
+    strategy_family: str
+    outcome_fingerprint: str
+    information_gain: float
+    materially_changed: bool = False
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= float(self.information_gain) <= 1.0:
+            raise ValueError("information_gain must be between 0 and 1")
+
+
+@dataclass(frozen=True, slots=True)
+class StagnationDecision:
+    stagnating: bool
+    change_strategy_required: bool
+    reason: str
+
+
+def detect_stagnation(
+    attempts: Sequence[AttemptTrace],
+    *,
+    window: int = 3,
+    information_gain_floor: float = 0.04,
+) -> StagnationDecision:
+    if window < 2:
+        raise ValueError("window must be at least 2")
+    if len(attempts) < window:
+        return StagnationDecision(False, False, "INSUFFICIENT_HISTORY")
+    recent = list(attempts[-window:])
+    same_family = len({a.strategy_family for a in recent}) == 1
+    same_outcome = len({a.outcome_fingerprint for a in recent}) == 1
+    low_gain = all(a.information_gain <= information_gain_floor for a in recent)
+    no_change = not any(a.materially_changed for a in recent)
+    stagnating = no_change and ((same_family and low_gain) or same_outcome)
+    return StagnationDecision(
+        stagnating,
+        stagnating,
+        "CHANGED_MECHANISM_REQUIRED" if stagnating else "CONTINUE_CURRENT_STRATEGY",
+    )
+
+
+def calibrated_confidence(
+    raw_confidence: float,
+    *,
+    independent_domains: int,
+    contradiction_mass: float,
+    historical_brier: float | None = None,
+    calibration_samples: int = 0,
+) -> float:
+    if not 0.0 <= raw_confidence <= 1.0:
+        raise ValueError("raw_confidence must be between 0 and 1")
+    if contradiction_mass < 0.0:
+        raise ValueError("contradiction_mass cannot be negative")
+    diversity_cap = min(0.98, 0.62 + 0.12 * max(0, independent_domains))
+    sample_cap = 0.80 if calibration_samples < 20 else 0.92 if calibration_samples < 100 else 0.98
+    calibration_cap = 0.98
+    if historical_brier is not None:
+        if not 0.0 <= historical_brier <= 1.0:
+            raise ValueError("historical_brier must be between 0 and 1")
+        calibration_cap = max(0.50, 1.0 - 0.75 * historical_brier)
+    contradiction_cap = max(0.35, 1.0 - min(0.65, 0.30 * contradiction_mass))
+    return round(
+        min(raw_confidence, diversity_cap, sample_cap, calibration_cap, contradiction_cap),
+        8,
+    )
