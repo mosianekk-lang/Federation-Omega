@@ -441,6 +441,9 @@ class Sol62CompleteClientRuntime:
             "client_state_sha256": digest(client["value"]),
             "event_head_before_checkpoint": history["event_head"],
             "event_history_sha256_before_checkpoint": history["history_sha256"],
+            "event_first_seq_before_checkpoint": history["first_seq"],
+            "event_last_seq_before_checkpoint": history["last_seq"],
+            "event_count_manifest_before_checkpoint": history["event_count_manifest"],
             "inflight_effect_ids": inflight,
             "open_interruption_ids": interruptions,
             "authority_expansion": False,
@@ -589,6 +592,58 @@ class Sol62CompleteClientRuntime:
             )
         self.durability_checkpoint(mission_id, reason=f"INTERRUPTION_RESOLVED:{normalized}")
         return stored
+
+    def verify_durability_checkpoint(self, checkpoint_key: str) -> dict[str, Any]:
+        row = self._get("sol62.durable.checkpoint", checkpoint_key)
+        if not row:
+            raise ConstraintError("DURABILITY_CHECKPOINT_NOT_FOUND")
+        checkpoint = dict(row["value"])
+        mission_id = str(checkpoint["mission_id"])
+        first_seq = checkpoint.get("event_first_seq_before_checkpoint")
+        last_seq = checkpoint.get("event_last_seq_before_checkpoint")
+        if first_seq is None or last_seq is None:
+            events: list[dict[str, Any]] = []
+        else:
+            rows = self.runtime.control.db.execute(
+                "SELECT seq,event_id,kind,payload_json,previous_hash,event_hash,created_at "
+                "FROM events WHERE aggregate=? AND seq>=? AND seq<=? ORDER BY seq",
+                (mission_id, int(first_seq), int(last_seq)),
+            ).fetchall()
+            events = [
+                {
+                    "seq": int(event["seq"]),
+                    "event_id": event["event_id"],
+                    "kind": event["kind"],
+                    "payload_sha256": digest(json.loads(event["payload_json"])),
+                    "previous_hash": event["previous_hash"],
+                    "event_hash": event["event_hash"],
+                    "created_at": event["created_at"],
+                }
+                for event in rows
+            ]
+        history_sha = digest(events)
+        event_head = events[-1]["event_hash"] if events else "GENESIS"
+        expected_count = int(checkpoint.get("event_count_manifest_before_checkpoint", 0))
+        verified = (
+            len(events) == expected_count
+            and history_sha == checkpoint["event_history_sha256_before_checkpoint"]
+            and event_head == checkpoint["event_head_before_checkpoint"]
+            and self.runtime.control.verify_event_chain()
+        )
+        return {
+            "schema": "SOL62_DURABILITY_REPLAY_GUARD_V1",
+            "checkpoint_key": checkpoint_key,
+            "mission_id": mission_id,
+            "verified": verified,
+            "event_count_expected": expected_count,
+            "event_count_observed": len(events),
+            "history_sha256_expected": checkpoint["event_history_sha256_before_checkpoint"],
+            "history_sha256_observed": history_sha,
+            "event_head_expected": checkpoint["event_head_before_checkpoint"],
+            "event_head_observed": event_head,
+            "canonical_event_chain_valid": self.runtime.control.verify_event_chain(),
+            "authority_expansion": False,
+        }
 
     def durability_status(self, mission_id: str) -> dict[str, Any]:
         latest = self._get("sol62.durable.checkpoint_latest", mission_id)
@@ -1537,6 +1592,9 @@ class Sol62CompleteClientRuntime:
         if not client:
             raise KeyError(mission_id)
         checkpoint = self.durability_checkpoint(mission_id, reason=f"RESUME:{reason}")
+        replay_guard = self.verify_durability_checkpoint(checkpoint["checkpoint_key"])
+        if not replay_guard["verified"]:
+            raise ProofError("DURABILITY_CHECKPOINT_REPLAY_GUARD_FAILED")
         return {
             "schema": "SOL62_CLIENT_RESUME_PACKET_V1",
             "schema_version": 2,
@@ -1557,4 +1615,6 @@ class Sol62CompleteClientRuntime:
             "event_history_head": checkpoint["event_head_before_checkpoint"],
             "open_interruption_ids": list(checkpoint["open_interruption_ids"]),
             "inflight_effect_ids": list(checkpoint["inflight_effect_ids"]),
+            "replay_guard_verified": True,
+            "replay_guard_history_sha256": replay_guard["history_sha256_observed"],
         }
