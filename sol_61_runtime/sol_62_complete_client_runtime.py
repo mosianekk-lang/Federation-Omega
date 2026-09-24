@@ -17,6 +17,7 @@ try:
     from .sol_62_runtime import ExecutionIntent, MissionSpec, TransitionSpec
     from .sol_62_strict_runtime import Sol62StrictRuntime
     from .sol_62_sovereign_plane_binding import Sol62SovereignPlaneBinding
+    from .sol_62_intelligence_amplifier import CognitionProfile, compile_intelligence_plan
 except ImportError:
     from sol_62_frontier_primitives import (
         AuthorityError,
@@ -28,6 +29,7 @@ except ImportError:
     from sol_62_runtime import ExecutionIntent, MissionSpec, TransitionSpec
     from sol_62_strict_runtime import Sol62StrictRuntime
     from sol_62_sovereign_plane_binding import Sol62SovereignPlaneBinding
+    from sol_62_intelligence_amplifier import CognitionProfile, compile_intelligence_plan
 
 
 SCHEMA = "SOL_6_2_COMPLETE_FUSE_CLIENT_RUNTIME_V1"
@@ -287,6 +289,120 @@ class Sol62CompleteClientRuntime:
             for row in rows
         ]
 
+    def _derive_cognition_profile(
+        self,
+        mission_id: str,
+        transition_id: str | None = None,
+    ) -> CognitionProfile:
+        mission_row = self._get("sol62.mission", mission_id)
+        client_row = self._get("sol62.client.mission", mission_id)
+        if not mission_row or not client_row:
+            raise ConstraintError("SOL62_MISSION_NOT_REGISTERED")
+
+        mission = mission_row["value"]
+        client = client_row["value"]
+        objective = str(mission.get("objective", ""))
+        constraints = tuple(mission.get("constraints", ()))
+        proof_ids = tuple(client.get("proof_ids", ()))
+        total_attempts = int(client.get("total_attempts", 0))
+        last_reason = str(client.get("last_reason", "")).upper()
+
+        transition = {}
+        binding = None
+        if transition_id:
+            row = self._get("sol62.transition", transition_id)
+            transition = dict(row["value"]) if row else {}
+            binding = self._binding(transition_id)
+
+        risk_class = str(transition.get("risk_class", "LOW")).upper()
+        consequential = bool(transition.get("consequential", False))
+        stakes = 0.92 if consequential or risk_class in {"HIGH", "CRITICAL", "R4", "R5"} else 0.62
+        reversibility = 0.30 if consequential else 0.82
+        if binding and binding.rollback_required:
+            reversibility = max(reversibility, 0.52)
+
+        complexity = min(
+            1.0,
+            0.38
+            + min(0.28, len(objective) / 12000.0)
+            + min(0.22, len(constraints) * 0.04)
+            + (0.12 if transition_id else 0.0),
+        )
+        evidence_gap = max(0.18, 0.86 - 0.14 * len(proof_ids))
+        uncertainty = max(0.22, 0.78 - 0.10 * len(proof_ids))
+        novelty = 0.78 if any(
+            marker in last_reason
+            for marker in ("BUILD", "NO_QUALIFIED_ROUTE", "UNBOUND", "EXHAUSTED", "MISSING")
+        ) else 0.48
+        if total_attempts >= 3:
+            novelty = max(novelty, 0.68)
+            uncertainty = max(uncertainty, 0.66)
+
+        failure_domains = {
+            str(row["value"].get("failure_domain", ""))
+            for row in self._rows("sol62.client.route")
+            if row["value"].get("current", True)
+            and row["value"].get("callable", True)
+            and row["value"].get("failure_domain")
+        }
+
+        return CognitionProfile(
+            complexity=round(complexity, 6),
+            stakes=round(stakes, 6),
+            uncertainty=round(uncertainty, 6),
+            novelty=round(novelty, 6),
+            evidence_gap=round(evidence_gap, 6),
+            time_pressure=0.0,
+            reversibility=round(reversibility, 6),
+            multi_domain=len(failure_domains) >= 2,
+        )
+
+    def refresh_intelligence_plan(
+        self,
+        mission_id: str,
+        *,
+        transition_id: str | None = None,
+    ) -> dict[str, Any]:
+        profile = self._derive_cognition_profile(mission_id, transition_id)
+        plan = compile_intelligence_plan(profile)
+        body = {
+            "schema": "SOL62_INTELLIGENCE_PLAN_V1",
+            "mission_id": mission_id,
+            "transition_id": transition_id or "",
+            "profile": dataclasses.asdict(profile),
+            "plan_id": plan.plan_id,
+            "mode": plan.mode.value,
+            "reasoning_budget": plan.reasoning_budget,
+            "max_parallel_strategies": plan.max_parallel_strategies,
+            "selected_strategies": [
+                dataclasses.asdict(item) for item in plan.selected_strategies
+            ],
+            "required_checks": list(plan.required_checks),
+            "stop_conditions": list(plan.stop_conditions),
+            "uncertainty_reporting_required": plan.uncertainty_reporting_required,
+            "independent_verifier_required": plan.independent_verifier_required,
+            "authority_expansion": False,
+            "provider_effect_authorized": False,
+            "goal_mutation_allowed": False,
+            "truth_root_replacement_allowed": False,
+        }
+        key = f"{mission_id}|{transition_id or 'MISSION'}"
+        previous = self._get("sol62.client.intelligence_plan", key)
+        stored = self._put("sol62.client.intelligence_plan", key, body)
+        if not previous or previous["value"].get("plan_id") != plan.plan_id:
+            self.runtime.control.append_event(
+                mission_id,
+                "SOL62_INTELLIGENCE_PLAN_REFRESHED",
+                {
+                    "transition_id": transition_id or "",
+                    "plan_id": plan.plan_id,
+                    "mode": plan.mode.value,
+                    "reasoning_budget": plan.reasoning_budget,
+                    "authority_expansion": False,
+                },
+            )
+        return stored
+
     def create_client_session(
         self,
         session_id: str,
@@ -366,6 +482,7 @@ class Sol62CompleteClientRuntime:
                 "authority_expansion": False,
             },
         )
+        self.refresh_intelligence_plan(mission_id)
         return stored
 
     def bind_transition(self, binding: TransitionBinding) -> dict[str, Any]:
@@ -397,6 +514,8 @@ class Sol62CompleteClientRuntime:
             now_epoch=now_epoch,
             satisfied_constraints=constraints,
         )
+        intelligence_row = self._get("sol62.client.intelligence_plan", f"{mission_id}|MISSION")
+        intelligence_plan = dict(intelligence_row["value"]) if intelligence_row else {}
         return {
             "schema": SCHEMA,
             "mission_id": mission_id,
@@ -405,6 +524,7 @@ class Sol62CompleteClientRuntime:
             "closure": closure,
             "integrity": self.runtime.verify_integrity(),
             "sovereign_plane": self.sovereign_plane.status(),
+            "intelligence_plan": intelligence_plan,
         }
 
     def _binding(self, transition_id: str) -> TransitionBinding | None:
@@ -965,6 +1085,7 @@ class Sol62CompleteClientRuntime:
                 }
 
             transition_id = ready[0]
+            self.refresh_intelligence_plan(mission_id, transition_id=transition_id)
             binding = self._binding(transition_id)
             if binding is None:
                 outcome = await self._apply_harvest(
