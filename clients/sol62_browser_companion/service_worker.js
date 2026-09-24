@@ -3,6 +3,82 @@ const HEARTBEAT_ALARM = "sol62-carrier-heartbeat";
 const OUTBOX_KEY = "pendingCarrierEvents";
 const OUTBOX_LIMIT = 64;
 const HYDRATION_KEY = "pendingMissionHydration";
+const NEW_CHAT_MENU_ID = "sol62-open-new-chat-tab";
+const NEW_CHAT_CONTEXT_KEY = "sol62NewChatContext";
+const NEW_CHAT_OPEN_KEY = "sol62NewChatOpen";
+const NEW_CHAT_CONTEXT_TTL_MS = 8000;
+const NEW_CHAT_DEDUP_MS = 1200;
+
+// Do not turn a relay failure into a mission-state assertion.
+
+function safeChatGptNewChatUrl(candidate) {
+  try {
+    const url = new URL(candidate || "https://chatgpt.com/");
+    if (url.protocol !== "https:" || url.hostname !== "chatgpt.com") {
+      return "https://chatgpt.com/";
+    }
+    if (/^\\/(?:c|share)\\//.test(url.pathname)) {
+      return url.origin + "/";
+    }
+    return url.href;
+  } catch (_) {
+    return "https://chatgpt.com/";
+  }
+}
+
+function ensureNewChatContextMenu() {
+  chrome.contextMenus.remove(NEW_CHAT_MENU_ID, () => {
+    void chrome.runtime.lastError;
+    chrome.contextMenus.create({
+      id: NEW_CHAT_MENU_ID,
+      title: "FUSE — Open New Chat in New Tab",
+      contexts: ["all"],
+      documentUrlPatterns: ["https://chatgpt.com/*"]
+    }, () => void chrome.runtime.lastError);
+  });
+}
+
+async function rememberNewChatContext(tabId, message) {
+  if (typeof tabId !== "number") return;
+  const row = await chrome.storage.session.get({ [NEW_CHAT_CONTEXT_KEY]: {} });
+  const all = row[NEW_CHAT_CONTEXT_KEY] || {};
+  all[String(tabId)] = {
+    observedAt: Number(message.observedAt || Date.now()),
+    ttlMs: Math.min(Number(message.ttlMs || NEW_CHAT_CONTEXT_TTL_MS), NEW_CHAT_CONTEXT_TTL_MS),
+    isNewChat: message.isNewChat === true,
+    confidence: Number(message.confidence || 0),
+    reasons: Array.isArray(message.reasons) ? message.reasons.slice(0, 8) : [],
+    url: safeChatGptNewChatUrl(message.url),
+    nativeLink: message.nativeLink === true
+  };
+  await chrome.storage.session.set({ [NEW_CHAT_CONTEXT_KEY]: all });
+}
+
+async function recentNewChatContext(tabId) {
+  if (typeof tabId !== "number") return null;
+  const row = await chrome.storage.session.get({ [NEW_CHAT_CONTEXT_KEY]: {} });
+  const all = row[NEW_CHAT_CONTEXT_KEY] || {};
+  const item = all[String(tabId)] || null;
+  if (!item) return null;
+  const age = Date.now() - Number(item.observedAt || 0);
+  if (age < 0 || age > Number(item.ttlMs || NEW_CHAT_CONTEXT_TTL_MS)) return null;
+  return item;
+}
+
+async function openNewChatTab(candidateUrl, active = true) {
+  const url = safeChatGptNewChatUrl(candidateUrl);
+  const now = Date.now();
+  const row = await chrome.storage.session.get({ [NEW_CHAT_OPEN_KEY]: null });
+  const prior = row[NEW_CHAT_OPEN_KEY];
+  if (prior && prior.url === url && now - Number(prior.openedAt || 0) < NEW_CHAT_DEDUP_MS) {
+    return { ok: true, deduplicated: true, url };
+  }
+  await chrome.storage.session.set({
+    [NEW_CHAT_OPEN_KEY]: { url, openedAt: now }
+  });
+  const tab = await chrome.tabs.create({ url, active });
+  return { ok: true, deduplicated: false, url, tabId: tab && tab.id };
+}
 
 async function getState() {
   const local = await chrome.storage.local.get({
@@ -244,11 +320,13 @@ async function reportFailure(code) {
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
+  ensureNewChatContextMenu();
   chrome.alarms.create(HEARTBEAT_ALARM, { periodInMinutes: 0.5 });
   try { await registerIfConfigured(); } catch (_) {}
 });
 
 chrome.runtime.onStartup.addListener(async () => {
+  ensureNewChatContextMenu();
   chrome.alarms.create(HEARTBEAT_ALARM, { periodInMinutes: 0.5 });
   try { await registerIfConfigured(); } catch (_) {}
 });
@@ -257,8 +335,30 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === HEARTBEAT_ALARM) heartbeat();
 });
 
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== NEW_CHAT_MENU_ID) return;
+  recentNewChatContext(tab && tab.id)
+    .then((context) => openNewChatTab(
+      context && context.isNewChat ? context.url : "https://chatgpt.com/",
+      true
+    ))
+    .catch(() => {});
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.source !== "SOL62_CHATGPT_OBSERVER") return;
+  if (message.type === "SOL62_NEW_CHAT_CONTEXT") {
+    rememberNewChatContext(sender && sender.tab ? sender.tab.id : undefined, message)
+      .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+  if (message.type === "SOL62_OPEN_NEW_CHAT") {
+    openNewChatTab(message.url, message.disposition !== "background_tab")
+      .then((result) => sendResponse(result))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
   if (message.type === "CHATGPT_CARRIER_FAILURE") {
     reportFailure(message.code || "CHATGPT_UI_UNAVAILABLE")
       .then(() => sendResponse({ ok: true }))
