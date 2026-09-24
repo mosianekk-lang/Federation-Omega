@@ -121,6 +121,24 @@ class CarrierFailoverBody(BaseModel):
     event_id: str = Field(default="", max_length=256)
 
 
+class DurabilityPolicyBody(BaseModel):
+    mode: str = Field(default="EFFECT_BOUNDARY", min_length=1, max_length=64)
+    history_event_limit: int = Field(default=2048, ge=16, le=10000)
+
+
+class DurabilityInterruptBody(BaseModel):
+    interruption_id: str | None = Field(default=None, max_length=256)
+    kind: str = Field(min_length=1, max_length=64)
+    reason: str = Field(min_length=1, max_length=2048)
+    transition_id: str = Field(default="", max_length=256)
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class DurabilityResolutionBody(BaseModel):
+    decision: str = Field(min_length=1, max_length=32)
+    proof_refs: list[str] = Field(default_factory=list, max_length=64)
+
+
 class WorkerIdentityProvider:
     """Server-side workload-identity binding. No browser/client credentials are accepted."""
 
@@ -518,6 +536,106 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
         if not client or client["value"]["owner_subject"] != owner.subject:
             raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
         return ctx.client.mission_status(mission_id)
+
+    @app.get("/v1/missions/{mission_id}/durability")
+    async def mission_durability(
+        mission_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"]["owner_subject"] != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        return ctx.client.durability_status(mission_id)
+
+    @app.put("/v1/missions/{mission_id}/durability/policy")
+    async def set_mission_durability_policy(
+        mission_id: str,
+        body: DurabilityPolicyBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"]["owner_subject"] != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        try:
+            stored = ctx.client.set_durability_policy(
+                mission_id,
+                mode=body.mode,
+                history_event_limit=body.history_event_limit,
+            )
+        except Exception as error:
+            raise HTTPException(status_code=400, detail={"status": "HELD", "reason": str(error)}) from error
+        return {
+            "status": "BOUND",
+            "mission_id": mission_id,
+            "policy": stored["value"],
+            "truth_boundary": "DURABILITY_POLICY_NE_EFFECT_AUTHORITY",
+        }
+
+    @app.post("/v1/missions/{mission_id}/interruptions")
+    async def create_mission_interruption(
+        mission_id: str,
+        body: DurabilityInterruptBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"]["owner_subject"] != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        interruption_id = body.interruption_id or ("int-" + secrets.token_hex(12))
+        try:
+            stored = ctx.client.interrupt_mission(
+                mission_id,
+                interruption_id=interruption_id,
+                kind=body.kind,
+                reason=body.reason,
+                transition_id=body.transition_id,
+                payload=body.payload,
+                now_epoch=int(time.time()),
+            )
+        except Exception as error:
+            raise HTTPException(status_code=400, detail={"status": "HELD", "reason": str(error)}) from error
+        return {
+            "status": "INTERRUPTED",
+            "mission_id": mission_id,
+            "interruption": stored["value"],
+            "effect_authorized": False,
+        }
+
+    @app.post("/v1/missions/{mission_id}/interruptions/{interruption_id}/resolve")
+    async def resolve_mission_interruption(
+        mission_id: str,
+        interruption_id: str,
+        body: DurabilityResolutionBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"]["owner_subject"] != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        try:
+            stored = ctx.client.resolve_interruption(
+                mission_id,
+                interruption_id=interruption_id,
+                decision=body.decision,
+                actor=owner.subject,
+                proof_refs=tuple(body.proof_refs),
+                now_epoch=int(time.time()),
+            )
+        except Exception as error:
+            raise HTTPException(status_code=400, detail={"status": "HELD", "reason": str(error)}) from error
+        return {
+            "status": "RESOLVED",
+            "mission_id": mission_id,
+            "interruption": stored["value"],
+            "effect_authorized": False,
+            "truth_boundary": "INTERRUPTION_DECISION_NE_EFFECT_AUTHORITY",
+        }
 
     @app.get("/v1/missions/{mission_id}/events")
     async def mission_events(
