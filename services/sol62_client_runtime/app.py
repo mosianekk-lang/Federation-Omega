@@ -622,6 +622,26 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "command": command,
         }
 
+    @app.post("/v1/browser/commands/{carrier_id}/{command_id}/authorize")
+    async def authorize_browser_command(
+        carrier_id: str,
+        command_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        try:
+            return ctx.browser_control.authorize_command(
+                command_id,
+                owner_subject=owner.subject,
+                carrier_id=carrier_id,
+            )
+        except (KeyError, ConstraintError) as error:
+            raise HTTPException(
+                status_code=400,
+                detail={"status": "HELD", "reason": str(error)},
+            ) from error
+
     @app.post("/v1/browser/commands/{carrier_id}/{command_id}/ack")
     async def acknowledge_browser_command(
         carrier_id: str,
