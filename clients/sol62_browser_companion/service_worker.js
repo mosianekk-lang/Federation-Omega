@@ -80,6 +80,12 @@ function hydrationReceipt(event, result) {
     replayGuardHistorySha256: resume.replay_guard_history_sha256 || "",
     openInterruptionIds: Array.isArray(resume.open_interruption_ids) ? resume.open_interruption_ids : [],
     inflightEffectIds: Array.isArray(resume.inflight_effect_ids) ? resume.inflight_effect_ids : [],
+    durableWakeStatus: result && result.durable_wake ? (result.durable_wake.status || "") : "",
+    durableWakeTaskId: result && result.durable_wake && result.durable_wake.receipt
+      ? (result.durable_wake.receipt.task_id || "")
+      : "",
+    ownerRetryRequired: result ? result.owner_retry_required === true : false,
+    uiRetryRequired: result ? result.ui_retry_required === true : false,
     receivedAt: Date.now(),
     providerCredentialsIncluded: false,
     transcriptIncluded: false,
@@ -122,6 +128,19 @@ async function acknowledgeHydration(expectedCheckpointSha256) {
   return { ok: true, receipt: acknowledged };
 }
 
+async function enqueueDurableWake(event, result) {
+  if (!event.missionId || !result || result.replacement_carrier_id) return null;
+  if (result.durable_continuation_required !== true) return null;
+  const resume = result.resume_packet
+    || (result.hydration && result.hydration.resume_packet)
+    || null;
+  if (!resume) return null;
+  return api("/v1/missions/" + encodeURIComponent(event.missionId) + "/wake", {
+    method: "POST",
+    body: JSON.stringify({ inline: false }),
+  });
+}
+
 async function deliverCarrierEvent(event) {
   let result;
   if (event.missionId) {
@@ -133,6 +152,8 @@ async function deliverCarrierEvent(event) {
         event_id: event.eventId,
       }),
     });
+    const durableWake = await enqueueDurableWake(event, result);
+    if (durableWake) result = { ...result, durable_wake: durableWake };
     await persistHydration(event, result);
     return result;
   }
@@ -179,7 +200,9 @@ async function registerIfConfigured() {
         "CARRIER_HEARTBEAT",
         "FAILURE_RELAY",
         "DURABLE_LOCAL_OUTBOX",
-        "IDEMPOTENT_REPLAY"
+        "IDEMPOTENT_REPLAY",
+        "STREAM_CACHE_FAILURE_RECOVERY",
+        "AUTO_DURABLE_MISSION_WAKE"
       ],
       failure_domain: "CHATGPT_BROWSER"
     }),
