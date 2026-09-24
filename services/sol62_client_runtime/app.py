@@ -27,6 +27,12 @@ from services.sol62_client_runtime.browser_carrier_resilience import (
     CarrierRegistration,
     SCHEMA as BROWSER_CARRIER_SCHEMA,
 )
+from services.sol62_client_runtime.browser_control_plane import (
+    BrowserControlIntent,
+    BrowserControlPlane,
+    BrowserEffectClass,
+    SCHEMA as BROWSER_CONTROL_SCHEMA,
+)
 from sol_61_runtime.sol_62 import (
     GatewayPolicy,
     MissionSpec,
@@ -132,6 +138,21 @@ class CarrierFailoverBody(BaseModel):
     event_id: str = Field(default="", max_length=256)
 
 
+class BrowserCommandBody(BaseModel):
+    operation: str = Field(min_length=1, max_length=64)
+    args: dict[str, Any] = Field(default_factory=dict)
+    effect_class: str = Field(default="READ_ONLY", min_length=1, max_length=64)
+    expected_readback: dict[str, Any] = Field(default_factory=dict)
+    authority_ref: str = Field(default="", max_length=512)
+    command_id: str = Field(default="", max_length=256)
+
+
+class BrowserCommandAckBody(BaseModel):
+    status: str = Field(min_length=1, max_length=32)
+    readback: dict[str, Any] = Field(default_factory=dict)
+    error_code: str = Field(default="", max_length=128)
+
+
 class DurabilityPolicyBody(BaseModel):
     mode: str = Field(default="EFFECT_BOUNDARY", min_length=1, max_length=64)
     history_event_limit: int = Field(default=2048, ge=16, le=10000)
@@ -210,6 +231,7 @@ class ServiceContext:
         self.sovereign_plane = Sol62SovereignPlaneBinding()
         self.client = Sol62CompleteClientRuntime(self.sol, sovereign_plane=self.sovereign_plane)
         self.browser_carriers = BrowserCarrierSupervisor(self.client)
+        self.browser_control = BrowserControlPlane(self.client)
         self.strategy = Sol62AlphaOmegaFormationBinding(
             workspace=Path(os.getenv("SOL62_STRATEGY_ROOT", "./sol62-strategy-state"))
         )
@@ -293,6 +315,15 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
                 "chat_conversation_is_mission_authority": False,
                 "carrier_loss_is_mission_terminal": False,
                 "effect_replay_on_failover": False,
+            },
+            "browser_control_plane": {
+                "schema": BROWSER_CONTROL_SCHEMA,
+                "bound": True,
+                "typed_command_queue": True,
+                "semantic_dom_control": True,
+                "website_state_requires_authority_ref": True,
+                "browser_is_mission_authority": False,
+                "provider_authority": False,
             },
         }
 
@@ -517,6 +548,102 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
         if not client or client["value"].get("owner_subject") != owner.subject:
             raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
         return ctx.browser_carriers.hydration_packet(mission_id, carrier_id=carrier_id)
+
+    @app.get("/v1/browser/controls/{carrier_id}")
+    async def browser_control_status(
+        carrier_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        row = ctx.client._get("sol62.browser.carrier", carrier_id)
+        if not row or row["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "CARRIER_NOT_FOUND"})
+        return {
+            "capability_twin": ctx.browser_control.capability_twin(
+                carrier_id,
+                owner_subject=owner.subject,
+            ),
+            "queue": ctx.browser_control.status(
+                owner_subject=owner.subject,
+                carrier_id=carrier_id,
+            ),
+        }
+
+    @app.post("/v1/browser/commands/{carrier_id}")
+    async def enqueue_browser_command(
+        carrier_id: str,
+        body: BrowserCommandBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        try:
+            effect_class = BrowserEffectClass(body.effect_class.strip().upper())
+            intent = BrowserControlIntent(
+                operation=body.operation,
+                args=body.args,
+                effect_class=effect_class,
+                expected_readback=body.expected_readback,
+                authority_ref=body.authority_ref,
+                command_id=body.command_id,
+            )
+            return ctx.browser_control.enqueue(
+                owner_subject=owner.subject,
+                carrier_id=carrier_id,
+                intent=intent,
+            )
+        except (ValueError, ConstraintError) as error:
+            raise HTTPException(
+                status_code=400,
+                detail={"status": "HELD", "reason": str(error)},
+            ) from error
+
+    @app.get("/v1/browser/commands/{carrier_id}/next")
+    async def next_browser_command(
+        carrier_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        try:
+            command = ctx.browser_control.next_command(
+                carrier_id,
+                owner_subject=owner.subject,
+            )
+        except (KeyError, ConstraintError) as error:
+            raise HTTPException(
+                status_code=404,
+                detail={"status": "HELD", "reason": str(error)},
+            ) from error
+        return {
+            "schema": BROWSER_CONTROL_SCHEMA,
+            "command": command,
+        }
+
+    @app.post("/v1/browser/commands/{carrier_id}/{command_id}/ack")
+    async def acknowledge_browser_command(
+        carrier_id: str,
+        command_id: str,
+        body: BrowserCommandAckBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        try:
+            return ctx.browser_control.acknowledge(
+                command_id,
+                owner_subject=owner.subject,
+                carrier_id=carrier_id,
+                status=body.status,
+                readback=body.readback,
+                error_code=body.error_code,
+            )
+        except (KeyError, ConstraintError) as error:
+            raise HTTPException(
+                status_code=400,
+                detail={"status": "HELD", "reason": str(error)},
+            ) from error
 
     @app.post("/v1/chat")
     async def chat(
