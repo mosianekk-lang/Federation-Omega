@@ -146,6 +146,43 @@ class BrowserCarrierSupervisor:
     def _now(self, now_epoch: int | None) -> int:
         return int(time.time()) if now_epoch is None else int(now_epoch)
 
+    def _receipt_key(self, event_id: str, kind: str) -> str:
+        return f"{kind}|{event_id}"
+
+    def _receipt(self, event_id: str, kind: str) -> dict[str, Any] | None:
+        if not event_id:
+            return None
+        return self.client._get("sol62.browser.event_receipt", self._receipt_key(event_id, kind))
+
+    def _store_receipt(
+        self,
+        *,
+        event_id: str,
+        kind: str,
+        payload: Mapping[str, Any],
+        result: Mapping[str, Any],
+        now_epoch: int,
+    ) -> None:
+        if not event_id:
+            return
+        body = {
+            "schema": SCHEMA,
+            "event_id": event_id,
+            "kind": kind,
+            "payload_sha256": digest(dict(payload)),
+            "result": dict(result),
+            "created_epoch": int(now_epoch),
+        }
+        self.client._put("sol62.browser.event_receipt", self._receipt_key(event_id, kind), body)
+        self.client.runtime.control.append_event(
+            event_id,
+            "SOL62_BROWSER_EVENT_RECEIPT",
+            {
+                "kind": kind,
+                "payload_sha256": body["payload_sha256"],
+            },
+        )
+
     def register(
         self,
         registration: CarrierRegistration,
@@ -219,12 +256,16 @@ class BrowserCarrierSupervisor:
         carrier_id: str,
         *,
         code: str,
+        event_id: str = "",
         now_epoch: int | None = None,
     ) -> dict[str, Any]:
         row = self.client._get("sol62.browser.carrier", carrier_id)
         if not row:
             raise KeyError(carrier_id)
         now = self._now(now_epoch)
+        failure_receipt = self._receipt(event_id, "CARRIER_FAILURE")
+        if failure_receipt:
+            return dict(failure_receipt["value"]["result"])
         failure = classify_carrier_failure(code)
         body = dict(row["value"])
         body.update(
@@ -247,11 +288,20 @@ class BrowserCarrierSupervisor:
                 "bypass_allowed": failure.bypass_allowed,
             },
         )
-        return {
+        result = {
             "carrier": stored,
             "failure": asdict(failure),
             "mission_continuity": "PRESERVED",
+            "event_id": event_id,
         }
+        self._store_receipt(
+            event_id=event_id,
+            kind="CARRIER_FAILURE",
+            payload={"carrier_id": carrier_id, "code": code},
+            result=result,
+            now_epoch=now,
+        )
+        return result
 
     def _eligible(self, owner_subject: str, *, now_epoch: int) -> list[dict[str, Any]]:
         rows = self.client._rows("sol62.browser.carrier")
@@ -345,10 +395,19 @@ class BrowserCarrierSupervisor:
         owner_subject: str,
         failed_carrier_id: str,
         failure_code: str,
+        event_id: str = "",
         now_epoch: int | None = None,
     ) -> dict[str, Any]:
         now = self._now(now_epoch)
-        failure_result = self.report_failure(failed_carrier_id, code=failure_code, now_epoch=now)
+        failover_receipt = self._receipt(event_id, "MISSION_CARRIER_FAILOVER")
+        if failover_receipt:
+            return dict(failover_receipt["value"]["result"])
+        failure_result = self.report_failure(
+            failed_carrier_id,
+            code=failure_code,
+            event_id=(event_id + ":failure") if event_id else "",
+            now_epoch=now,
+        )
         replacement = self.elect(
             owner_subject=owner_subject,
             now_epoch=now,
@@ -356,7 +415,7 @@ class BrowserCarrierSupervisor:
         )
         inflight = self.client._inflight_for_mission(mission_id)
         if replacement is None:
-            return {
+            result = {
                 "schema": SCHEMA,
                 "state": "WAITING_CARRIER",
                 "mission_id": mission_id,
@@ -366,7 +425,20 @@ class BrowserCarrierSupervisor:
                 "resume_packet": self.client.resume_packet(mission_id, reason="WAITING_CARRIER"),
                 "effect_replay_allowed": False,
                 "inflight_effects": inflight,
+                "event_id": event_id,
             }
+            self._store_receipt(
+                event_id=event_id,
+                kind="MISSION_CARRIER_FAILOVER",
+                payload={
+                    "mission_id": mission_id,
+                    "failed_carrier_id": failed_carrier_id,
+                    "failure_code": failure_code,
+                },
+                result=result,
+                now_epoch=now,
+            )
+            return result
         attachment = self.attach_mission(
             mission_id,
             owner_subject=owner_subject,
@@ -374,7 +446,7 @@ class BrowserCarrierSupervisor:
             now_epoch=now,
         )
         state = "WAITING_EFFECT_READBACK" if inflight else "HYDRATE_REPLACEMENT"
-        return {
+        result = {
             "schema": SCHEMA,
             "state": state,
             "mission_id": mission_id,
@@ -391,7 +463,20 @@ class BrowserCarrierSupervisor:
                 carrier_id=str(replacement["carrier_id"]),
                 now_epoch=now,
             ),
+            "event_id": event_id,
         }
+        self._store_receipt(
+            event_id=event_id,
+            kind="MISSION_CARRIER_FAILOVER",
+            payload={
+                "mission_id": mission_id,
+                "failed_carrier_id": failed_carrier_id,
+                "failure_code": failure_code,
+            },
+            result=result,
+            now_epoch=now,
+        )
+        return result
 
     def hydration_packet(
         self,
