@@ -1218,6 +1218,26 @@ class Sol62CompleteClientRuntime:
             binding=binding,
             objective=mission["objective"],
         )
+        trace_started_ms = int(time.time() * 1000)
+        trace_id = digest({"mission_id": mission_id})[:32]
+        span_id = digest(
+            {
+                "mission_id": mission_id,
+                "transition_id": transition_id,
+                "effect_id": effect_id,
+                "attempt_no": attempt_no,
+            }
+        )[:16]
+        trace_base = {
+            "sol.mission.id_hash": digest(mission_id),
+            "sol.transition.id_hash": digest(transition_id),
+            "sol.effect.id_hash": digest(effect_id),
+            "sol.route.id_hash": digest(route.route_id),
+            "sol.provider": route.provider,
+            "sol.attempt.number": attempt_no,
+            "sol.durability.mode": self._durability_policy(mission_id)["mode"],
+            "sol.authority.expansion": False,
+        }
         try:
             response = await adapter.execute(request)
         except Exception as exc:
@@ -1236,7 +1256,43 @@ class Sol62CompleteClientRuntime:
                 last_reason="ADAPTER_EXCEPTION_EFFECT_STATE_UNKNOWN",
                 next_retry_epoch=now_epoch + self.policy.retry_delay_seconds,
             )
+            self.runtime.trace(
+                trace_id=trace_id,
+                span_id=span_id,
+                parent_span_id=None,
+                kind="provider_attempt",
+                name="sol62.client.execute",
+                started_at_epoch_ms=trace_started_ms,
+                duration_ms=max(0.0, float(int(time.time() * 1000) - trace_started_ms)),
+                status="ERROR",
+                attributes={
+                    **trace_base,
+                    "sol.outcome": "ADAPTER_EXCEPTION",
+                    "sol.error.class": type(exc).__name__,
+                    "sol.error.sha256": digest(str(exc)),
+                    "sol.effect.state": "UNKNOWN",
+                },
+            )
             return {"state": "WAITING_READBACK", "reason": "ADAPTER_EXCEPTION_EFFECT_STATE_UNKNOWN"}
+
+        self.runtime.trace(
+            trace_id=trace_id,
+            span_id=span_id,
+            parent_span_id=None,
+            kind="provider_attempt",
+            name="sol62.client.execute",
+            started_at_epoch_ms=trace_started_ms,
+            duration_ms=max(0.0, float(int(time.time() * 1000) - trace_started_ms)),
+            status="OK" if response.success else "ERROR",
+            attributes={
+                **trace_base,
+                "sol.outcome": "SUCCESS" if response.success else "REJECTED_OR_UNKNOWN",
+                "sol.dispatch.started": bool(response.dispatch_started),
+                "sol.provider.ref_sha256": digest(response.provider_ref) if response.provider_ref else "",
+                "sol.constraint.code": response.constraint_code or "",
+                "sol.readback.sha256": digest(response.readback) if response.readback else "",
+            },
+        )
 
         if not response.success:
             constraint = classify_provider_constraint(response.constraint_code, response.message)
