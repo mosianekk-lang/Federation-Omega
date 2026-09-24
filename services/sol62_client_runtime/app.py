@@ -890,12 +890,47 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
         if not client or client["value"]["owner_subject"] != owner.subject:
             raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
 
+        mission_row = ctx.client._get("sol62.mission", mission_id)
+        objective = str(mission_row["value"]["objective"]) if mission_row else mission_id
+
+        bible_capsule_row = ctx.client._get("sol62.bible.capsule", mission_id)
+        if not bible_capsule_row:
+            bible_capsule = ctx.bibles.compile_capsule(
+                mission_id=mission_id,
+                objective=objective,
+                requested_systems=(),
+                max_bibles=16,
+                max_chars_per_bible=5000,
+            )
+            ctx.sol.control.append_event(
+                mission_id,
+                "SOL62_BIBLE_EMBODIMENT_WAKE_PREPASS",
+                {
+                    "capsule_sha256": bible_capsule["capsule_sha256"],
+                    "selected_bible_count": bible_capsule["selected_bible_count"],
+                    "missing_source_reads": len(bible_capsule["missing_source_reads"]),
+                    "full_corpus_available": ctx.bibles.embodiment_status()["full_corpus_available"],
+                    "authority_widened": False,
+                    "external_effect": False,
+                },
+            )
+        else:
+            bible_capsule = dict(bible_capsule_row["value"])
+
         strategy_row = ctx.client._get("sol62.strategy.receipt", mission_id)
-        if not strategy_row:
-            mission_row = ctx.client._get("sol62.mission", mission_id)
+        strategy_capsule_sha = (
+            str(strategy_row["value"].get("bible_capsule_sha256") or "")
+            if strategy_row
+            else ""
+        )
+        strategy_stale = bool(
+            strategy_row
+            and strategy_capsule_sha
+            and strategy_capsule_sha != bible_capsule["capsule_sha256"]
+        )
+        if not strategy_row or strategy_stale:
             route_rows = ctx.client._rows("sol62.client.route")
             routes = tuple(ctx.client._route(row["value"]) for row in route_rows)
-            objective = str(mission_row["value"]["objective"]) if mission_row else mission_id
             genes = select_upgrade_genes(
                 objective=objective,
                 reason="MISSION_WAKE_PREPASS",
@@ -917,11 +952,20 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
                 objective=objective,
                 reason="MISSION_WAKE_PREPASS",
                 routes=routes,
-                constraints=("proof-before-claim", "no-authority-expansion", "verified-reality-closure"),
+                constraints=(
+                    "proof-before-claim",
+                    "no-authority-expansion",
+                    "verified-reality-closure",
+                    "bible-domain-authority-preserved",
+                    "bible-capsule:" + bible_capsule["capsule_sha256"],
+                ),
                 preferred_surfaces=("FUSE_GATEWAY", "GENESIS", "LOCAL_FUSE"),
                 selected_upgrade_genes=gene_rows,
             )
             strategy_result = alpha_omega_formation_receipt_to_dict(strategy)
+            strategy_result["bible_capsule_sha256"] = bible_capsule["capsule_sha256"]
+            strategy_result["bible_embodiment_full_corpus"] = ctx.bibles.embodiment_status()["full_corpus_available"]
+            strategy_result["bible_missing_source_reads"] = list(bible_capsule["missing_source_reads"])
             ctx.client._put("sol62.strategy.receipt", mission_id, strategy_result)
             ctx.sol.control.append_event(
                 mission_id,
@@ -933,6 +977,9 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
                     "implementation_required": strategy.implementation_required,
                     "formation_foundry_executed": True,
                     "alpha_omega_plan_compiled": strategy.truth_boundary["alpha_omega_plan_compiled"],
+                    "bible_capsule_sha256": bible_capsule["capsule_sha256"],
+                    "bible_embodiment_full_corpus": ctx.bibles.embodiment_status()["full_corpus_available"],
+                    "strategy_recompiled_for_bible_change": strategy_stale,
                     "authority_widened": False,
                     "external_effect": False,
                 },
