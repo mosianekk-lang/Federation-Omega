@@ -142,6 +142,38 @@ class BrowserCarrierResilienceTests(unittest.TestCase):
         self.assertFalse(result.mission_terminal)
         self.assertTrue(result.retry_requires_changed_route)
         self.assertFalse(result.goal_mutation_allowed)
+    def test_duplicate_failover_event_is_idempotent(self):
+        self.register("dead", priority=100)
+        self.register("replacement", priority=90)
+        self.supervisor.attach_mission(
+            "m1",
+            owner_subject="owner",
+            carrier_id="dead",
+            now_epoch=self.now,
+        )
+        first = self.supervisor.failover(
+            "m1",
+            owner_subject="owner",
+            failed_carrier_id="dead",
+            failure_code="CHATGPT_CONVERSATION_LOAD_FAILED",
+            event_id="evt-1",
+            now_epoch=self.now + 1,
+        )
+        second = self.supervisor.failover(
+            "m1",
+            owner_subject="owner",
+            failed_carrier_id="dead",
+            failure_code="CHATGPT_CONVERSATION_LOAD_FAILED",
+            event_id="evt-1",
+            now_epoch=self.now + 2,
+        )
+        self.assertEqual(first["replacement_carrier_id"], second["replacement_carrier_id"])
+        self.assertEqual(
+            first["attachment"]["value"]["mission_carrier_epoch"],
+            second["attachment"]["value"]["mission_carrier_epoch"],
+        )
+        receipts = self.client._rows("sol62.browser.event_receipt")
+        self.assertTrue(any(row["value"]["event_id"] == "evt-1" for row in receipts))
 
     def test_hard_boundary_never_becomes_bypass_authority(self):
         failure = classify_carrier_failure("SAFETY_BOUNDARY")
