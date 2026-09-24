@@ -90,5 +90,33 @@ class Sol62BrowserCompanionSourceContractTests(unittest.TestCase):
         self.assertNotIn('fuseAccessToken: receipt', worker)
 
 
+    def test_new_chat_tab_resilience_is_semantic_and_persistent(self):
+        manifest = json.loads((COMPANION / "manifest.json").read_text(encoding="utf-8"))
+        content = (COMPANION / "content.js").read_text(encoding="utf-8")
+        worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
+        self.assertIn("contextMenus", manifest["permissions"])
+        self.assertIn("semanticNewChatTarget", content)
+        self.assertIn('document.addEventListener("contextmenu"', content)
+        self.assertIn('document.addEventListener("auxclick"', content)
+        self.assertIn("event.ctrlKey || event.metaKey", content)
+        self.assertIn("result.nativeLink", content)
+        self.assertIn("FUSE — Open New Chat in New Tab", worker)
+        self.assertIn("chrome.contextMenus.onClicked", worker)
+        self.assertIn("chrome.tabs.create", worker)
+        self.assertIn("NEW_CHAT_DEDUP_MS", worker)
+        self.assertIn("safeChatGptNewChatUrl", worker)
+
+    def test_new_chat_opening_is_origin_bounded_and_not_click_injection(self):
+        content = (COMPANION / "content.js").read_text(encoding="utf-8")
+        worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
+        self.assertIn('url.hostname !== "chatgpt.com"', content)
+        self.assertIn('url.hostname !== "chatgpt.com"', worker)
+        self.assertIn('url.protocol !== "https:"', worker)
+        self.assertNotIn(".click(", content)
+        self.assertNotIn("document.querySelector", content)
+        self.assertNotIn("document.querySelector", worker)
+
+
+
 if __name__ == "__main__":
     unittest.main()
