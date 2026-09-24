@@ -1,0 +1,54 @@
+{
+  "schema": "SOL62_ASIA_FRONTIER_PROFILE_V1",
+  "frozen_at": "2026-09-24",
+  "target": "Outperform the frozen public China+Japan frontier composite on matched, task-relevant owner-value courts without safety, authority, privacy, portability, or reliability regression.",
+  "base_runtime": {
+    "control": "START:FUSE_ONE v4.43",
+    "sol62_snapshot": "c78419c3ff91a50af54253a062be4484b7bd197a",
+    "admission_pr": 1688,
+    "successor_branch": "f336-sol62-asia-frontier-composite-v1"
+  },
+  "gene_count": 24,
+  "benchmark_dimension_count": 32,
+  "promotion_floor": {
+    "minimum_matched_samples_per_dimension": 12,
+    "minimum_significant_wins_total": 8,
+    "critical_regressions_allowed": 0,
+    "all_dimensions_noninferior_required": true,
+    "independent_judge_required": true,
+    "fresh_cohort_required_after_material_frontier_change": true
+  },
+  "priority": {
+    "P0": [
+      "dynamic_large_scale_subagent_swarm",
+      "live_workflow_over_static_benchmark_evaluation",
+      "deny_first_subprocess_sandbox_then_scoped_escalation",
+      "pareto_capability_cost_model_orchestration",
+      "demonstration_to_safe_replayable_browser_workflow",
+      "guard_embedding_rerank_generation_specialists"
+    ],
+    "P1": [
+      "ultra_long_context_with_externalized_working_set",
+      "task_risk_scaled_thinking_effort",
+      "requirement_to_code_debug_validate_end_to_end",
+      "terminal_agent_bugfix_refactor_complex_task_loop",
+      "web_search_fetch_skill_mcp_exploration",
+      "hybrid_fast_and_slow_thinking_route",
+      "moe_active_parameter_cost_performance_optimization",
+      "dynamic_specialist_model_and_agent_synthesis",
+      "experiment_falsify_learn_recursive_improvement",
+      "unstructured_input_to_multi_system_web_execution",
+      "compact_single_gpu_private_document_vision"
+    ],
+    "P2": [
+      "remote_session_takeover_without_mission_restart",
+      "unified_video_image_audio_text_plus_gui_agent",
+      "multi_model_private_vpc_coding_plane",
+      "clarify_plan_align_then_execute",
+      "typed_optional_code_runtime_capability_seam",
+      "data_operation_and_technology_sovereignty_cell",
+      "japanese_optimized_open_moe_code_and_document_model"
+    ]
+  },
+  "truth_boundary": "PUBLIC_COHORT_FROZEN != IMPLEMENTED != MATCHED_PASS != JUDGE_ACK != SOURCE_ADMITTED != LIVE_RUNTIME != OWNER_VALUE != UNIVERSAL_MARKET_SUPERIORITY"
+}
