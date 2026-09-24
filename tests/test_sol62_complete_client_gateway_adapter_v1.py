@@ -9,6 +9,9 @@ from sol_61_runtime.sol_62_complete_client_runtime import ExecutionRequest, Rout
 
 
 class Executor:
+    route_id = "fuse"
+    provider = "LOCAL_FUSE"
+
     async def execute(self, *, request, decision, identity):
         return ExecutionResult(
             text="done",
