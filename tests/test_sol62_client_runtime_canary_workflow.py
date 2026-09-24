@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "sol62-client-runtime-canary.yml"
 POLICY = ROOT / "governance" / "github_airlock_policy.json"
+DOCKERFILE = ROOT / "services" / "sol62_client_runtime" / "Dockerfile"
 REL = ".github/workflows/sol62-client-runtime-canary.yml"
 TITLE = "[FO-DISPATCH] SOL62_CLIENT_RUNTIME_CANARY_V1"
 
@@ -49,3 +50,21 @@ def test_sol62_canary_proves_meta_intelligence_semantics_before_and_after_deploy
     assert "untrusted_content_has_instruction_authority" in text
     assert "provider_authority_created" in text
     assert "chatgpt_ui_required" in text
+
+def test_sol62_container_has_nonroot_writable_state_roots():
+    text = DOCKERFILE.read_text(encoding="utf-8")
+    assert "USER fuse" in text
+    assert "SOL62_CLIENT_ROOT=/home/fuse/sol62-client-state" in text
+    assert "SOL62_STRATEGY_ROOT=/home/fuse/sol62-strategy-state" in text
+    assert "FUSE_GENESIS_HOST_ROOT=/home/fuse/fuse-host-state" in text
+    assert "chown -R fuse:fuse /home/fuse" in text
+
+def test_sol62_canary_persists_startup_failure_evidence():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "docker logs" in text
+    assert "local-startup.log" in text
+    assert "local-container-inspect.json" in text
+    assert "SOL62_LOCAL_STARTUP_FAILED" in text
+    assert "LOCAL_STARTUP_LOG_SHA256" in text
+    assert "LOCAL_CONTAINER_INSPECT_SHA256" in text
+
