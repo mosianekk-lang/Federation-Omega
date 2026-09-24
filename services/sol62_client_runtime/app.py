@@ -17,7 +17,11 @@ from services.sol62_client_runtime import VERSION
 from services.sol62_client_runtime.gateway_adapter import GatewayChatAdapter
 from services.sol62_client_runtime.autonomous_harvester import FuseAutonomousHarvester
 from services.sol62_client_runtime.capability_registry import compile_registry
-from services.sol62_client_runtime.runtime_upgrade_genome import UPGRADE_GENOME, genome_summary
+from services.sol62_client_runtime.runtime_upgrade_genome import UPGRADE_GENOME, genome_summary, select_upgrade_genes
+from services.sol62_client_runtime.alpha_omega_formation_binding import (
+    Sol62AlphaOmegaFormationBinding,
+    receipt_to_dict as alpha_omega_formation_receipt_to_dict,
+)
 from services.sol62_client_runtime.browser_carrier_resilience import (
     BrowserCarrierSupervisor,
     CarrierRegistration,
@@ -88,6 +92,13 @@ class TransitionBody(BaseModel):
 
 class WakeBody(BaseModel):
     inline: bool = False
+
+
+class StrategyBody(BaseModel):
+    reason: str = Field(default="MISSION_STRATEGY_RECOMPILE", min_length=1, max_length=256)
+    constraints: list[str] = Field(default_factory=list, max_length=64)
+    preferred_surfaces: list[str] = Field(default_factory=list, max_length=32)
+    upgrade_limit: int = Field(default=12, ge=1, le=24)
 
 
 class CarrierRegisterBody(BaseModel):
@@ -199,6 +210,9 @@ class ServiceContext:
         self.sovereign_plane = Sol62SovereignPlaneBinding()
         self.client = Sol62CompleteClientRuntime(self.sol, sovereign_plane=self.sovereign_plane)
         self.browser_carriers = BrowserCarrierSupervisor(self.client)
+        self.strategy = Sol62AlphaOmegaFormationBinding(
+            workspace=Path(os.getenv("SOL62_STRATEGY_ROOT", "./sol62-strategy-state"))
+        )
         self.worker_identity = WorkerIdentityProvider()
         self.genesis = Sol62GenesisWakeBridge(
             os.getenv("FUSE_GENESIS_HOST_ROOT", "./fuse-host-state")
@@ -265,6 +279,14 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "provider_specific_limits_are_mission_terminal": False,
             "capability_registry": compile_registry(gateway_execution_ready=ctx.gateway.execution_ready)["counts"],
             "runtime_upgrade_genome": genome_summary(),
+            "alpha_omega_formation": {
+                "bound": True,
+                "formation_producer": "EVIDENCEOPS-ALGORITHM-FOUNDRY",
+                "alpha_omega_producer": "ALPHA_OMEGA_TURNKEY_BUILD_ENGINE",
+                "authority_ceiling": "A1_INTERNAL",
+                "external_effect": False,
+                "planning_is_execution_proof": False,
+            },
             "browser_carrier_resilience": {
                 "schema": BROWSER_CARRIER_SCHEMA,
                 "bound": True,
@@ -306,6 +328,83 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
                 for gene in UPGRADE_GENOME
             ],
         }
+
+    @app.post("/v1/missions/{mission_id}/strategy")
+    async def compile_mission_strategy(
+        mission_id: str,
+        body: StrategyBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client_mission = ctx.client._get("sol62.client.mission", mission_id)
+        mission = ctx.client._get("sol62.mission", mission_id)
+        if (
+            not client_mission
+            or not mission
+            or client_mission["value"].get("owner_subject") != owner.subject
+        ):
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+
+        route_rows = ctx.client._rows("sol62.client.route")
+        routes = tuple(ctx.client._route(row["value"]) for row in route_rows)
+        genes = select_upgrade_genes(
+            objective=str(mission["value"]["objective"]),
+            reason=body.reason,
+            limit=body.upgrade_limit,
+        )
+        gene_rows = tuple(
+            {
+                "gene_id": gene.gene_id,
+                "category": gene.category,
+                "mechanism": gene.mechanism,
+                "tags": list(gene.tags),
+                "provenance": gene.provenance,
+                "maturity": gene.maturity,
+            }
+            for gene in genes
+        )
+        receipt = ctx.strategy.compile(
+            mission_id=mission_id,
+            objective=str(mission["value"]["objective"]),
+            reason=body.reason,
+            routes=routes,
+            constraints=tuple(body.constraints),
+            preferred_surfaces=tuple(body.preferred_surfaces),
+            selected_upgrade_genes=gene_rows,
+        )
+        result = alpha_omega_formation_receipt_to_dict(receipt)
+        ctx.client._put("sol62.strategy.receipt", mission_id, result)
+        ctx.sol.control.append_event(
+            mission_id,
+            "SOL62_ALPHA_OMEGA_FORMATION_STRATEGY_COMPILED",
+            {
+                "receipt_sha256": receipt.receipt_sha256,
+                "selected_family": receipt.selected_family,
+                "reuse_vs_build": receipt.reuse_vs_build,
+                "implementation_required": receipt.implementation_required,
+                "formation_foundry_executed": receipt.truth_boundary["formation_foundry_executed"],
+                "alpha_omega_plan_compiled": receipt.truth_boundary["alpha_omega_plan_compiled"],
+                "authority_widened": False,
+                "external_effect": False,
+            },
+        )
+        return result
+
+    @app.get("/v1/missions/{mission_id}/strategy")
+    async def read_mission_strategy(
+        mission_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client_mission = ctx.client._get("sol62.client.mission", mission_id)
+        if not client_mission or client_mission["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        row = ctx.client._get("sol62.strategy.receipt", mission_id)
+        if not row:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "STRATEGY_NOT_COMPILED"})
+        return dict(row["value"])
 
     @app.post("/v1/carriers/register")
     async def register_carrier(
