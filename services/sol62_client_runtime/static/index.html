@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SOL 6.2 — FUSE Runtime</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">FUSE-OWNED CLIENT / RUNTIME</p>
+        <h1>SOL 6.2</h1>
+        <p class="sub">Mission truth stays in SOL. Models, providers and browser surfaces are replaceable routes.</p>
+      </div>
+      <div id="health" class="pill">checking runtime…</div>
+    </header>
+
+    <section class="auth panel">
+      <label>FUSE session token <input id="token" type="password" autocomplete="off" placeholder="Bearer session token"></label>
+      <button id="saveToken">Use session</button>
+      <span class="muted">Stored only in this browser tab.</span>
+    </section>
+
+    <nav>
+      <button class="tab active" data-target="chatPanel">Chat</button>
+      <button class="tab" data-target="missionPanel">Missions</button>
+    </nav>
+
+    <section id="chatPanel" class="panel">
+      <h2>FUSE Chat</h2>
+      <div id="chatLog" class="chatlog"></div>
+      <textarea id="chatIntent" placeholder="Give FUSE an objective…"></textarea>
+      <div class="row">
+        <select id="chatMode">
+          <option>AUTO</option><option>THINK</option><option>RESEARCH</option><option>BUILD</option><option>CREATE</option>
+        </select>
+        <button id="sendChat">Send through FUSE</button>
+      </div>
+    </section>
+
+    <section id="missionPanel" class="panel hidden">
+      <h2>Durable Mission</h2>
+      <label>Objective<textarea id="objective" placeholder="Mission objective"></textarea></label>
+      <div class="grid">
+        <label>Initial state<textarea id="initialState">{"state":"OPEN"}</textarea></label>
+        <label>Target state<textarea id="targetState">{"state":"DONE"}</textarea></label>
+      </div>
+      <button id="createMission">Create SOL mission</button>
+      <div id="missionCard" class="mission hidden">
+        <div class="row spread">
+          <strong id="missionId"></strong>
+          <button id="wakeMission">Durable wake</button>
+        </div>
+        <pre id="missionStatus"></pre>
+      </div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
