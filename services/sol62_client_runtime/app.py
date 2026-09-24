@@ -108,6 +108,7 @@ class CarrierHeartbeatBody(BaseModel):
 
 class CarrierFailureBody(BaseModel):
     code: str = Field(min_length=1, max_length=128)
+    event_id: str = Field(default="", max_length=256)
 
 
 class CarrierAttachBody(BaseModel):
@@ -117,6 +118,7 @@ class CarrierAttachBody(BaseModel):
 class CarrierFailoverBody(BaseModel):
     failed_carrier_id: str = Field(min_length=1, max_length=256)
     failure_code: str = Field(min_length=1, max_length=128)
+    event_id: str = Field(default="", max_length=256)
 
 
 class WorkerIdentityProvider:
@@ -336,7 +338,11 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
         row = ctx.client._get("sol62.browser.carrier", carrier_id)
         if not row or row["value"].get("owner_subject") != owner.subject:
             raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "CARRIER_NOT_FOUND"})
-        return ctx.browser_carriers.report_failure(carrier_id, code=body.code)
+        return ctx.browser_carriers.report_failure(
+            carrier_id,
+            code=body.code,
+            event_id=body.event_id,
+        )
 
     @app.post("/v1/missions/{mission_id}/carrier/attach")
     async def attach_mission_carrier(
@@ -371,6 +377,7 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             owner_subject=owner.subject,
             failed_carrier_id=body.failed_carrier_id,
             failure_code=body.failure_code,
+            event_id=body.event_id,
         )
 
     @app.get("/v1/missions/{mission_id}/carrier/hydration")
