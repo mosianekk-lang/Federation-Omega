@@ -146,7 +146,7 @@ async function executeBrowserCommand(command) {
   }
   if (operation === "CREATE_TAB" || operation === "OPEN_NEW_CHAT") {
     const result = await openNewChatTab(args.url || "https://chatgpt.com/", args.active !== false);
-    return { ...result, operation };
+    return { ...result, operation, action_observed: true };
   }
   if (operation === "ACTIVATE_TAB") {
     const tab = await resolveCommandTab(args);
@@ -154,33 +154,33 @@ async function executeBrowserCommand(command) {
     if (updated && Number.isInteger(updated.windowId)) {
       try { await chrome.windows.update(updated.windowId, { focused: true }); } catch (_) {}
     }
-    return { tab: safeChatGptTab(updated), active: true };
+    return { tab: safeChatGptTab(updated), active: true, action_observed: true };
   }
   if (operation === "CLOSE_TAB") {
     const tab = await resolveCommandTab(args);
     await chrome.tabs.remove(tab.tab_id);
-    return { tab_id: tab.tab_id, closed: true };
+    return { tab_id: tab.tab_id, closed: true, action_observed: true };
   }
   if (operation === "RELOAD_TAB") {
     const tab = await resolveCommandTab(args);
     await chrome.tabs.reload(tab.tab_id);
-    return { tab_id: tab.tab_id, reload_requested: true };
+    return { tab_id: tab.tab_id, reload_requested: true, action_observed: true };
   }
   if (operation === "GO_BACK") {
     const tab = await resolveCommandTab(args);
     await chrome.tabs.goBack(tab.tab_id);
-    return { tab_id: tab.tab_id, history_action: "BACK" };
+    return { tab_id: tab.tab_id, history_action: "BACK", action_observed: true };
   }
   if (operation === "GO_FORWARD") {
     const tab = await resolveCommandTab(args);
     await chrome.tabs.goForward(tab.tab_id);
-    return { tab_id: tab.tab_id, history_action: "FORWARD" };
+    return { tab_id: tab.tab_id, history_action: "FORWARD", action_observed: true };
   }
   if (operation === "NAVIGATE_CHATGPT") {
     const tab = await resolveCommandTab(args);
     const url = safeChatGptNewChatUrl(args.url || "https://chatgpt.com/");
     const updated = await chrome.tabs.update(tab.tab_id, { url });
-    return { tab: safeChatGptTab(updated), navigated: true, url };
+    return { tab: safeChatGptTab(updated), navigated: true, url, action_observed: true };
   }
 
   if (
@@ -192,10 +192,33 @@ async function executeBrowserCommand(command) {
   ) {
     const tab = await resolveCommandTab(args);
     const result = await sendSemanticCommand(tab.tab_id, command);
-    return { tab_id: tab.tab_id, semantic: result || {} };
+    return {
+      tab_id: tab.tab_id,
+      semantic: result || {},
+      action_observed: Boolean(result && result.action_observed === true)
+    };
   }
 
   throw new Error("UNSUPPORTED_BROWSER_OPERATION");
+}
+
+async function authorizeBrowserCommand(command) {
+  if (command.effect_class !== "WEBSITE_STATE") return command;
+  const state = await getState();
+  if (!state.carrierId) throw new Error("NO_BROWSER_CARRIER");
+  const envelope = await api(
+    "/v1/browser/commands/"
+      + encodeURIComponent(state.carrierId)
+      + "/"
+      + encodeURIComponent(command.command_id)
+      + "/authorize",
+    { method: "POST", body: "{}" }
+  );
+  const row = envelope && envelope.value ? envelope.value : envelope;
+  if (!row || row.authority_bound !== true) {
+    throw new Error("WEBSITE_STATE_AUTHORITY_NOT_BOUND");
+  }
+  return row;
 }
 
 async function acknowledgeBrowserCommand(command, status, readback = {}, errorCode = "") {
@@ -234,7 +257,8 @@ async function pullAndExecuteBrowserCommand() {
     const command = envelope && envelope.command ? envelope.command : null;
     if (!command) return { command: null };
     try {
-      const readback = await executeBrowserCommand(command);
+      const authorizedCommand = await authorizeBrowserCommand(command);
+      const readback = await executeBrowserCommand(authorizedCommand);
       await acknowledgeBrowserCommand(command, "VERIFIED", readback, "");
       return { command_id: command.command_id, status: "VERIFIED", readback };
     } catch (error) {
