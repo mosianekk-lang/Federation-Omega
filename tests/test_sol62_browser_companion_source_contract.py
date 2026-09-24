@@ -30,6 +30,21 @@ class Sol62BrowserCompanionSourceContractTests(unittest.TestCase):
         self.assertNotIn("sk-", combined)
         self.assertIn("chrome.storage.session", worker)
         self.assertIn("NO_FUSE_SESSION", worker)
+    def test_companion_durably_queues_before_transport(self):
+        worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
+        enqueue_index = worker.index("await enqueueCarrierEvent(event)")
+        flush_index = worker.index("await flushOutbox()", enqueue_index)
+        self.assertGreaterEqual(enqueue_index, 0)
+        self.assertGreater(flush_index, enqueue_index)
+        self.assertIn("pendingCarrierEvents", worker)
+        self.assertIn("event_id", worker)
+        self.assertIn("IDEMPOTENT_REPLAY", worker)
+
+    def test_persistent_outbox_does_not_store_access_token(self):
+        worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
+        self.assertIn("chrome.storage.session", worker)
+        self.assertNotIn('chrome.storage.local.set({ fuseAccessToken', worker)
+        self.assertIn("providerCredentialsIncluded: false", worker)
 
     def test_relay_failure_never_asserts_mission_failure(self):
         worker = (COMPANION / "service_worker.js").read_text(encoding="utf-8")
