@@ -15,6 +15,7 @@ from services.fuse_mobile_gateway.bindings import runtime_from_environment as ga
 from services.fuse_mobile_gateway.runtime import GatewayRuntime, RuntimeBindingError, bearer_token
 from services.sol62_client_runtime import VERSION
 from services.sol62_client_runtime.gateway_adapter import GatewayChatAdapter
+from services.sol62_client_runtime.sovereign_meta_intelligence import SovereignMetaIntelligence
 from services.sol62_client_runtime.autonomous_harvester import FuseAutonomousHarvester
 from services.sol62_client_runtime.capability_registry import compile_registry
 from services.sol62_client_runtime.runtime_upgrade_genome import UPGRADE_GENOME, genome_summary, select_upgrade_genes
@@ -208,6 +209,7 @@ class ServiceContext:
         self.gateway = gateway or gateway_from_environment()
         self.sol = sol or _sol_runtime()
         self.sovereign_plane = Sol62SovereignPlaneBinding()
+        self.meta_intelligence = SovereignMetaIntelligence()
         self.client = Sol62CompleteClientRuntime(self.sol, sovereign_plane=self.sovereign_plane)
         self.browser_carriers = BrowserCarrierSupervisor(self.client)
         self.strategy = Sol62AlphaOmegaFormationBinding(
@@ -271,6 +273,7 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "fuse_executor_provider": ctx.gateway.execution_provider,
             "worker_identity_ready": ctx.worker_identity.ready,
             "sovereign_plane": ctx.sovereign_plane.status(),
+            "sovereign_meta_intelligence": ctx.meta_intelligence.status(),
             "sol_role": "TRANSACTIONAL_MISSION_TRUTH_AND_VERIFIED_TRANSITION_KERNEL",
             "genesis_handoff": "BOUND",
             "hypercube_codeforge_harvest": "BOUND",
@@ -582,6 +585,28 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             )
         )
         ctx.client.bind_mission(mission_id, owner_subject=owner.subject)
+        owner_intent = ctx.meta_intelligence.build_owner_intent(
+            owner_subject=owner.subject,
+            mission_id=mission_id,
+            objective=body.objective,
+            terminal_predicates={
+                "target_state": dict(body.target_state),
+                "success_proofs": list(body.success_proofs),
+            },
+            constraints=tuple(body.constraints),
+        )
+        ctx.client._put("sol62.owner.intent", mission_id, owner_intent)
+        ctx.sol.control.append_event(
+            mission_id,
+            "SOL62_OWNER_INTENT_BOUND",
+            {
+                "owner_subject": owner.subject,
+                "owner_label": owner_intent["owner_label"],
+                "intent_sha256": owner_intent["intent_sha256"],
+                "authority_ceiling": owner_intent["delegated_authority_ceiling"],
+                "external_effect": False,
+            },
+        )
         return ctx.client.mission_status(mission_id)
 
     @app.post("/v1/missions/{mission_id}/transitions")
@@ -643,6 +668,21 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
         if not client or client["value"]["owner_subject"] != owner.subject:
             raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
         return ctx.client.mission_status(mission_id)
+
+    @app.get("/v1/missions/{mission_id}/owner-intent")
+    async def mission_owner_intent(
+        mission_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"]["owner_subject"] != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        row = ctx.client._get("sol62.owner.intent", mission_id)
+        if not row:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "OWNER_INTENT_NOT_BOUND"})
+        return dict(row["value"])
 
     @app.get("/v1/missions/{mission_id}/durability")
     async def mission_durability(
