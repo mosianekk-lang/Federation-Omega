@@ -194,6 +194,7 @@ def compile_intelligence_plan(
 
     checks = [
         "FRESH_EVIDENCE_OR_CURRENTNESS_CHECK",
+        "VALUE_OF_INFORMATION_NEXT_ACTION",
         "ALTERNATIVE_HYPOTHESIS_OR_ROUTE",
         "CONTRADICTION_SCAN",
         "UNCERTAINTY_CALIBRATION",
@@ -203,7 +204,12 @@ def compile_intelligence_plan(
     if profile.multi_domain:
         checks.append("CROSS_DOMAIN_CONSISTENCY")
     if high_assurance:
-        checks.extend(("INDEPENDENT_VERIFIER", "FAIL_CLOSED_ON_AMBIGUITY"))
+        checks.extend((
+            "INDEPENDENT_VERIFIER",
+            "ROBUSTNESS_SENSITIVITY_GATE",
+            "STAGNATION_MUTATION_GUARD",
+            "FAIL_CLOSED_ON_AMBIGUITY",
+        ))
 
     fingerprint = {
         "profile": asdict(profile),
