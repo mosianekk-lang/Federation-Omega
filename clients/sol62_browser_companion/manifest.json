@@ -1,9 +1,14 @@
 {
   "manifest_version": 3,
   "name": "FUSE Sol 6.2 Browser Carrier",
-  "version": "0.2.0",
-  "description": "Detachable browser-carrier health relay for FUSE Sol 6.2. It does not modify ChatGPT controls or bypass provider policy.",
-  "permissions": ["storage", "alarms", "contextMenus"],
+  "version": "0.3.0",
+  "description": "FUSE Sol 6.2 detachable browser carrier with typed, authority-gated ChatGPT browser control and durable failover.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "contextMenus",
+    "tabs"
+  ],
   "host_permissions": [
     "https://chatgpt.com/*",
     "http://127.0.0.1:8762/*",
@@ -14,8 +19,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://chatgpt.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ]
