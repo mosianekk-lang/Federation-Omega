@@ -87,5 +87,18 @@ class Sol62ClientSourceContractTests(unittest.TestCase):
         self.assertIn("goal_mutation_allowed=False", core)
 
 
+    def test_durability_api_is_owner_scoped_and_effect_authority_stays_separate(self):
+        text = (ROOT / "services/sol62_client_runtime/app.py").read_text()
+        for marker in (
+            '"/v1/missions/{mission_id}/durability"',
+            '"/v1/missions/{mission_id}/durability/policy"',
+            '"/v1/missions/{mission_id}/interruptions"',
+            '"/v1/missions/{mission_id}/interruptions/{interruption_id}/resolve"',
+            '"effect_authorized": False',
+            '"INTERRUPTION_DECISION_NE_EFFECT_AUTHORITY"',
+        ):
+            self.assertIn(marker, text)
+
+
 if __name__ == "__main__":
     unittest.main()
