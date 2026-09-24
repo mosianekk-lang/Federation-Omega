@@ -455,5 +455,29 @@ class Sol62CompleteClientRuntimeTests(unittest.TestCase):
         )
 
 
+    def test_provider_attempt_emits_safe_trace_lineage(self):
+        self.register()
+        result = asyncio.run(
+            self.client.wake_until_terminal(
+                "m1",
+                adapter=FakeAdapter([self.success()]),
+                gateway_request=self.gateway,
+                identity_claims=self.claims,
+                worker="test",
+                now_epoch=self.now,
+            )
+        )
+        self.assertEqual(result["state"], "VERIFIED_REALITY")
+        rows = self.rt.control.db.execute(
+            "SELECT payload_json FROM events WHERE kind='SOL62_TRACE_EMITTED' ORDER BY seq"
+        ).fetchall()
+        self.assertGreaterEqual(len(rows), 1)
+        payload = rows[-1]["payload_json"]
+        self.assertIn("sol.provider", payload)
+        self.assertIn("sol.effect.id_hash", payload)
+        self.assertNotIn("complete mission independently", payload)
+        self.assertNotIn("authorization", payload.lower())
+
+
 if __name__ == "__main__":
     unittest.main()
