@@ -2,6 +2,7 @@ const DEFAULT_RUNTIME = "http://127.0.0.1:8762";
 const HEARTBEAT_ALARM = "sol62-carrier-heartbeat";
 const OUTBOX_KEY = "pendingCarrierEvents";
 const OUTBOX_LIMIT = 64;
+const HYDRATION_KEY = "pendingMissionHydration";
 
 async function getState() {
   const local = await chrome.storage.local.get({
@@ -58,9 +59,73 @@ async function enqueueCarrierEvent(event) {
   }
 }
 
+function hydrationReceipt(event, result) {
+  const hydration = result && result.hydration ? result.hydration : null;
+  const resume = hydration && hydration.resume_packet
+    ? hydration.resume_packet
+    : (result && result.resume_packet ? result.resume_packet : null);
+  if (!resume) return null;
+  return {
+    schema: "SOL62_BROWSER_HYDRATION_RECEIPT_V1",
+    eventId: event.eventId,
+    missionId: event.missionId || resume.mission_id || "",
+    failedCarrierId: event.carrierId,
+    replacementCarrierId: (result && result.replacement_carrier_id) || "",
+    failoverState: (result && result.state) || "",
+    hydrationPacketSha256: hydration ? (hydration.packet_sha256 || "") : "",
+    durabilityCheckpointKey: resume.durability_checkpoint_key || "",
+    durabilityCheckpointSha256: resume.durability_checkpoint_sha256 || "",
+    eventHistoryHead: resume.event_history_head || "",
+    replayGuardVerified: resume.replay_guard_verified === true,
+    replayGuardHistorySha256: resume.replay_guard_history_sha256 || "",
+    openInterruptionIds: Array.isArray(resume.open_interruption_ids) ? resume.open_interruption_ids : [],
+    inflightEffectIds: Array.isArray(resume.inflight_effect_ids) ? resume.inflight_effect_ids : [],
+    receivedAt: Date.now(),
+    providerCredentialsIncluded: false,
+    transcriptIncluded: false,
+    acknowledged: false,
+  };
+}
+
+async function persistHydration(event, result) {
+  const receipt = hydrationReceipt(event, result);
+  if (!receipt) return null;
+  const prior = await chrome.storage.local.get({ [HYDRATION_KEY]: null });
+  const existing = prior[HYDRATION_KEY];
+  if (
+    existing
+    && existing.eventId === receipt.eventId
+    && existing.durabilityCheckpointSha256 === receipt.durabilityCheckpointSha256
+  ) {
+    return existing;
+  }
+  await chrome.storage.local.set({ [HYDRATION_KEY]: receipt });
+  return receipt;
+}
+
+async function readHydration() {
+  const row = await chrome.storage.local.get({ [HYDRATION_KEY]: null });
+  return row[HYDRATION_KEY] || null;
+}
+
+async function acknowledgeHydration(expectedCheckpointSha256) {
+  const receipt = await readHydration();
+  if (!receipt) return { ok: false, reason: "NO_PENDING_HYDRATION" };
+  if (
+    expectedCheckpointSha256
+    && receipt.durabilityCheckpointSha256 !== expectedCheckpointSha256
+  ) {
+    return { ok: false, reason: "HYDRATION_CHECKPOINT_MISMATCH" };
+  }
+  const acknowledged = { ...receipt, acknowledged: true, acknowledgedAt: Date.now() };
+  await chrome.storage.local.set({ [HYDRATION_KEY]: acknowledged });
+  return { ok: true, receipt: acknowledged };
+}
+
 async function deliverCarrierEvent(event) {
+  let result;
   if (event.missionId) {
-    return api("/v1/missions/" + encodeURIComponent(event.missionId) + "/carrier/failover", {
+    result = await api("/v1/missions/" + encodeURIComponent(event.missionId) + "/carrier/failover", {
       method: "POST",
       body: JSON.stringify({
         failed_carrier_id: event.carrierId,
@@ -68,6 +133,8 @@ async function deliverCarrierEvent(event) {
         event_id: event.eventId,
       }),
     });
+    await persistHydration(event, result);
+    return result;
   }
   return api("/v1/carriers/" + encodeURIComponent(event.carrierId) + "/failure", {
     method: "POST",
@@ -178,6 +245,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "CHATGPT_CARRIER_HEALTHY") {
     heartbeat()
       .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+  if (message.type === "SOL62_GET_PENDING_HYDRATION") {
+    readHydration()
+      .then((receipt) => sendResponse({ ok: true, receipt }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+  if (message.type === "SOL62_ACK_PENDING_HYDRATION") {
+    acknowledgeHydration(message.durabilityCheckpointSha256 || "")
+      .then((result) => sendResponse(result))
       .catch(() => sendResponse({ ok: false }));
     return true;
   }
