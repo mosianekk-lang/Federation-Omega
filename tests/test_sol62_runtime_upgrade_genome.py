@@ -13,12 +13,12 @@ from services.sol62_client_runtime.runtime_upgrade_genome import (
 
 
 class Sol62RuntimeUpgradeGenomeTests(unittest.TestCase):
-    def test_genome_is_exactly_100_unique_monotonic_genes(self):
+    def test_genome_is_exactly_124_unique_monotonic_genes(self):
         ids = [gene.gene_id for gene in UPGRADE_GENOME]
-        self.assertEqual(len(ids), 100)
-        self.assertEqual(len(set(ids)), 100)
+        self.assertEqual(len(ids), 124)
+        self.assertEqual(len(set(ids)), 124)
         self.assertEqual(ids[0], "HG-SOL62-101")
-        self.assertEqual(ids[-1], "HG-SOL62-200")
+        self.assertEqual(ids[-1], "HG-SOL62-224")
         self.assertEqual(genome_summary()["schema"], GENOME_SCHEMA)
 
     def test_genes_are_candidate_residuals_not_maturity_promotions(self):
@@ -57,12 +57,32 @@ class Sol62RuntimeUpgradeGenomeTests(unittest.TestCase):
             )
         ).build_packet
         genome = packet["runtime_upgrade_genome"]
-        self.assertEqual(genome["summary"]["count"], 100)
+        self.assertEqual(genome["summary"]["count"], 124)
         self.assertGreater(len(genome["selected"]), 0)
         self.assertLessEqual(len(genome["selected"]), 12)
         self.assertEqual(genome["selection_semantic"], "RANKED_CANDIDATE_RESIDUALS_ONLY")
         self.assertFalse(packet["authority_boundary"]["source_mutation_authority_granted"])
         self.assertFalse(packet["authority_boundary"]["provider_effect_authority_granted"])
+
+
+    def test_codex_residuals_are_selectable_without_provider_authority(self):
+        selected = select_upgrade_genes(
+            objective="parallel codex-style worktrees with skills sandbox remote steering",
+            reason="need long-running agent recovery and review queue",
+            limit=16,
+        )
+        ids = {gene.gene_id for gene in selected}
+        self.assertTrue(any(gene_id.startswith("HG-SOL62-2") for gene_id in ids))
+        mechanisms = {gene.mechanism for gene in selected}
+        self.assertTrue(
+            {
+                "isolated_worktree_agent_lane",
+                "lazy_skill_directory_loader",
+                "long_run_harness_recovery",
+            }
+            & mechanisms
+        )
+        self.assertTrue(all(gene.maturity == "CANDIDATE_RESIDUAL" for gene in selected))
 
 
 if __name__ == "__main__":
