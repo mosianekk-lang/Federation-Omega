@@ -46,6 +46,7 @@ from sol_61_runtime.sol_62_complete_client_runtime import (
     TransitionBinding,
 )
 from sol_61_runtime.sol_62_genesis_client_bridge import Sol62GenesisWakeBridge
+from sol_61_runtime.sol_62_frontier_primitives import ConstraintError
 from sol_61_runtime.sol_62_sovereign_plane_binding import Sol62SovereignPlaneBinding
 
 
