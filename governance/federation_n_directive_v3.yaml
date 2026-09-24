@@ -1,5 +1,5 @@
 policy_id: FEDOMEGA-N-DIRECTIVE-V3
-version: 3.0.0
+version: 3.7.0
 owner: Kim Kagiso Mosiane
 state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
 authority_ceiling: A1_INTERNAL
@@ -36,13 +36,21 @@ exact_trigger:
     - promote prompt variants only after measured superiority and green regressions
     - recalculate maturity through the existing strict proof gates
     - continue eligible safe work while another lane is blocked
+    - normalize every blocker into dependency/effect/source/provider/resource collision domains
+    - quarantine only nodes that actually intersect the blocker
+    - before any WAITING or BLOCKED mission status, prove the ready set is empty or work-steal all disjoint ready nodes
+    - GLOBAL_STALL is invalid unless every remaining required nonterminal node causally depends on the same irreducible blocker and no safe preparation/proof/recovery lane exists
+    - a foreign source fence may hold canonical admission for an intersecting write set but must not stop disjoint branch preparation, build, test, proof, PR, provider-read or non-source work
+    - transport interruption requires effect readback before replay whenever tool or external effect completion is uncertain
+    - transport interruption must reroute/rebind rather than wait indefinitely when another safe route exists
     - stop only at COMPLETE_VERIFIED, PRODUCTION_VERIFIED or a genuine owner-reserved decision
 
 
 frontier_capability_adoption:
+  frontier_resilience_interop_contract: federation/frontier_resilience_interop_v1.py
   compiler: benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py
-  full_gene_range: AGF-001..AGF-053
-  latest_clean_room_residuals: AGF-041..AGF-053
+  full_gene_range: AGF-001..AGF-063
+  latest_clean_room_residuals: AGF-054..AGF-063
   auto_select:
     - long_running
     - multi_agent
@@ -100,6 +108,8 @@ parallel_scheduler:
     - LANE-H-DOCUMENTATION_PROOF_LEARNING
   may_parallelize:
     - independent read-only discovery
+    - disjoint branch preparation, build, tests and PR proof even while another source-admission fence is active
+    - disjoint provider mutations only when target, effect, authority, privacy and cost domains are independently proven non-overlapping
     - evidence mapping
     - solution formation
     - architecture analysis
@@ -108,13 +118,231 @@ parallel_scheduler:
     - red-team analysis
     - learning extraction
   must_serialize:
-    - canonical writes
+    - overlapping canonical writes
     - shared-target mutations
-    - provider mutations
-    - external effects
-    - authority-sensitive changes
+    - overlapping provider mutations
+    - overlapping external effects
+    - overlapping authority-sensitive changes
+    - repository-global source paths
   blocked_lane_rule: blocked lane does not stop eligible independent lanes
+  blocker_locality_rule: only proven collision-domain intersections may wait
+  global_stall_rule: GLOBAL_STALL requires empty READY set plus universal causal dependency on one irreducible blocker
+  anti_head_of_line_rule: idle qualified capacity with READY work is a routing defect and triggers immediate work-steal
 
+
+
+
+
+
+
+delivery_proof_tiers:
+  policy_id: FUSE-DELIVERY-PROOF-TIERS-V1
+  tiers:
+    D0_RESULT_READY: immutable result artifact or pointer exists
+    D1_DELIVERY_JOURNALED: DeliveryJournal transaction exact-read succeeds
+    D2_CURRENT_CLIENT_RENDER_VERIFIED: identical result or pointer is verified on the current authorized client/surface
+    D3_EXPLICIT_OWNER_INTERACTION_CONFIRMED: explicit owner interaction references the result
+  default_delivery_complete_tier: D2_CURRENT_CLIENT_RENDER_VERIFIED
+  journal_acknowledged_maps_to: D2_CURRENT_CLIENT_RENDER_VERIFIED
+  human_read_inferred_from_render: false
+  D3_required_for_normal_delivery_complete: false
+  bootstrap_pending_delivery_scan: true
+  exact_hash_visible_on_current_client_may_ack_without_duplicate_redelivery: true
+  pending_priority:
+    - explicit owner requested result
+    - critical/security result
+    - mission terminal result
+    - material failure/hold result
+    - high owner value result
+    - routine completion result
+    - low-value progress result
+  privacy:
+    authorized_surface_only: true
+    preserve_matter_walls: true
+    minimum_necessary_payload: true
+    large_sensitive_artifact_prefer_pointer_hash: true
+
+terminal_delivery_assurance:
+  policy_id: FUSE-TERMINAL-DELIVERY-ASSURANCE-V1
+  existing_primitive: CFRE DeliveryJournal
+  invariant: EXECUTION_COMPLETE is not OWNER_DELIVERY_ACKNOWLEDGED
+  states:
+    - RESULT_READY
+    - ORPHANED_UNACKNOWLEDGED
+    - ACKNOWLEDGED
+  transaction_identity_immutable: true
+  artifact_identity_and_hash_immutable: true
+  on_missing_ack:
+    - mark ORPHANED_UNACKNOWLEDGED
+    - do not rerun underlying mission effects
+    - retain identical terminal artifact or reconstructable pointer
+    - redeliver under same transaction identity through a healthy current client
+    - transition same transaction to ACKNOWLEDGED after verified owner-visible delivery
+  bootstrap_scan_pending_orphans: true
+  owner_delivery_complete_requires_journal_readback: true
+  forbidden:
+    - execution success alone treated as owner delivery
+    - effect replay solely because final response was lost
+    - new transaction identity used to bypass an existing orphan
+    - acknowledged transaction rebound to different content
+
+client_liveness_supervisor:
+  policy_id: FUSE-CLIENT-LIVENESS-SUPERVISOR-V1
+  banner_required_for_detection: false
+  request_lifecycle:
+    - IDLE
+    - REQUEST_ACCEPTED
+    - STREAM_OPEN
+    - RESPONSE_PROGRESS
+    - TOOL_INFLIGHT
+    - TOOL_RESULT_SEEN
+    - RESPONSE_PARTIAL
+    - TERMINAL_ACKED
+    - SUSPECT_NO_PROGRESS
+    - CONFIRMED_STALL
+    - POSSIBLE_EFFECT_PENDING_READBACK
+    - DETACHING
+    - TAKEOVER_PENDING
+    - TAKEN_OVER
+    - OBSERVER_STALE
+  durable_request_journal_required: true
+  stall_detection:
+    pure_elapsed_time_is_not_terminal_failure: true
+    state_specific_grace_policy_required: true
+    suspect_requires_no_meaningful_progress: true
+    confirmed_stall_requires_independent_supporting_signal_or_hard_runtime_policy_boundary: true
+    suspect_action: checkpoint and prepare alternate route without duplicate replay
+    confirmed_action: effect readback then takeover or reroute
+    long_reasoning_progress_prevents_false_takeover: true
+  takeover:
+    expiry_ne_release: true
+    stale_heartbeat_ne_release: true
+    client_epoch_cas_required: true
+    possible_effect_readback_before_new_writer_commit: true
+    takeover_receipt_required: true
+    prior_epoch_becomes_observer_stale: true
+    stale_epoch_auto_send_forbidden: true
+    late_stale_response_reconcile_only: true
+  terminal_ack:
+    response_only_terminal_can_ack_without_provider_effect_receipt: true
+    effectful_terminal_requires_effect_or_provider_readback: true
+    terminal_text_does_not_clear_unknown_effect: true
+  orphan_handling:
+    request_without_terminal_ack_is_nonterminal: true
+    interrupted_tool_marker_without_result: POSSIBLE_EFFECT_PENDING_READBACK
+    tool_result_without_terminal_assistant_response: RESULT_PRESENT_RESPONSE_ORPHANED
+    late_terminal_after_takeover: STALE_EPOCH_RECONCILE_ONLY
+
+chat_failure_continuity_matrix:
+  policy_id: FUSE-CHAT-FAILURE-CONTINUITY-MATRIX-V1
+  source_classifier: existing CFRE
+  classes:
+    TRANSPORT_INTERRUPTION: checkpoint -> effect readback if needed -> rebind -> stale-client fence -> exact-once fan-in
+    SERVER_GENERATION_FAILURE: distinguish response-only from in-flight tool/effect work before retry; alternate qualified model/route when safe
+    STALL_TIMEOUT: bounded health grace -> checkpoint/progress readback -> effect readback if uncertain -> reroute/rebind
+    CONTEXT_PRESSURE: durable checkpoint -> compact working set -> idempotent successor/durable executor; full history stays external
+    TOOL_OR_CONNECTOR_FAILURE: tool outcome readback before retry -> isolate tool lane -> alternate authorized route -> continue disjoint work
+    FILE_OR_ATTACHMENT_FAILURE: verify pointer/digest -> regenerate or reattach from canonical -> continue disjoint work
+    AUTH_OR_SESSION_FAILURE: preserve pending action -> fail closed -> recheck authorized executor; never infer authority
+    RATE_OR_CAPACITY_LIMIT: changed route/work-steal; no global stop
+    CLIENT_RESOURCE_FAILURE: minimal checkpoint -> healthy client/carrier rebind; never infer device-global failure
+    USER_INTERRUPTION: explicit owner stop/cancel is authoritative for that intent; do not auto-resume
+    UNKNOWN_CHAT_FAILURE: checkpoint/minimal telemetry -> effect readback when possible -> lowest-risk alternate route; no blind effect replay
+  cross_tab_takeover:
+    mission_client_epoch_required: true
+    one_effect_writer_per_mission_effect_lane: true
+    verified_takeover_increments_client_epoch: true
+    stale_client_auto_send_forbidden: true
+    observer_tabs_allowed: true
+  partial_response:
+    partial_assistant_text_state: PARTIAL_UNACKED
+    visible_tool_call_without_terminal_answer_state: POSSIBLE_EFFECT_PENDING_READBACK
+    partial_text_is_not_terminal_proof: true
+    preserve_for_context_not_completion: true
+
+chat_transport_continuity:
+  policy_id: FUSE-CHAT-TRANSPORT-CONTINUITY-V1
+  observed_signature: Connection interrupted. Waiting for the complete answer
+  primary_class: TRANSPORT_INTERRUPTION
+  secondary_class: STALL_TIMEOUT
+  invariant: response-stream interruption is client-route failure, not mission stop and not proof of no effect
+  no_response_ne_no_effect: true
+  on_interrupt:
+    - persist mission checkpoint and pending action identity
+    - freeze blind replay when effect state is unknown
+    - read back FDOF effect provider and mission receipts for possibly in-flight actions
+    - classify pending action as NO_EFFECT_PROVEN EFFECT_COMMITTED EFFECT_UNKNOWN or RESPONSE_ONLY
+    - if EFFECT_COMMITTED resume after committed result without replay
+    - if NO_EFFECT_PROVEN or RESPONSE_ONLY resume same atomic action with idempotency identity
+    - if EFFECT_UNKNOWN quarantine only that effect lane and work-steal all disjoint READY work
+    - rebind to a healthy successor or durable client route
+    - fence stale client from duplicate commit after verified takeover
+    - semantic fan-in first verified continuation exactly once
+  forbidden:
+    - blind resend of effectful action
+    - indefinite wait on interrupted chat while safe route exists
+    - owner copy paste of persisted mission state
+  owner_action_required_while_safe_route_exists: false
+
+chat_capacity_continuity:
+  invariant: interactive chat context or weighted-token capacity is a route transition, never mission stop
+  semantic_detection: provider wording independent
+  on_pressure:
+    - checkpoint current mission state
+    - flush durable egress
+    - mark client draining and nonauthoritative
+    - JOIN/REUSE same mission
+    - automatically create or reuse one successor when a live client carrier supports it
+    - otherwise continue through another qualified durable executor
+    - restore a compact capacity-safe working set while full history remains external
+  owner_click_copy_paste_required: false
+
+bible_fleet_completion:
+  fleet_source: current OWN_DOMAIN_CANONICAL rows plus registered Bible nodes
+  future_owning_bibles_auto_inherit: true
+  hydration: metadata/index first; mission-relevant Bible slices only
+  compiler: existing Master Bible Mission Production Compiler
+  semantic_dedupe: JOIN/REUSE existing Work Plane Mission Bus and FDOF identities
+  cross_bible_dependency_graph: required
+  completion_debt:
+    - unresolved Next_Action
+    - unmet terminal predicate
+    - missing required binding runtime provider semantic behaviour production or value proof
+  fleet_complete_only_when: every current required owning Bible is terminal or legitimately superseded with current proof
+
+blocker_containment:
+  policy_id: FUSE-BLOCKER-CONTAINMENT-V1
+  failure_class: CFAIL-20260919-029
+  regression: REG-DISJOINT-SAFE-WORK-CONTINUES-001
+  invariant: one blocker may stop only the nodes that actually depend on or collide with it
+  collision_dimensions:
+    - dependency
+    - source_write_set
+    - provider_target
+    - effect_id
+    - canonical_object
+    - authority_scope
+    - privacy_scope
+    - cost_scope
+    - resource_pool
+  on_blocker:
+    - quarantine intersecting nodes only
+    - recompute READY set immediately
+    - work-steal all disjoint READY nodes
+    - elect alternate qualified execution pools
+    - prepare future dependency outputs early
+    - arm changed-state recheck for blocked domain
+  global_stall_requires:
+    - READY set empty
+    - every remaining required nonterminal node has proven causal dependency on the same irreducible blocker
+    - no safe prepare build test research proof recovery or alternate-route lane remains
+  source_fence:
+    branch_prepare_build_test_pr_non_source_continue: true
+    canonical_admission_waits_only_when_current_coordination_law_requires_it: true
+    fdof_v3_scoped_registry_is_target_for_disjoint_concurrent_admission: true
+  owner_burden:
+    manual_user_tasks_while_safe_route_exists: false
+    owner_action_required_while_safe_route_exists: false
 critical_path_priority:
   - critical blocker
   - blocker-removing infrastructure
@@ -235,3 +463,84 @@ truth_boundary:
   source_merge_is_not_provider_deployment: true
   provider_activation_requires_native_readback: true
   ten_x_is_a_measured_target_not_a_prompt_claim: true
+
+estate_resolution:
+  policy_id: FUSE-ESTATE-RESOLUTION-START433
+  required_before_material_provider_choice_build_or_no_access_claim: true
+  service: estate.resolve
+  capability_state_machine:
+    - CAP-00_UNKNOWN
+    - CAP-10_TOOL_SCHEMA_KNOWN
+    - CAP-20_CONNECTOR_DISCOVERED
+    - CAP-30_AUTH_OR_SESSION_VALID
+    - CAP-40_ROUTE_CALLABLE
+    - CAP-50_ROUTE_EXECUTED
+    - CAP-60_READBACK_VERIFIED
+    - CAP-70_OBJECTIVE_COMPLETE
+  terminal_no_access_requires:
+    - BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED
+    - GENUINE_HARD_SAFETY_OR_PLATFORM_BOUNDARY
+  provider_neutral_runtime_inputs:
+    - Execution Capability Passport
+    - Execution Surface Graph
+    - Capability Federation Map
+    - FIO Surface Authority
+    - Route Memory
+    - Failure Memory
+  local_chat_binding_failure_is_estate_absence: false
+  strategic_task_service: strategy.intelligence
+
+mission_route_portfolio_v2:
+  policy_id: FUSE-MISSION-ROUTE-PORTFOLIO-V2
+  generate_multiple_feasible_portfolios_after_hard_gates: true
+  preserve_incumbent_lkg: true
+  preserve_bounded_pareto_nondominated_challengers: true
+  route_name_diversity_is_failure_independence: false
+  unknown_shared_dependency_counts_as_independent_redundancy: false
+  failure_domain_vector:
+    - provider_company
+    - provider_account_or_project
+    - credential_or_auth_chain
+    - network_or_region
+    - host_or_runtime
+    - queue_or_scheduler
+    - state_store
+    - code_or_release_lineage
+    - model_or_runtime_family
+    - owner_only_gate
+  portfolio_min_cut_required_for_critical_missions: true
+  score: PORTFOLIO_SCORE_V2
+  hysteresis_required: true
+  safe_shadow_or_hedge_effect_free_only: true
+  post_execution_actual_vs_predicted_calibration_required: true
+  degraded_route_replaces_smallest_affected_subgraph: true
+
+more_trigger:
+  input: more
+  semantic_version: BOOTSTRAP_MORE_V2
+  policy_id: FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2
+  cycle:
+    - fresh_read
+    - join_reuse
+    - estate_resolve
+    - auto_sync
+    - auto_repair
+    - auto_converge
+    - missionir_dag_ready_collisions
+    - portfolio_v2_tournament
+    - safe_dispatch_work_steal
+    - auto_harvest_true_residuals
+    - auto_audit
+    - matched_frontier_market_benchmark_when_material
+    - compose_or_build_minimum_residual_if_trailing
+    - verify_readback
+    - learning_regret_update
+    - auto_continue
+  wait_for_another_more_while_safe_ready_work_exists: false
+  best_in_market_self_certification_forbidden: true
+  best_in_market_requires_current_matched_external_evidence_and_independent_proof: true
+  stop_only_at:
+    - terminal_predicates_and_required_proof
+    - irreducible_owner_only_authority_or_consent
+    - all_lawful_routes_exhausted_durable_hold
+    - no_positive_value_action

@@ -100,5 +100,38 @@
       "Federation Omega Airlock",
       "Public Repository Leak Guard"
     ]
+  },
+  "terminalDeliveryAssurance": {
+    "policyId": "FUSE-TERMINAL-DELIVERY-ASSURANCE-V1",
+    "executionCompleteIsDeliveryAcknowledged": false,
+    "states": [
+      "RESULT_READY",
+      "ORPHANED_UNACKNOWLEDGED",
+      "ACKNOWLEDGED"
+    ],
+    "transactionIdentityImmutable": true,
+    "artifactHashImmutable": true,
+    "redeliveryMayAcknowledgeExistingOrphan": true,
+    "redeliveryMayRerunUnderlyingEffect": false,
+    "pendingSweepRequired": true,
+    "ownerVisibleAcknowledgementRequiredForDeliveryComplete": true,
+    "successorClientMayRedeliverSameArtifact": true,
+    "staleClientAcknowledgementAcceptedOnlyIfArtifactTransactionAndCurrentDeliveryPolicyMatch": true
+  },
+  "deliveryProofTiers": {
+    "policyId": "FUSE-DELIVERY-PROOF-TIERS-V1",
+    "tiers": [
+      "D0_RESULT_READY",
+      "D1_DELIVERY_JOURNALED",
+      "D2_CURRENT_CLIENT_RENDER_VERIFIED",
+      "D3_EXPLICIT_OWNER_INTERACTION_CONFIRMED"
+    ],
+    "journalAcknowledgedSemantic": "D2_CURRENT_CLIENT_RENDER_VERIFIED",
+    "humanReadInferredFromRender": false,
+    "explicitOwnerInteractionRequiredForD3": true,
+    "D3RequiredForNormalDeliveryComplete": false,
+    "resultHashDedupeBeforeRedelivery": true,
+    "crossSessionPendingResultHydration": true,
+    "sensitiveResultDelivery": "AUTHORIZED_SURFACE_ONLY_MINIMUM_NECESSARY_POINTER_WHEN_POSSIBLE"
   }
 }

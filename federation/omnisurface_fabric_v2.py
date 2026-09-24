@@ -474,6 +474,16 @@ CURRENT_SURFACES = (
         readback_signals=("event_id", "event_state", "availability"),
     ),
     _surface(
+        "LOCAL-LM-STUDIO", "Local", "LM Studio local runtime", SurfaceState.USER_NAMED_REVALIDATE_RUNTIME,
+        (Protocol.RESPONSES_API, Protocol.REST, MCP_2026),
+        ("local_inference", "model_discovery", "responses", "chat_completions", "embeddings",
+         "tool_calling", "remote_mcp", "stateful_chat", "model_load_unload", "offline_private_runtime"),
+        ("official:lmstudio:openai-compat", "official:lmstudio:rest-v1", "repo:federation:frontier_resilience_interop_v1"),
+        maximum_effect=EffectClass.INTERNAL,
+        readback_signals=("local_server_identity", "model_list", "response_id", "tool_result", "stateful_chat_id"),
+        auth_strategy="LOCALHOST_OR_OWNER_CONFIGURED_LOCAL_TOKEN_REVALIDATE_ON_USE",
+    ),
+    _surface(
         "WINDOWS-FEDERATION-PLANE", "Federation", "Windows Execution Plane", SurfaceState.REPOSITORY_BRIDGE_ADMITTED,
         (MCP_2026, Protocol.FEDERATION_NATIVE),
         ("windows", "computer_use", "local_execution", "hosted_windows", "desktop_automation", "task_receipts"),
