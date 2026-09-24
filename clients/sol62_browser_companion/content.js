@@ -117,6 +117,209 @@
     }).catch(() => {});
   }
 
+  function stableHash(value) {
+    let hash = 2166136261;
+    const text = String(value || "");
+    for (let i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16).padStart(8, "0");
+  }
+
+  function elementRole(element) {
+    return compactText(element.getAttribute("role"))
+      || (element instanceof HTMLButtonElement ? "button"
+        : element instanceof HTMLAnchorElement ? "link"
+        : element instanceof HTMLTextAreaElement ? "textbox"
+        : element instanceof HTMLInputElement ? "textbox"
+        : element instanceof HTMLSelectElement ? "combobox"
+        : element.getAttribute("contenteditable") === "true" ? "textbox"
+        : element.tagName.toLowerCase());
+  }
+
+  function accessibleName(element) {
+    const labelledBy = compactText(element.getAttribute("aria-labelledby"));
+    if (labelledBy) {
+      const label = document.getElementById(labelledBy);
+      if (label) return compactText(label.textContent);
+    }
+    return compactText(
+      element.getAttribute("aria-label")
+      || element.getAttribute("title")
+      || element.getAttribute("placeholder")
+      || element.getAttribute("name")
+      || element.textContent
+    );
+  }
+
+  function elementVisible(element) {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return rect.width > 0
+      && rect.height > 0
+      && style.display !== "none"
+      && style.visibility !== "hidden";
+  }
+
+  function descriptor(element) {
+    const role = elementRole(element);
+    const name = accessibleName(element);
+    const text = compactText(element.textContent);
+    const href = element instanceof HTMLAnchorElement && element.href
+      ? safeNewChatUrl(element.href)
+      : "";
+    const testId = compactText(element.getAttribute("data-testid"));
+    const identity = [
+      element.tagName.toLowerCase(),
+      role,
+      name,
+      text,
+      href,
+      testId
+    ].join("|");
+    const rect = element.getBoundingClientRect();
+    return {
+      stable_id: "sem-" + stableHash(identity),
+      role,
+      name,
+      text,
+      href,
+      disabled: Boolean(element.disabled) || element.getAttribute("aria-disabled") === "true",
+      checked: element.getAttribute("aria-checked") || "",
+      expanded: element.getAttribute("aria-expanded") || "",
+      test_id: testId,
+      rect: {
+        x: Math.round(rect.x),
+        y: Math.round(rect.y),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      }
+    };
+  }
+
+  function interactiveElements() {
+    return Array.from(document.querySelectorAll(
+      'a,button,input,textarea,select,[role],[contenteditable="true"]'
+    )).filter((element) => element instanceof Element && elementVisible(element));
+  }
+
+  function semanticSnapshot() {
+    const controls = interactiveElements().slice(0, 300).map(descriptor);
+    return {
+      schema: "SOL62_SEMANTIC_BROWSER_SNAPSHOT_V1",
+      origin: location.origin,
+      pathname: location.pathname,
+      title: document.title,
+      visibility: document.visibilityState,
+      controls,
+      control_count: controls.length,
+      action_observed: true
+    };
+  }
+
+  function targetScore(desc, target) {
+    let score = 0;
+    if (target.stable_id && desc.stable_id === target.stable_id) score += 0.72;
+    if (target.role && desc.role.toLowerCase() === String(target.role).toLowerCase()) score += 0.12;
+    if (target.name && desc.name.toLowerCase() === String(target.name).trim().toLowerCase()) score += 0.10;
+    if (target.text && desc.text.toLowerCase() === String(target.text).trim().toLowerCase()) score += 0.06;
+    if (target.href && desc.href === target.href) score += 0.12;
+    return Math.min(1, score);
+  }
+
+  function resolveSemanticTarget(target) {
+    const rows = interactiveElements().map((element) => ({
+      element,
+      descriptor: descriptor(element)
+    }));
+    const ranked = rows
+      .map((row) => ({ ...row, score: targetScore(row.descriptor, target || {}) }))
+      .sort((a, b) => b.score - a.score);
+    const best = ranked[0] || null;
+    const second = ranked[1] || null;
+    if (!best || best.score < 0.60) {
+      return { ok: false, reason: "SEMANTIC_TARGET_NOT_FOUND", confidence: best ? best.score : 0 };
+    }
+    if (second && second.score >= best.score - 0.03 && best.score < 0.95) {
+      return { ok: false, reason: "SEMANTIC_TARGET_AMBIGUOUS", confidence: best.score };
+    }
+    return { ok: true, ...best };
+  }
+
+  async function executeSemanticCommand(command) {
+    const operation = String(command.operation || "").toUpperCase();
+    if (operation === "SEMANTIC_SNAPSHOT") return semanticSnapshot();
+
+    const args = command.args || {};
+    const resolved = resolveSemanticTarget(args.target || {});
+    if (!resolved.ok) {
+      return {
+        schema: "SOL62_SEMANTIC_BROWSER_ACTION_V1",
+        operation,
+        verified: false,
+        reason: resolved.reason,
+        confidence: resolved.confidence || 0,
+        action_observed: false
+      };
+    }
+
+    const element = resolved.element;
+    if (operation === "FOCUS_ELEMENT") {
+      element.focus({ preventScroll: true });
+    } else if (operation === "SCROLL_ELEMENT") {
+      element.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+    } else if (operation === "CLICK_ELEMENT") {
+      if (command.effect_class !== "WEBSITE_STATE" || command.authority_bound !== true) {
+        return { verified: false, reason: "WEBSITE_STATE_AUTHORITY_NOT_BOUND", action_observed: false };
+      }
+      if (resolved.descriptor.disabled) {
+        return { verified: false, reason: "SEMANTIC_TARGET_DISABLED", action_observed: false };
+      }
+      element.click();
+    } else if (operation === "FILL_ELEMENT") {
+      if (command.effect_class !== "WEBSITE_STATE" || command.authority_bound !== true) {
+        return { verified: false, reason: "WEBSITE_STATE_AUTHORITY_NOT_BOUND", action_observed: false };
+      }
+      const value = String(args.value ?? "");
+      if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+        const proto = element instanceof HTMLInputElement
+          ? HTMLInputElement.prototype
+          : HTMLTextAreaElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+        if (setter) setter.call(element, value);
+        else element.value = value;
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+        element.dispatchEvent(new Event("change", { bubbles: true }));
+      } else if (element.getAttribute("contenteditable") === "true") {
+        element.focus();
+        element.textContent = value;
+        element.dispatchEvent(new InputEvent("input", {
+          bubbles: true,
+          inputType: "insertText",
+          data: value
+        }));
+      } else {
+        return { verified: false, reason: "SEMANTIC_TARGET_NOT_FILLABLE", action_observed: false };
+      }
+    } else {
+      return { verified: false, reason: "UNSUPPORTED_SEMANTIC_OPERATION", action_observed: false };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    const after = descriptor(element);
+    return {
+      schema: "SOL62_SEMANTIC_BROWSER_ACTION_V1",
+      operation,
+      verified: true,
+      action_observed: true,
+      confidence: resolved.score,
+      target: after,
+      url: location.href,
+      fill_length: operation === "FILL_ELEMENT" ? String(args.value ?? "").length : undefined
+    };
+  }
+
   function inspect() {
     const text = bodyText();
     for (const [marker, code] of FAILURE_MARKERS) {
@@ -165,9 +368,28 @@
     openNewChat(result, "background_tab");
   }, true);
 
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (!message || message.source !== "SOL62_BROWSER_CONTROL") return;
+    if (message.type !== "SOL62_EXECUTE_BROWSER_COMMAND") return;
+    executeSemanticCommand(message.command || {})
+      .then((result) => sendResponse(result))
+      .catch((error) => sendResponse({
+        verified: false,
+        action_observed: false,
+        reason: String((error && error.message) || "SEMANTIC_ACTION_FAILED").slice(0, 128)
+      }));
+    return true;
+  });
+
   const observer = new MutationObserver(inspect);
   observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true });
   document.addEventListener("visibilitychange", inspect);
   setInterval(inspect, 10000);
+  setInterval(() => {
+    chrome.runtime.sendMessage({
+      source: "SOL62_CHATGPT_OBSERVER",
+      type: "SOL62_BROWSER_POLL"
+    }).catch(() => {});
+  }, 5000);
   inspect();
 })();

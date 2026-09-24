@@ -1,5 +1,6 @@
 const DEFAULT_RUNTIME = "http://127.0.0.1:8762";
 const HEARTBEAT_ALARM = "sol62-carrier-heartbeat";
+const CONTROL_POLL_ALARM = "sol62-browser-control-poll";
 const OUTBOX_KEY = "pendingCarrierEvents";
 const OUTBOX_LIMIT = 64;
 const HYDRATION_KEY = "pendingMissionHydration";
@@ -78,6 +79,198 @@ async function openNewChatTab(candidateUrl, active = true) {
   });
   const tab = await chrome.tabs.create({ url, active });
   return { ok: true, deduplicated: false, url, tabId: tab && tab.id };
+}
+
+
+function safeChatGptTab(tab) {
+  if (!tab || typeof tab.id !== "number") return null;
+  try {
+    const url = new URL(tab.url || tab.pendingUrl || "https://chatgpt.com/");
+    if (url.protocol !== "https:" || url.hostname !== "chatgpt.com") return null;
+    return {
+      tab_id: tab.id,
+      window_id: tab.windowId,
+      active: tab.active === true,
+      pinned: tab.pinned === true,
+      status: tab.status || "",
+      url: url.href
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+async function chatGptTabs() {
+  const tabs = await chrome.tabs.query({});
+  return tabs.map(safeChatGptTab).filter(Boolean);
+}
+
+async function resolveCommandTab(args = {}) {
+  if (Number.isInteger(args.tab_id)) {
+    const tab = await chrome.tabs.get(args.tab_id);
+    const safe = safeChatGptTab(tab);
+    if (!safe) throw new Error("CHATGPT_TAB_REQUIRED");
+    return safe;
+  }
+  const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  const active = tabs.map(safeChatGptTab).find(Boolean);
+  if (active) return active;
+  const all = await chatGptTabs();
+  if (!all.length) throw new Error("NO_CHATGPT_TAB");
+  return all[0];
+}
+
+async function sendSemanticCommand(tabId, command) {
+  return chrome.tabs.sendMessage(tabId, {
+    source: "SOL62_BROWSER_CONTROL",
+    type: "SOL62_EXECUTE_BROWSER_COMMAND",
+    command
+  });
+}
+
+async function executeBrowserCommand(command) {
+  const operation = String(command.operation || "").toUpperCase();
+  const args = command.args || {};
+  const websiteState = command.effect_class === "WEBSITE_STATE";
+  if (websiteState && command.authority_bound !== true) {
+    throw new Error("WEBSITE_STATE_AUTHORITY_NOT_BOUND");
+  }
+
+  if (operation === "LIST_TABS") {
+    const tabs = await chatGptTabs();
+    return { tabs, count: tabs.length };
+  }
+  if (operation === "READ_ACTIVE_TAB") {
+    const tab = await resolveCommandTab(args);
+    return { tab };
+  }
+  if (operation === "CREATE_TAB" || operation === "OPEN_NEW_CHAT") {
+    const result = await openNewChatTab(args.url || "https://chatgpt.com/", args.active !== false);
+    return { ...result, operation, action_observed: true };
+  }
+  if (operation === "ACTIVATE_TAB") {
+    const tab = await resolveCommandTab(args);
+    const updated = await chrome.tabs.update(tab.tab_id, { active: true });
+    if (updated && Number.isInteger(updated.windowId)) {
+      try { await chrome.windows.update(updated.windowId, { focused: true }); } catch (_) {}
+    }
+    return { tab: safeChatGptTab(updated), active: true, action_observed: true };
+  }
+  if (operation === "CLOSE_TAB") {
+    const tab = await resolveCommandTab(args);
+    await chrome.tabs.remove(tab.tab_id);
+    return { tab_id: tab.tab_id, closed: true, action_observed: true };
+  }
+  if (operation === "RELOAD_TAB") {
+    const tab = await resolveCommandTab(args);
+    await chrome.tabs.reload(tab.tab_id);
+    return { tab_id: tab.tab_id, reload_requested: true, action_observed: true };
+  }
+  if (operation === "GO_BACK") {
+    const tab = await resolveCommandTab(args);
+    await chrome.tabs.goBack(tab.tab_id);
+    return { tab_id: tab.tab_id, history_action: "BACK", action_observed: true };
+  }
+  if (operation === "GO_FORWARD") {
+    const tab = await resolveCommandTab(args);
+    await chrome.tabs.goForward(tab.tab_id);
+    return { tab_id: tab.tab_id, history_action: "FORWARD", action_observed: true };
+  }
+  if (operation === "NAVIGATE_CHATGPT") {
+    const tab = await resolveCommandTab(args);
+    const url = safeChatGptNewChatUrl(args.url || "https://chatgpt.com/");
+    const updated = await chrome.tabs.update(tab.tab_id, { url });
+    return { tab: safeChatGptTab(updated), navigated: true, url, action_observed: true };
+  }
+
+  if (
+    operation === "SEMANTIC_SNAPSHOT"
+    || operation === "FOCUS_ELEMENT"
+    || operation === "SCROLL_ELEMENT"
+    || operation === "CLICK_ELEMENT"
+    || operation === "FILL_ELEMENT"
+  ) {
+    const tab = await resolveCommandTab(args);
+    const result = await sendSemanticCommand(tab.tab_id, command);
+    return {
+      tab_id: tab.tab_id,
+      semantic: result || {},
+      action_observed: Boolean(result && result.action_observed === true)
+    };
+  }
+
+  throw new Error("UNSUPPORTED_BROWSER_OPERATION");
+}
+
+async function authorizeBrowserCommand(command) {
+  if (command.effect_class !== "WEBSITE_STATE") return command;
+  const state = await getState();
+  if (!state.carrierId) throw new Error("NO_BROWSER_CARRIER");
+  const envelope = await api(
+    "/v1/browser/commands/"
+      + encodeURIComponent(state.carrierId)
+      + "/"
+      + encodeURIComponent(command.command_id)
+      + "/authorize",
+    { method: "POST", body: "{}" }
+  );
+  const row = envelope && envelope.value ? envelope.value : envelope;
+  if (!row || row.authority_bound !== true) {
+    throw new Error("WEBSITE_STATE_AUTHORITY_NOT_BOUND");
+  }
+  return row;
+}
+
+async function acknowledgeBrowserCommand(command, status, readback = {}, errorCode = "") {
+  const state = await getState();
+  if (!state.carrierId) return null;
+  return api(
+    "/v1/browser/commands/"
+      + encodeURIComponent(state.carrierId)
+      + "/"
+      + encodeURIComponent(command.command_id)
+      + "/ack",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        status,
+        readback,
+        error_code: errorCode
+      })
+    }
+  );
+}
+
+let browserCommandPollInFlight = false;
+
+async function pullAndExecuteBrowserCommand() {
+  if (browserCommandPollInFlight) return { skipped: true, reason: "POLL_IN_FLIGHT" };
+  browserCommandPollInFlight = true;
+  try {
+    const state = await getState();
+    if (!state.enabled || !state.carrierId || !state.fuseAccessToken) {
+      return { skipped: true, reason: "CONTROL_NOT_CONFIGURED" };
+    }
+    const envelope = await api(
+      "/v1/browser/commands/" + encodeURIComponent(state.carrierId) + "/next"
+    );
+    const command = envelope && envelope.command ? envelope.command : null;
+    if (!command) return { command: null };
+    try {
+      const authorizedCommand = await authorizeBrowserCommand(command);
+      const readback = await executeBrowserCommand(authorizedCommand);
+      await acknowledgeBrowserCommand(command, "VERIFIED", readback, "");
+      return { command_id: command.command_id, status: "VERIFIED", readback };
+    } catch (error) {
+      const code = String((error && error.message) || "BROWSER_COMMAND_FAILED").slice(0, 128);
+      try { await acknowledgeBrowserCommand(command, "FAILED", {}, code); } catch (_) {}
+      return { command_id: command.command_id, status: "FAILED", error_code: code };
+    }
+  } catch (_) {
+    return { skipped: true, reason: "RUNTIME_UNREACHABLE" };
+  } finally {
+    browserCommandPollInFlight = false;
+  }
 }
 
 async function getState() {
@@ -281,7 +474,20 @@ async function registerIfConfigured() {
         "AUTO_DURABLE_MISSION_WAKE",
         "SEMANTIC_NEW_CHAT_TARGETING",
         "CONTEXT_MENU_NEW_CHAT_TAB",
-        "MODIFIED_CLICK_NEW_CHAT_TAB"
+        "MODIFIED_CLICK_NEW_CHAT_TAB",
+        "TAB_QUERY",
+        "TAB_CREATE",
+        "TAB_ACTIVATE",
+        "TAB_CLOSE",
+        "TAB_RELOAD",
+        "HISTORY_BACK_FORWARD",
+        "SAFE_CHATGPT_NAVIGATION",
+        "SEMANTIC_DOM_SNAPSHOT",
+        "SEMANTIC_FOCUS_SCROLL",
+        "SEMANTIC_CLICK_GATED",
+        "SEMANTIC_FILL_GATED",
+        "TYPED_BROWSER_COMMAND_QUEUE",
+        "SEMANTIC_READBACK"
       ],
       failure_domain: "CHATGPT_BROWSER"
     }),
@@ -325,17 +531,20 @@ async function reportFailure(code) {
 chrome.runtime.onInstalled.addListener(async () => {
   ensureNewChatContextMenu();
   chrome.alarms.create(HEARTBEAT_ALARM, { periodInMinutes: 0.5 });
+  chrome.alarms.create(CONTROL_POLL_ALARM, { periodInMinutes: 0.5 });
   try { await registerIfConfigured(); } catch (_) {}
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   ensureNewChatContextMenu();
   chrome.alarms.create(HEARTBEAT_ALARM, { periodInMinutes: 0.5 });
+  chrome.alarms.create(CONTROL_POLL_ALARM, { periodInMinutes: 0.5 });
   try { await registerIfConfigured(); } catch (_) {}
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === HEARTBEAT_ALARM) heartbeat();
+  if (alarm.name === CONTROL_POLL_ALARM) pullAndExecuteBrowserCommand();
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -371,6 +580,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "CHATGPT_CARRIER_HEALTHY") {
     heartbeat()
       .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+  if (message.type === "SOL62_BROWSER_POLL") {
+    pullAndExecuteBrowserCommand()
+      .then((result) => sendResponse({ ok: true, result }))
       .catch(() => sendResponse({ ok: false }));
     return true;
   }
