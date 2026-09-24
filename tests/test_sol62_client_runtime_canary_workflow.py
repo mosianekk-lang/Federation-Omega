@@ -32,7 +32,12 @@ def test_sol62_canary_is_isolated_authenticated_and_nonproduction():
     assert "--allow-unauthenticated" not in text
     assert "update-traffic" not in text
     assert "get-iam-policy" in text
-    assert "print-identity-token" in text
+    assert "token_format: id_token" in text
+    assert "id_token_audience: https://fuse-sol62-client-canary-257649435135.africa-south1.run.app" in text
+    assert "ID_TOKEN: ${{ steps.auth.outputs.id_token }}" in text
+    assert "gcloud auth print-identity-token" in text
+    assert "--impersonate-service-account=\"$DEPLOYER_SA\"" in text
+    assert "CANARY_AUDIENCE_URL" in text
     assert "PRODUCTION_TRAFFIC_CHANGED: 'false'" in text
     assert "production_traffic_changed" in text
     assert "PUBLIC_INVOCATION=false" in text
@@ -75,4 +80,3 @@ def test_sol62_canary_validates_structured_integrity_contract():
     assert "integrity.get('version') == '6.2'" in text
     assert "integrity.get('event_chain_valid') is True" in text
     assert "integrity.get('inflight_effects') == []" in text
-
