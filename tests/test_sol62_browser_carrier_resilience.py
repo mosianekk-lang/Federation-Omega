@@ -11,7 +11,11 @@ from services.sol62_client_runtime.browser_carrier_resilience import (
     classify_carrier_failure,
 )
 from sol_61_runtime.sol_62 import GatewayPolicy, MissionSpec, Sol62Runtime, WorkloadIdentityPolicy
-from sol_61_runtime.sol_62_complete_client_runtime import Sol62CompleteClientRuntime
+from sol_61_runtime.sol_62_complete_client_runtime import (
+    ConstraintDisposition,
+    Sol62CompleteClientRuntime,
+    classify_provider_constraint,
+)
 
 
 class BrowserCarrierResilienceTests(unittest.TestCase):
@@ -129,6 +133,15 @@ class BrowserCarrierResilienceTests(unittest.TestCase):
         self.assertEqual(result["state"], "WAITING_EFFECT_READBACK")
         self.assertFalse(result["effect_replay_allowed"])
         self.assertTrue(result["inflight_effects"])
+    def test_core_runtime_classifier_matches_browser_supervisor(self):
+        result = classify_provider_constraint(
+            "CHATGPT_CONVERSATION_LOAD_FAILED",
+            "Could not load this ChatGPT conversation",
+        )
+        self.assertEqual(result.disposition, ConstraintDisposition.ROUTE_LOCAL)
+        self.assertFalse(result.mission_terminal)
+        self.assertTrue(result.retry_requires_changed_route)
+        self.assertFalse(result.goal_mutation_allowed)
 
     def test_hard_boundary_never_becomes_bypass_authority(self):
         failure = classify_carrier_failure("SAFETY_BOUNDARY")
