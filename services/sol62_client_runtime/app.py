@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from services.fuse_mobile_gateway.bindings import runtime_from_environment as gateway_from_environment
 from services.fuse_mobile_gateway.runtime import GatewayRuntime, RuntimeBindingError, bearer_token
 from services.sol62_client_runtime import VERSION
+from federation.browser_control_algorithm_genome_v1 import algorithm_summary as browser_algorithm_summary
 from services.sol62_client_runtime.gateway_adapter import GatewayChatAdapter
 from services.sol62_client_runtime.autonomous_harvester import FuseAutonomousHarvester
 from services.sol62_client_runtime.capability_registry import compile_registry
@@ -326,6 +327,7 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
                 "browser_is_mission_authority": False,
                 "provider_authority": False,
             },
+            "browser_control_algorithms": browser_algorithm_summary(),
         }
 
     @app.get("/v1/capabilities")
