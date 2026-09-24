@@ -82,7 +82,14 @@ jobs:
         run: |
           set -euo pipefail
           LOCAL_CONTAINER="sol62-local-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          cleanup() { docker rm --force "$LOCAL_CONTAINER" >/dev/null 2>&1 || true; }
+          mkdir -p /tmp/sol62-canary-receipt
+          capture_local() {
+            set +e
+            docker inspect "$LOCAL_CONTAINER" > /tmp/sol62-canary-receipt/local-container-inspect.json 2>/dev/null || true
+            docker logs "$LOCAL_CONTAINER" > /tmp/sol62-canary-receipt/local-startup.log 2>&1 || true
+            set -e
+          }
+          cleanup() { capture_local || true; docker rm --force "$LOCAL_CONTAINER" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           docker pull "$IMAGE_DIGEST_URI"
           docker run --detach --name "$LOCAL_CONTAINER"             --publish 127.0.0.1:18762:8762             --env SOL62_CLIENT_HOST=0.0.0.0             --env SOL62_CLIENT_PORT=8762             "$IMAGE_DIGEST_URI" >/dev/null
@@ -93,7 +100,15 @@ jobs:
             docker inspect --format='{{.State.Running}}' "$LOCAL_CONTAINER" | grep -Fx true >/dev/null || break
             sleep 1
           done
-          test "$CODE" = '200'
+          if [[ "$CODE" != '200' ]]; then
+            capture_local
+            echo "SOL62_LOCAL_STARTUP_FAILED:health_code=$CODE" >&2
+            cat /tmp/sol62-canary-receipt/local-startup.log >&2 || true
+            exit 72
+          fi
+          capture_local
+          echo "LOCAL_STARTUP_LOG_SHA256=$(sha256sum /tmp/sol62-canary-receipt/local-startup.log | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "LOCAL_CONTAINER_INSPECT_SHA256=$(sha256sum /tmp/sol62-canary-receipt/local-container-inspect.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/sol62-local-health.json',encoding='utf-8'))
@@ -174,6 +189,8 @@ jobs:
             'artifact_registry_push_performed':truth('ARTIFACT_REGISTRY_PUSH_PERFORMED'),
             'cloud_run_deploy_attempted':truth('CLOUD_RUN_DEPLOY_ATTEMPTED'),
             'local_semantic_canary':os.environ.get('LOCAL_SEMANTIC_CANARY'),
+            'local_startup_log_sha256':os.environ.get('LOCAL_STARTUP_LOG_SHA256'),
+            'local_container_inspect_sha256':os.environ.get('LOCAL_CONTAINER_INSPECT_SHA256'),
             'provider_semantic_canary':os.environ.get('PROVIDER_SEMANTIC_CANARY'),
             'provider_mutation_performed':truth('ARTIFACT_REGISTRY_PUSH_PERFORMED') or truth('CLOUD_RUN_DEPLOY_ATTEMPTED'),
             'production_traffic_changed':truth('PRODUCTION_TRAFFIC_CHANGED'),
