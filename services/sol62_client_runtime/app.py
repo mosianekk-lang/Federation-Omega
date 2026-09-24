@@ -18,6 +18,7 @@ from services.sol62_client_runtime.gateway_adapter import GatewayChatAdapter
 from services.sol62_client_runtime.autonomous_harvester import FuseAutonomousHarvester
 from services.sol62_client_runtime.capability_registry import compile_registry
 from services.sol62_client_runtime.runtime_upgrade_genome import UPGRADE_GENOME, genome_summary, select_upgrade_genes
+from services.sol62_client_runtime.bible_embodiment import BibleEmbodimentFabric
 from services.sol62_client_runtime.alpha_omega_formation_binding import (
     Sol62AlphaOmegaFormationBinding,
     receipt_to_dict as alpha_omega_formation_receipt_to_dict,
@@ -92,6 +93,21 @@ class TransitionBody(BaseModel):
 
 class WakeBody(BaseModel):
     inline: bool = False
+
+
+class BibleSnapshotBody(BaseModel):
+    bible_id: str = Field(min_length=1, max_length=256)
+    source_ref: str = Field(min_length=1, max_length=512)
+    title: str = Field(min_length=1, max_length=512)
+    text: str = Field(min_length=1, max_length=5_000_000)
+    revision: str = Field(default="", max_length=512)
+    freshness: str = Field(default="PROVIDER_READBACK", max_length=128)
+
+
+class BibleCapsuleBody(BaseModel):
+    requested_systems: list[str] = Field(default_factory=list, max_length=64)
+    max_bibles: int = Field(default=16, ge=1, le=39)
+    max_chars_per_bible: int = Field(default=5000, ge=500, le=20000)
 
 
 class StrategyBody(BaseModel):
@@ -209,6 +225,8 @@ class ServiceContext:
         self.sol = sol or _sol_runtime()
         self.sovereign_plane = Sol62SovereignPlaneBinding()
         self.client = Sol62CompleteClientRuntime(self.sol, sovereign_plane=self.sovereign_plane)
+        self.bibles = BibleEmbodimentFabric(self.client)
+        self.bible_manifest_receipt = self.bibles.register_manifest()
         self.browser_carriers = BrowserCarrierSupervisor(self.client)
         self.strategy = Sol62AlphaOmegaFormationBinding(
             workspace=Path(os.getenv("SOL62_STRATEGY_ROOT", "./sol62-strategy-state"))
@@ -279,6 +297,7 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "provider_specific_limits_are_mission_terminal": False,
             "capability_registry": compile_registry(gateway_execution_ready=ctx.gateway.execution_ready)["counts"],
             "runtime_upgrade_genome": genome_summary(),
+            "bible_embodiment": ctx.bibles.embodiment_status(),
             "alpha_omega_formation": {
                 "bound": True,
                 "formation_producer": "EVIDENCEOPS-ALGORITHM-FOUNDRY",
@@ -328,6 +347,88 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
                 for gene in UPGRADE_GENOME
             ],
         }
+
+    @app.get("/v1/bibles/status")
+    async def bible_status(
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        await identity(authorization, x_fuse_authorization)
+        return ctx.bibles.embodiment_status()
+
+    @app.get("/v1/bibles/manifest")
+    async def bible_manifest(
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        await identity(authorization, x_fuse_authorization)
+        return {
+            "schema": ctx.bibles.manifest.payload["schema"],
+            "entry_count": len(ctx.bibles.manifest.entries),
+            "invariants": list(ctx.bibles.manifest.payload.get("invariants") or ()),
+            "entries": [dict(item) for item in ctx.bibles.manifest.entries],
+        }
+
+    @app.post("/v1/bibles/snapshots")
+    async def ingest_bible_snapshot(
+        body: BibleSnapshotBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        stored = ctx.bibles.ingest_snapshot(
+            bible_id=body.bible_id,
+            source_ref=body.source_ref,
+            title=body.title,
+            text=body.text,
+            revision=body.revision,
+            freshness=body.freshness,
+        )
+        return {
+            "owner_subject": owner.subject,
+            "snapshot": stored,
+            "coverage": ctx.bibles.snapshot_coverage(),
+            "authority_expansion": False,
+        }
+
+    @app.post("/v1/missions/{mission_id}/bible-capsule")
+    async def compile_bible_capsule(
+        mission_id: str,
+        body: BibleCapsuleBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client_mission = ctx.client._get("sol62.client.mission", mission_id)
+        mission = ctx.client._get("sol62.mission", mission_id)
+        if (
+            not client_mission
+            or not mission
+            or client_mission["value"].get("owner_subject") != owner.subject
+        ):
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        return ctx.bibles.compile_capsule(
+            mission_id=mission_id,
+            objective=str(mission["value"]["objective"]),
+            requested_systems=tuple(body.requested_systems),
+            max_bibles=body.max_bibles,
+            max_chars_per_bible=body.max_chars_per_bible,
+        )
+
+    @app.get("/v1/missions/{mission_id}/bible-capsule")
+    async def read_bible_capsule(
+        mission_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client_mission = ctx.client._get("sol62.client.mission", mission_id)
+        if not client_mission or client_mission["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        row = ctx.client._get("sol62.bible.capsule", mission_id)
+        if not row:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "BIBLE_CAPSULE_NOT_COMPILED"})
+        return dict(row["value"])
 
     @app.post("/v1/missions/{mission_id}/strategy")
     async def compile_mission_strategy(
