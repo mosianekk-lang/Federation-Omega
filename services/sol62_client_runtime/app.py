@@ -406,6 +406,14 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "STRATEGY_NOT_COMPILED"})
         return dict(row["value"])
 
+    @app.get("/v1/carriers/federation")
+    async def carrier_federation_status(
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        return ctx.browser_carriers.federation_status(owner_subject=owner.subject)
+
     @app.post("/v1/carriers/register")
     async def register_carrier(
         body: CarrierRegisterBody,
