@@ -435,5 +435,25 @@ class Sol62CompleteClientRuntimeTests(unittest.TestCase):
         self.assertNotIn("payload", after["events"][0])
 
 
+    def test_durability_checkpoint_replay_guard_verifies_exact_history_prefix(self):
+        self.register()
+        packet = self.client.resume_packet("m1", reason="REPLAY_GUARD_TEST")
+        guard = self.client.verify_durability_checkpoint(packet["durability_checkpoint_key"])
+        self.assertTrue(guard["verified"])
+        self.assertTrue(packet["replay_guard_verified"])
+        self.assertEqual(
+            packet["replay_guard_history_sha256"],
+            guard["history_sha256_observed"],
+        )
+        self.assertEqual(
+            guard["history_sha256_observed"],
+            guard["history_sha256_expected"],
+        )
+        self.assertEqual(
+            guard["event_head_observed"],
+            guard["event_head_expected"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
