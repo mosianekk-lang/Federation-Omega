@@ -68,3 +68,11 @@ def test_sol62_canary_persists_startup_failure_evidence():
     assert "LOCAL_STARTUP_LOG_SHA256" in text
     assert "LOCAL_CONTAINER_INSPECT_SHA256" in text
 
+def test_sol62_canary_validates_structured_integrity_contract():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "assert d.get('sol_integrity') is True" not in text
+    assert "integrity=d.get('sol_integrity') or {}" in text
+    assert "integrity.get('version') == '6.2'" in text
+    assert "integrity.get('event_chain_valid') is True" in text
+    assert "integrity.get('inflight_effects') == []" in text
+
