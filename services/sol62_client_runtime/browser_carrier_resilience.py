@@ -32,6 +32,9 @@ ROUTE_LOCAL_FAILURES = frozenset(
         "CHATGPT_CHAT_LOAD_FAILED",
         "CHATGPT_TAB_CLOSED",
         "CHATGPT_UI_UNAVAILABLE",
+        "STREAM_CACHE_EXPIRED",
+        "CHATGPT_STREAM_INTERRUPTED",
+        "CHATGPT_RESPONSE_STREAM_LOST",
         "BROWSER_TAB_CRASHED",
         "BROWSER_RENDER_FAILED",
         "NETWORK_TRANSIENT",
@@ -420,15 +423,21 @@ class BrowserCarrierSupervisor:
         )
         inflight = self.client._inflight_for_mission(mission_id)
         if replacement is None:
+            continuation_state = "WAITING_EFFECT_READBACK" if inflight else "DURABLE_CONTINUATION_READY"
             result = {
                 "schema": SCHEMA,
-                "state": "WAITING_CARRIER",
+                "state": continuation_state,
                 "mission_id": mission_id,
                 "failed_carrier_id": failed_carrier_id,
                 "failure": failure_result["failure"],
                 "mission_terminal": False,
-                "resume_packet": self.client.resume_packet(mission_id, reason="WAITING_CARRIER"),
+                "resume_packet": self.client.resume_packet(mission_id, reason=continuation_state),
                 "effect_replay_allowed": False,
+                "effect_readback_before_retry": True,
+                "durable_continuation_required": True,
+                "continuation_mode": "SOL62_GENESIS_WAKE",
+                "owner_retry_required": False,
+                "ui_retry_required": False,
                 "inflight_effects": inflight,
                 "event_id": event_id,
             }
@@ -462,6 +471,10 @@ class BrowserCarrierSupervisor:
             "attachment": attachment,
             "effect_replay_allowed": False,
             "effect_readback_before_retry": True,
+            "durable_continuation_required": False,
+            "continuation_mode": "CLIENT_REHYDRATION",
+            "owner_retry_required": False,
+            "ui_retry_required": False,
             "inflight_effects": inflight,
             "hydration": self.hydration_packet(
                 mission_id,
