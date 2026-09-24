@@ -249,3 +249,23 @@ AGF-063 OAuth Issuer / Dynamic-Client Mix-Up Hardening
 ### Proof boundary
 
 Source adoption means the frontier compiler knows how to select and compose these mechanisms. It does not prove a Chrome offscreen runtime, OpenAI background job, A2A server, Temporal/Durable Task worker, Google Agent Engine session, local LM Studio server, or any provider OAuth flow is currently bound or authorized. Those remain action-specific runtime/provider/behavior/value courts.
+
+
+## External Algorithm Genome 100 — START v4.37
+
+Control cohort: `HG-EXTALG-001..100` / `CFM-EXTALG100-001`.
+
+This cohort is an external-mechanism harvest pool, not 100 source-admitted features. Startup carries only metadata. A material mission gap triggers lazy source refresh, overlap/equivalence/superset collapse against existing FUSE mechanisms, then the strongest lawful disposition. New code is allowed only for a true residual.
+
+Families:
+- 001..020 reasoning/planning/search;
+- 021..040 optimization/experimentation/resource allocation;
+- 041..050 scheduling/flow/routing;
+- 051..065 distributed intelligence/concurrency/recovery;
+- 066..078 retrieval/memory/knowledge;
+- 079..090 causal/currentness/drift/uncertainty;
+- 091..100 proof/falsification/debugging/epistemics.
+
+The first tournament tranche is ordered by current estate leverage: ReAct, graph/tree search, Reflexion, MCTS/UCT, LPA*/D* Lite, Bayesian Optimization, Thompson Sampling, Hyperband/BOHB, CMA-ES, NSGA-II/MOEA-D, Max-Flow/Min-Cut, HEFT, Work-Stealing, Chandy-Lamport, SWIM/Phi, HNSW/RRF/ColBERT, FCI/NOTEARS, BOCPD/ADWIN, Conformal Prediction, QuickXplain, Delta Debugging and CEGAR/CEGIS.
+
+Promotion requires current primary-source evidence when the gene is materially selected, matched incumbent/challenger evaluation, untouched/falsifier cases and independent ProofOS/Reality Judge. Consensus or replicated-state algorithms remain subordinate to FUSE sovereign truth and authority roots.
