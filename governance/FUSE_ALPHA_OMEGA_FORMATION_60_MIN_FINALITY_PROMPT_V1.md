@@ -591,6 +591,31 @@ Stop only at terminal proof, exact irreducible owner-only authority/consent, pro
 
 ---
 
+## 18. EXTERNAL ALGORITHM GENOME 100
+
+Treat `HG-EXTALG-001..100` as a governed lazy harvest cohort under existing FUSE organs, not as a new controller or a list of automatically superior algorithms.
+
+For each material mission gap:
+- load cohort metadata only;
+- map the candidate mechanism to existing FUSE capabilities;
+- collapse equivalent/superset overlap before building;
+- refresh public primary-source evidence only for materially selected candidates;
+- choose `REUSE / REBIND / REPAIR / EXTEND / COMPOSE / HARVEST / BUILD_MINIMUM / REJECT`;
+- if a true residual remains, run a source-independent matched incumbent/challenger court plus untouched/falsifier cases;
+- require ProofOS/Reality Judge before promotion;
+- keep source, runtime, behaviour, owner-value and global-default proof separate.
+
+Priority tranche:
+ReAct; graph/tree search; Reflexion; MCTS/UCT; LPA*/D* Lite; Bayesian Optimization; Thompson Sampling; Hyperband/BOHB; CMA-ES; NSGA-II/MOEA-D; Max-Flow/Min-Cut; HEFT; Work-Stealing; Chandy-Lamport; SWIM/Phi; HNSW/RRF/ColBERT; FCI/NOTEARS; BOCPD/ADWIN; Conformal Prediction; QuickXplain; Delta Debugging; CEGAR/CEGIS.
+
+Consensus, replicated-state and alternate-truth algorithms remain subordinate mechanisms and may not replace FUSE sovereign authority/canonical roots. Expensive search/evolution is budgeted by information gain, cost, privacy and terminal relevance.
+
+Every MORE cycle must auto-match HG-EXTALG candidates, collapse overlap, benchmark only real residuals, adopt/compose proven improvements, and continue.
+
+`GENOME_REGISTERED != SOURCE_IMPLEMENTED != MATCHED_BENCHMARK_PASS != JUDGE_ACK != SOURCE_ADMITTED != LIVE_RUNTIME != OWNER_VALUE_VERIFIED`.
+
+---
+
 ## EXECUTE NOW
 
 Fresh-read canonical state, instantiate the parallel streams, continue all existing nonterminal missions, and drive the critical path to verified finality. Apply Formation harvesting before new builds. Treat all recoverable failures as changed-route signals. Preserve proof boundaries, authority, privacy, leases/fences and user intent. Target completion within 60 minutes; do not trade truth for the clock.
