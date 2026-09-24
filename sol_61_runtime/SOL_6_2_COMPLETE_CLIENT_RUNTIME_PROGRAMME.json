@@ -1,0 +1,70 @@
+{
+  "programme_id": "SOL-6.2-COMPLETE-FUSE-CLIENT-RUNTIME",
+  "version": "1.2.0",
+  "parent_runtime": "SOL-6.2-TRANSACTIONAL-SELF-VERIFYING-RUNTIME",
+  "status": "SOURCE_CANDIDATE",
+  "objective": "Make SOL 6.2 the complete FUSE-owned owner client/runtime with provider-neutral chat, durable missions, autonomous changed-route retry, capability harvesting, Genesis continuation and SOL verified-reality closure.",
+  "inherited_truth_root": "SOL_6_2",
+  "reused_surfaces": [
+    "FUSE_SOVEREIGN_PLANE_R59",
+    "FUSE_MOBILE_GATEWAY",
+    "FUSE_GENESIS_RESIDENT_EXECUTOR_V2",
+    "SOL_6_2_STRICT_RUNTIME",
+    "FDOF",
+    "PROOFOS"
+  ],
+  "provider_policy": {
+    "provider_specific_capacity_limits": "ROUTE_LOCAL",
+    "mission_goal_mutation_by_provider": false,
+    "changed_route_retry": true,
+    "authority_privacy_legal_safety": "FAIL_CLOSED"
+  },
+  "truth_boundary": {
+    "source_candidate": true,
+    "main_admitted": false,
+    "deployed_runtime": false,
+    "provider_live_verified": false,
+    "owner_daily_driver_verified": false,
+    "market_superiority": false,
+    "sovereign_plane_control_bound": true,
+    "sovereign_plane_external_resolver_live": false
+  },
+  "primary_orchestration_plane": "FUSE_SOVEREIGN_PLANE_R59",
+  "startup_authority": "START:FUSE_ONE_FRESH_CANON",
+  "sovereign_plane_binding": {
+    "schema": "SOL62_FUSE_SOVEREIGN_PLANE_BINDING_V1",
+    "estate_resolution_service": "estate.resolve",
+    "route_portfolio_policy": "MISSION_ROUTE_PORTFOLIO_V2",
+    "truth_root": "SOL_6_2",
+    "resident_executor": "FUSE_GENESIS_RESIDENT_EXECUTOR_V2",
+    "source_arbiter": "FDOF",
+    "state_integrity": "SICF",
+    "proof_plane": "PROOFOS_REALITY_JUDGE",
+    "route_order_only_after_sol_hard_gates": true,
+    "authority_expansion": false,
+    "provider_effect_authorized": false
+  },
+  "intelligence_amplifier": {
+    "schema": "SOL62_INTELLIGENCE_AMPLIFIER_V1",
+    "version": "1.0.0",
+    "status": "SOURCE_CANDIDATE",
+    "adaptive_reasoning_budget": true,
+    "parallel_hypothesis_families": true,
+    "causal_falsification": true,
+    "uncertainty_calibration": true,
+    "adversarial_proof": true,
+    "external_algorithm_cohort": "HG-EXTALG-001..100",
+    "chain_of_thought_exposure_allowed": false,
+    "authority_expansion": false,
+    "provider_effect_authorized": false,
+    "goal_mutation_allowed": false,
+    "truth_root_replacement_allowed": false,
+    "promotion_requires": [
+      "DETERMINISTIC_TEST_PASS",
+      "MATCHED_MISSION_COHORT",
+      "FALSIFIER_OR_UNTOUCHED_CASES",
+      "PROOFOS_REALITY_JUDGE",
+      "OWNER_VALUE_EVIDENCE"
+    ]
+  }
+}

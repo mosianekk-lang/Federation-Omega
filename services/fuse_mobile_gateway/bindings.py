@@ -542,6 +542,9 @@ class RuntimeCapabilityHealth:
 
 
 class VertexKDVChatExecutor:
+    route_id = "GOOGLE-VERTEX-GEMINI"
+    provider = "GOOGLE_VERTEX_AI_GEMINI"
+
     def __init__(self, kdv: KDVSheetsReader, vertex: VertexGeminiClient):
         self.kdv = kdv
         self.vertex = vertex
