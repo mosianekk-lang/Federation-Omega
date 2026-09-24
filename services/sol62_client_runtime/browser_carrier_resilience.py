@@ -326,6 +326,7 @@ class BrowserCarrierSupervisor:
         owner_subject: str,
         now_epoch: int | None = None,
         exclude_carrier_id: str = "",
+        avoid_failure_domain: str = "",
     ) -> dict[str, Any] | None:
         now = self._now(now_epoch)
         candidates = [
@@ -337,6 +338,7 @@ class BrowserCarrierSupervisor:
             return None
         candidates.sort(
             key=lambda value: (
+                0 if (avoid_failure_domain and value.get("failure_domain") != avoid_failure_domain) else 1,
                 0 if value.get("state") == CarrierState.HEALTHY.value else 1,
                 -int(value.get("priority", 50)),
                 -int(value.get("last_seen_epoch", 0)),
@@ -402,6 +404,8 @@ class BrowserCarrierSupervisor:
         failover_receipt = self._receipt(event_id, "MISSION_CARRIER_FAILOVER")
         if failover_receipt:
             return dict(failover_receipt["value"]["result"])
+        failed_row = self.client._get("sol62.browser.carrier", failed_carrier_id)
+        failed_domain = str(failed_row["value"].get("failure_domain") or "") if failed_row else ""
         failure_result = self.report_failure(
             failed_carrier_id,
             code=failure_code,
@@ -412,6 +416,7 @@ class BrowserCarrierSupervisor:
             owner_subject=owner_subject,
             now_epoch=now,
             exclude_carrier_id=failed_carrier_id,
+            avoid_failure_domain=failed_domain,
         )
         inflight = self.client._inflight_for_mission(mission_id)
         if replacement is None:
@@ -477,6 +482,43 @@ class BrowserCarrierSupervisor:
             now_epoch=now,
         )
         return result
+
+    def federation_status(
+        self,
+        *,
+        owner_subject: str,
+        now_epoch: int | None = None,
+    ) -> dict[str, Any]:
+        now = self._now(now_epoch)
+        rows = [
+            row["value"]
+            for row in self.client._rows("sol62.browser.carrier")
+            if row["value"].get("owner_subject") == owner_subject
+        ]
+        live = self._eligible(owner_subject, now_epoch=now)
+        by_domain: dict[str, int] = {}
+        by_kind: dict[str, int] = {}
+        for value in live:
+            domain = str(value.get("failure_domain") or "UNSPECIFIED")
+            kind = str(value.get("client_kind") or "UNKNOWN")
+            by_domain[domain] = by_domain.get(domain, 0) + 1
+            by_kind[kind] = by_kind.get(kind, 0) + 1
+        return {
+            "schema": "SOL62_CARRIER_FEDERATION_STATUS_V1",
+            "owner_subject": owner_subject,
+            "registered_carriers": len(rows),
+            "live_carriers": len(live),
+            "live_failure_domains": len(by_domain),
+            "failure_domains": dict(sorted(by_domain.items())),
+            "client_kinds": dict(sorted(by_kind.items())),
+            "cross_domain_failover_ready": len(by_domain) >= 2,
+            "mission_authority_in_carrier": False,
+            "provider_authority_in_carrier": False,
+            "truth_boundary": (
+                "CARRIER_REGISTERED_NE_CALLABLE; HEARTBEAT_NE_EFFECT_AUTHORITY; "
+                "CROSS_DOMAIN_REDUNDANCY_NE_RUNTIME_VERIFIED"
+            ),
+        }
 
     def hydration_packet(
         self,
