@@ -241,6 +241,10 @@ class GatewayRuntime:
     _perf_capability_provider_reads: int = field(default=0, init=False, repr=False)
     _perf_capability_cache_hits: int = field(default=0, init=False, repr=False)
     _perf_capability_singleflight_joins: int = field(default=0, init=False, repr=False)
+    _session_inflight: dict[str, asyncio.Task[VerifiedIdentity]] = field(default_factory=dict, init=False, repr=False)
+    _session_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
+    _perf_session_backend_reads: int = field(default=0, init=False, repr=False)
+    _perf_session_singleflight_joins: int = field(default=0, init=False, repr=False)
 
     @property
     def _session_backend_ready(self) -> bool:
@@ -333,11 +337,29 @@ class GatewayRuntime:
         await self.device_manager.revoke(credential, expected_subject=identity.subject)
 
     async def verify_session(self, token: str) -> VerifiedIdentity:
-        if self.session_manager is not None:
-            return await self.session_manager.verify(token)
-        if self.session_codec is not None:
-            return self.session_codec.verify(token)
-        raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
+        if self.session_manager is None:
+            if self.session_codec is not None:
+                return self.session_codec.verify(token)
+            raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
+
+        key = hashlib.sha256(token.encode()).hexdigest()
+        leader = False
+        async with self._session_lock:
+            task = self._session_inflight.get(key)
+            if task is None:
+                task = asyncio.create_task(self.session_manager.verify(token))
+                self._session_inflight[key] = task
+                self._perf_session_backend_reads += 1
+                leader = True
+            else:
+                self._perf_session_singleflight_joins += 1
+        try:
+            return await asyncio.shield(task)
+        finally:
+            if leader:
+                async with self._session_lock:
+                    if self._session_inflight.get(key) is task:
+                        self._session_inflight.pop(key, None)
 
     def _capability_cache_key(self, identity: VerifiedIdentity) -> str:
         payload = json.dumps(
@@ -404,6 +426,8 @@ class GatewayRuntime:
             "capability_provider_reads": self._perf_capability_provider_reads,
             "capability_cache_hits": self._perf_capability_cache_hits,
             "capability_singleflight_joins": self._perf_capability_singleflight_joins,
+            "session_backend_reads": self._perf_session_backend_reads,
+            "session_singleflight_joins": self._perf_session_singleflight_joins,
             "cache_entries": len(self._capability_cache),
             "inflight_reads": len(self._capability_inflight),
             "ttl_cap_seconds": float(self.capability_cache_ttl_cap_seconds),
