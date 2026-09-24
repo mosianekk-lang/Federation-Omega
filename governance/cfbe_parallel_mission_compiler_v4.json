@@ -133,8 +133,9 @@
     "adapter_scope": "effect-free READY read packets only",
     "does_not_create_second_sovereign_scheduler": true,
     "agentic_frontier_compiler": "benchmarking.cfbe_omega.n_omega_agentic_frontier_v1.AgenticFrontierCompiler",
-    "frontier_gene_range": "AGF-001..AGF-053",
-    "frontier_compile_required_before_packetization": true
+    "frontier_gene_range": "AGF-001..AGF-063",
+    "frontier_compile_required_before_packetization": true,
+    "frontier_resilience_interop": "federation.frontier_resilience_interop_v1"
   },
   "truth_boundary": {
     "stored_source_proves_runtime": false,
@@ -144,10 +145,11 @@
   },
   "frontier_selection": {
     "source": "N_OMEGA_AGENTIC_FRONTIER_V1",
-    "latest_clean_room_residuals": "AGF-041..AGF-053",
+    "latest_clean_room_residuals": "AGF-054..AGF-063",
     "automatic_profile_selection": true,
     "one_mutating_lane_preserved": true,
     "external_model_authority": "PROPOSAL_ONLY",
-    "provider_gated_genes_require_provider_identity_and_semantic_readback": true
+    "provider_gated_genes_require_provider_identity_and_semantic_readback": true,
+    "residual_contract_required_for_agf_054_063": true
   }
 }
