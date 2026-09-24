@@ -1,5 +1,9 @@
 (() => {
   const FAILURE_MARKERS = [
+    ["Stream cache expired", "STREAM_CACHE_EXPIRED"],
+    ["Connection interrupted. Waiting for the complete answer", "CHATGPT_STREAM_INTERRUPTED"],
+    ["You've hit max weighted tokens for this chat", "CONTEXT_LIMIT"],
+    ["You’ve hit max weighted tokens for this chat", "CONTEXT_LIMIT"],
     ["Could not load this ChatGPT conversation", "CHATGPT_CONVERSATION_LOAD_FAILED"],
     ["Unable to load conversation", "CHATGPT_CONVERSATION_LOAD_FAILED"],
     ["Something went wrong", "CHATGPT_UI_UNAVAILABLE"]
