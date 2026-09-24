@@ -11,6 +11,7 @@ from evidenceops.innovation_engine.of50_adapter import compile_of50_formation_de
 from formation_omega.powerhouse import FormationOmega
 from sol_61_runtime.sol_62_frontier_primitives import digest
 from sol_61_runtime.sol_62_complete_client_runtime import RouteCandidate
+from services.sol62_client_runtime.astra_max_composite import compile_astra_max_profile
 
 
 SCHEMA = "SOL62_ALPHA_OMEGA_FORMATION_BINDING_V2"
@@ -345,6 +346,30 @@ class Sol62AlphaOmegaFormationBinding:
             selected_upgrade_genes=selected_upgrade_genes,
         )
         foundry_dict = foundry_result.as_dict()
+        preferred_upper = {str(item).upper() for item in preferred_surfaces}
+        astra_profile = compile_astra_max_profile(
+            objective=objective,
+            constraints=constraints,
+            preferred_surfaces=preferred_surfaces,
+            risk_class="HIGH" if reason.upper() in {
+                "NO_QUALIFIED_ROUTE",
+                "QUALIFIED_ROUTES_EXHAUSTED",
+                "TRANSITION_EXECUTION_BINDING_MISSING",
+            } else "LOW",
+            consequential=False,
+            astra_provider_available=any("ASTRA" in item for item in preferred_upper),
+            code_execution_available=any(
+                marker in item
+                for item in preferred_upper
+                for marker in ("CODE", "LOCAL", "WORKSPACE", "CODEX")
+            ),
+            browser_control_available=any(
+                marker in item
+                for item in preferred_upper
+                for marker in ("BROWSER", "WORKSPACE", "CHATGPT", "CODEX")
+            ),
+        )
+        foundry_dict["astra_max_profile"] = astra_profile.to_dict()
         if foundry_result.status != "PASSED":
             raise RuntimeError("FORMATION_INNOVATION_CYCLE_NOT_PASSED")
 
@@ -391,6 +416,9 @@ class Sol62AlphaOmegaFormationBinding:
             "source_admitted": False,
             "authority_widened": False,
             "external_effect_created": False,
+            "astra_max_profile_compiled": True,
+            "astra_model_runtime_verified": False,
+            "astra_provider_authority_granted": False,
         }
         material = {
             "schema": SCHEMA,
