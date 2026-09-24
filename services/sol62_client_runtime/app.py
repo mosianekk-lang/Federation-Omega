@@ -781,6 +781,54 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
         if not client or client["value"]["owner_subject"] != owner.subject:
             raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
 
+        strategy_row = ctx.client._get("sol62.strategy.receipt", mission_id)
+        if not strategy_row:
+            mission_row = ctx.client._get("sol62.mission", mission_id)
+            route_rows = ctx.client._rows("sol62.client.route")
+            routes = tuple(ctx.client._route(row["value"]) for row in route_rows)
+            objective = str(mission_row["value"]["objective"]) if mission_row else mission_id
+            genes = select_upgrade_genes(
+                objective=objective,
+                reason="MISSION_WAKE_PREPASS",
+                limit=12,
+            )
+            gene_rows = tuple(
+                {
+                    "gene_id": gene.gene_id,
+                    "category": gene.category,
+                    "mechanism": gene.mechanism,
+                    "tags": list(gene.tags),
+                    "provenance": gene.provenance,
+                    "maturity": gene.maturity,
+                }
+                for gene in genes
+            )
+            strategy = ctx.strategy.compile(
+                mission_id=mission_id,
+                objective=objective,
+                reason="MISSION_WAKE_PREPASS",
+                routes=routes,
+                constraints=("proof-before-claim", "no-authority-expansion", "verified-reality-closure"),
+                preferred_surfaces=("FUSE_GATEWAY", "GENESIS", "LOCAL_FUSE"),
+                selected_upgrade_genes=gene_rows,
+            )
+            strategy_result = alpha_omega_formation_receipt_to_dict(strategy)
+            ctx.client._put("sol62.strategy.receipt", mission_id, strategy_result)
+            ctx.sol.control.append_event(
+                mission_id,
+                "SOL62_ALPHA_OMEGA_FORMATION_WAKE_PREPASS",
+                {
+                    "receipt_sha256": strategy.receipt_sha256,
+                    "selected_family": strategy.selected_family,
+                    "reuse_vs_build": strategy.reuse_vs_build,
+                    "implementation_required": strategy.implementation_required,
+                    "formation_foundry_executed": True,
+                    "alpha_omega_plan_compiled": strategy.truth_boundary["alpha_omega_plan_compiled"],
+                    "authority_widened": False,
+                    "external_effect": False,
+                },
+            )
+
         packet = ctx.client.resume_packet(mission_id, reason="OWNER_OR_RUNTIME_WAKE")
         if not body.inline or not ctx.worker_identity.ready:
             receipt = ctx.genesis.enqueue(packet, now_epoch=time.time())
