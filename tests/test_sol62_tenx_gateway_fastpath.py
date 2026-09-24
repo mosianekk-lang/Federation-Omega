@@ -29,6 +29,21 @@ class CountingHealth:
         )
 
 
+class CountingSessionManager:
+    def __init__(self, delay_seconds: float = 0.01) -> None:
+        self.delay_seconds = delay_seconds
+        self.calls = 0
+
+    async def issue(self, identity: VerifiedIdentity) -> tuple[str, int]:
+        del identity
+        raise AssertionError("issue() not expected in this test")
+
+    async def verify(self, token: str) -> VerifiedIdentity:
+        self.calls += 1
+        await asyncio.sleep(self.delay_seconds)
+        return VerifiedIdentity("owner-session", {"token_kind": "opaque"})
+
+
 class Sol62TenXFastPathTests(unittest.IsolatedAsyncioTestCase):
     async def test_concurrent_identical_manifest_reads_are_singleflight(self) -> None:
         provider = CountingHealth(ttl_seconds=0)
@@ -74,6 +89,21 @@ class Sol62TenXFastPathTests(unittest.IsolatedAsyncioTestCase):
         await runtime.manifest(VerifiedIdentity("owner-1", {"role": "b"}))
 
         self.assertEqual(provider.calls, 2)
+
+    async def test_concurrent_identical_session_checks_are_singleflight_without_auth_cache(self) -> None:
+        manager = CountingSessionManager()
+        runtime = GatewayRuntime(session_manager=manager)
+
+        identities = await asyncio.gather(*(runtime.verify_session("opaque-token") for _ in range(24)))
+
+        self.assertEqual(manager.calls, 1)
+        self.assertEqual({identity.subject for identity in identities}, {"owner-session"})
+        metrics = runtime.performance_snapshot()
+        self.assertEqual(metrics["session_backend_reads"], 1)
+        self.assertEqual(metrics["session_singleflight_joins"], 23)
+
+        await runtime.verify_session("opaque-token")
+        self.assertEqual(manager.calls, 2)
 
     async def test_metrics_are_redacted(self) -> None:
         provider = CountingHealth(ttl_seconds=2, delay_seconds=0)
