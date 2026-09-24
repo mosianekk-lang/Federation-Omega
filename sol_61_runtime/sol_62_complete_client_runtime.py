@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -83,6 +84,19 @@ class ConstraintDisposition(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class DurabilityMode(str, Enum):
+    EVERY_STEP = "EVERY_STEP"
+    EFFECT_BOUNDARY = "EFFECT_BOUNDARY"
+    ON_EXIT = "ON_EXIT"
+
+
+class InterruptionKind(str, Enum):
+    APPROVAL = "APPROVAL"
+    EXTERNAL_INPUT = "EXTERNAL_INPUT"
+    MANUAL_PAUSE = "MANUAL_PAUSE"
+    PROVIDER_RECOVERY = "PROVIDER_RECOVERY"
+
+
 @dataclass(frozen=True, slots=True)
 class ProviderConstraint:
     code: str
@@ -130,6 +144,7 @@ class ClientRuntimePolicy:
     negative_cache_seconds: int = 300
     retry_delay_seconds: int = 30
     fence_ttl_seconds: int = 120
+    durability_mode: str = "EFFECT_BOUNDARY"
     auto_harvest: bool = True
     auto_build: bool = True
     auto_reroute: bool = True
@@ -260,7 +275,7 @@ class Sol62CompleteClientRuntime:
     def _register_client_schemas(self) -> None:
         self.runtime.control.register_schema(
             "sol62.client.runtime",
-            1,
+            2,
             {
                 "schema": SCHEMA,
                 "truth_root": "SOL_6_2",
@@ -270,6 +285,14 @@ class Sol62CompleteClientRuntime:
                 "estate_resolution_service": self.sovereign_plane.contract.estate_resolution_service,
                 "route_portfolio_policy": self.sovereign_plane.contract.route_portfolio_policy,
                 "resident_executor": self.sovereign_plane.contract.resident_executor,
+                "durable_execution": {
+                    "event_store": "CANONICAL_SOL62_HASH_CHAIN",
+                    "effect_store": "CANONICAL_SOL62_EFFECT_INTENT",
+                    "default_checkpoint_mode": self.policy.durability_mode,
+                    "interruptions_are_resumable": True,
+                    "approval_never_mints_effect_authority": True,
+                    "resume_packet_binds_checkpoint": True,
+                },
             },
         )
 
@@ -298,6 +321,289 @@ class Sol62CompleteClientRuntime:
             }
             for row in rows
         ]
+
+    def set_durability_policy(
+        self,
+        mission_id: str,
+        *,
+        mode: str | DurabilityMode | None = None,
+        history_event_limit: int = 2048,
+    ) -> dict[str, Any]:
+        if not self._get("sol62.mission", mission_id):
+            raise ConstraintError("SOL62_MISSION_NOT_REGISTERED")
+        try:
+            resolved = mode if isinstance(mode, DurabilityMode) else DurabilityMode(mode or self.policy.durability_mode)
+        except ValueError as exc:
+            raise ConstraintError("INVALID_DURABILITY_MODE") from exc
+        if history_event_limit < 16 or history_event_limit > 10000:
+            raise ConstraintError("DURABILITY_HISTORY_LIMIT_OUT_OF_RANGE")
+        body = {
+            "schema": "SOL62_DURABILITY_POLICY_V1",
+            "mission_id": mission_id,
+            "mode": resolved.value,
+            "history_event_limit": int(history_event_limit),
+            "canonical_event_store": "SOL62_CONTROL_EVENTS",
+            "canonical_effect_store": "SOL62_EFFECT_INTENT",
+            "authority_expansion": False,
+        }
+        stored = self._put("sol62.durable.policy", mission_id, body)
+        self.runtime.control.append_event(
+            mission_id,
+            "SOL62_DURABILITY_POLICY_BOUND",
+            {"mode": resolved.value, "history_event_limit": int(history_event_limit)},
+        )
+        return stored
+
+    def _durability_policy(self, mission_id: str) -> dict[str, Any]:
+        row = self._get("sol62.durable.policy", mission_id)
+        if row:
+            return dict(row["value"])
+        return {
+            "schema": "SOL62_DURABILITY_POLICY_V1",
+            "mission_id": mission_id,
+            "mode": DurabilityMode(self.policy.durability_mode).value,
+            "history_event_limit": 2048,
+            "canonical_event_store": "SOL62_CONTROL_EVENTS",
+            "canonical_effect_store": "SOL62_EFFECT_INTENT",
+            "authority_expansion": False,
+        }
+
+    def event_history_manifest(self, mission_id: str) -> dict[str, Any]:
+        if not self._get("sol62.mission", mission_id):
+            raise ConstraintError("SOL62_MISSION_NOT_REGISTERED")
+        policy = self._durability_policy(mission_id)
+        limit = int(policy.get("history_event_limit", 2048))
+        total = int(
+            self.runtime.control.db.execute(
+                "SELECT COUNT(*) AS n FROM events WHERE aggregate=?",
+                (mission_id,),
+            ).fetchone()["n"]
+        )
+        rows = self.runtime.control.db.execute(
+            "SELECT seq,event_id,kind,payload_json,previous_hash,event_hash,created_at "
+            "FROM events WHERE aggregate=? ORDER BY seq DESC LIMIT ?",
+            (mission_id, limit),
+        ).fetchall()
+        rows = list(reversed(rows))
+        events = [
+            {
+                "seq": int(row["seq"]),
+                "event_id": row["event_id"],
+                "kind": row["kind"],
+                "payload_sha256": digest(json.loads(row["payload_json"])),
+                "previous_hash": row["previous_hash"],
+                "event_hash": row["event_hash"],
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
+        return {
+            "schema": "SOL62_EVENT_HISTORY_MANIFEST_V1",
+            "mission_id": mission_id,
+            "event_count_total": total,
+            "event_count_manifest": len(events),
+            "truncated": total > len(events),
+            "first_seq": events[0]["seq"] if events else None,
+            "last_seq": events[-1]["seq"] if events else None,
+            "event_head": events[-1]["event_hash"] if events else "GENESIS",
+            "history_sha256": digest(events),
+            "events": events,
+            "payloads_included": False,
+        }
+
+    def open_interruptions(self, mission_id: str) -> list[dict[str, Any]]:
+        rows = []
+        for row in self._rows("sol62.durable.interruption"):
+            value = dict(row["value"])
+            if value.get("mission_id") == mission_id and value.get("state") == "OPEN":
+                rows.append(value)
+        return sorted(rows, key=lambda value: (int(value.get("created_epoch", 0)), str(value.get("interruption_id", ""))))
+
+    def durability_checkpoint(self, mission_id: str, *, reason: str) -> dict[str, Any]:
+        mission_state = self.runtime.mission_state(mission_id)
+        client = self._get("sol62.client.mission", mission_id)
+        if not client:
+            raise ConstraintError("CLIENT_MISSION_NOT_BOUND")
+        latest = self._get("sol62.durable.checkpoint_latest", mission_id)
+        generation = int(latest["value"].get("generation", 0)) + 1 if latest else 1
+        history = self.event_history_manifest(mission_id)
+        inflight = sorted(str(item["effect_id"]) for item in self._inflight_for_mission(mission_id))
+        interruptions = [str(item["interruption_id"]) for item in self.open_interruptions(mission_id)]
+        body = {
+            "schema": "SOL62_DURABILITY_CHECKPOINT_V1",
+            "mission_id": mission_id,
+            "generation": generation,
+            "reason": reason,
+            "durability_mode": self._durability_policy(mission_id)["mode"],
+            "mission_state_version": int(mission_state["version"]),
+            "mission_state_sha256": digest(mission_state["value"]),
+            "client_state_version": int(client["version"]),
+            "client_state_sha256": digest(client["value"]),
+            "event_head_before_checkpoint": history["event_head"],
+            "event_history_sha256_before_checkpoint": history["history_sha256"],
+            "inflight_effect_ids": inflight,
+            "open_interruption_ids": interruptions,
+            "authority_expansion": False,
+        }
+        checkpoint_key = f"{mission_id}|{generation:08d}"
+        self._put("sol62.durable.checkpoint", checkpoint_key, body)
+        self._put(
+            "sol62.durable.checkpoint_latest",
+            mission_id,
+            {
+                "mission_id": mission_id,
+                "checkpoint_key": checkpoint_key,
+                "generation": generation,
+                "reason": reason,
+                "checkpoint_sha256": digest(body),
+            },
+        )
+        self.runtime.control.append_event(
+            mission_id,
+            "SOL62_DURABILITY_CHECKPOINT",
+            {
+                "checkpoint_key": checkpoint_key,
+                "generation": generation,
+                "reason": reason,
+                "checkpoint_sha256": digest(body),
+            },
+        )
+        return {**body, "checkpoint_key": checkpoint_key, "checkpoint_sha256": digest(body)}
+
+    def interrupt_mission(
+        self,
+        mission_id: str,
+        *,
+        interruption_id: str,
+        kind: str | InterruptionKind,
+        reason: str,
+        transition_id: str = "",
+        payload: Mapping[str, Any] | None = None,
+        now_epoch: int | None = None,
+    ) -> dict[str, Any]:
+        if not interruption_id or not reason:
+            raise ConstraintError("INTERRUPTION_ID_AND_REASON_REQUIRED")
+        if not self._get("sol62.client.mission", mission_id):
+            raise ConstraintError("CLIENT_MISSION_NOT_BOUND")
+        try:
+            resolved_kind = kind if isinstance(kind, InterruptionKind) else InterruptionKind(kind)
+        except ValueError as exc:
+            raise ConstraintError("INVALID_INTERRUPTION_KIND") from exc
+        now = int(time.time()) if now_epoch is None else int(now_epoch)
+        identity = {
+            "mission_id": mission_id,
+            "transition_id": transition_id,
+            "interruption_id": interruption_id,
+            "kind": resolved_kind.value,
+            "reason": reason,
+            "payload": dict(payload or {}),
+        }
+        identity_sha = digest(identity)
+        current = self._get("sol62.durable.interruption", interruption_id)
+        if current:
+            if current["value"].get("identity_sha256") != identity_sha:
+                raise ConstraintError("INTERRUPTION_ID_COLLISION")
+            return current
+        body = {
+            "schema": "SOL62_DURABLE_INTERRUPTION_V1",
+            **identity,
+            "identity_sha256": identity_sha,
+            "state": "OPEN",
+            "created_epoch": now,
+            "resolved_epoch": 0,
+            "decision": "",
+            "decision_actor": "",
+            "proof_refs": [],
+            "authority_expansion": False,
+            "effect_authorized_by_decision": False,
+        }
+        stored = self._put("sol62.durable.interruption", interruption_id, body)
+        self._update_client_mission(
+            mission_id,
+            state="WAITING_INTERRUPT",
+            last_reason=f"DURABLE_INTERRUPTION_{resolved_kind.value}",
+        )
+        self.runtime.control.append_event(
+            mission_id,
+            "SOL62_DURABLE_INTERRUPTION_OPENED",
+            {
+                "interruption_id": interruption_id,
+                "kind": resolved_kind.value,
+                "transition_id": transition_id,
+                "identity_sha256": identity_sha,
+            },
+        )
+        self.durability_checkpoint(mission_id, reason=f"INTERRUPTION:{resolved_kind.value}")
+        return stored
+
+    def resolve_interruption(
+        self,
+        mission_id: str,
+        *,
+        interruption_id: str,
+        decision: str,
+        actor: str,
+        proof_refs: Sequence[str] = (),
+        now_epoch: int | None = None,
+    ) -> dict[str, Any]:
+        row = self._get("sol62.durable.interruption", interruption_id)
+        if not row or row["value"].get("mission_id") != mission_id:
+            raise ConstraintError("INTERRUPTION_NOT_FOUND")
+        body = dict(row["value"])
+        if body.get("state") != "OPEN":
+            return row
+        normalized = decision.strip().upper()
+        if normalized not in {"RESUME", "APPROVE", "REJECT", "CANCEL"}:
+            raise ConstraintError("INVALID_INTERRUPTION_DECISION")
+        if not actor:
+            raise ConstraintError("INTERRUPTION_DECISION_ACTOR_REQUIRED")
+        now = int(time.time()) if now_epoch is None else int(now_epoch)
+        body.update(
+            {
+                "state": "RESOLVED",
+                "resolved_epoch": now,
+                "decision": normalized,
+                "decision_actor": actor,
+                "proof_refs": list(proof_refs),
+                "authority_expansion": False,
+                "effect_authorized_by_decision": False,
+            }
+        )
+        stored = self._put("sol62.durable.interruption", interruption_id, body)
+        self.runtime.control.append_event(
+            mission_id,
+            "SOL62_DURABLE_INTERRUPTION_RESOLVED",
+            {
+                "interruption_id": interruption_id,
+                "decision": normalized,
+                "actor": actor,
+                "proof_refs": list(proof_refs),
+                "effect_authorized_by_decision": False,
+            },
+        )
+        if not self.open_interruptions(mission_id):
+            self._update_client_mission(
+                mission_id,
+                state="ACTIVE",
+                last_reason=f"INTERRUPTION_{normalized}",
+            )
+        self.durability_checkpoint(mission_id, reason=f"INTERRUPTION_RESOLVED:{normalized}")
+        return stored
+
+    def durability_status(self, mission_id: str) -> dict[str, Any]:
+        latest = self._get("sol62.durable.checkpoint_latest", mission_id)
+        return {
+            "schema": "SOL62_DURABILITY_STATUS_V1",
+            "mission_id": mission_id,
+            "policy": self._durability_policy(mission_id),
+            "history": self.event_history_manifest(mission_id),
+            "open_interruptions": self.open_interruptions(mission_id),
+            "inflight_effect_ids": sorted(str(item["effect_id"]) for item in self._inflight_for_mission(mission_id)),
+            "latest_checkpoint": dict(latest["value"]) if latest else None,
+            "effect_truth_root": "SOL62_EFFECT_INTENT",
+            "event_truth_root": "SOL62_CONTROL_EVENTS",
+            "authority_expansion": False,
+        }
 
     def _derive_cognition_profile(
         self,
@@ -493,6 +799,8 @@ class Sol62CompleteClientRuntime:
             },
         )
         self.refresh_intelligence_plan(mission_id)
+        if not self._get("sol62.durable.policy", mission_id):
+            self.set_durability_policy(mission_id)
         return stored
 
     def bind_transition(self, binding: TransitionBinding) -> dict[str, Any]:
@@ -526,6 +834,7 @@ class Sol62CompleteClientRuntime:
         )
         intelligence_row = self._get("sol62.client.intelligence_plan", f"{mission_id}|MISSION")
         intelligence_plan = dict(intelligence_row["value"]) if intelligence_row else {}
+        durability = self.durability_status(mission_id)
         return {
             "schema": SCHEMA,
             "mission_id": mission_id,
@@ -535,6 +844,7 @@ class Sol62CompleteClientRuntime:
             "integrity": self.runtime.verify_integrity(),
             "sovereign_plane": self.sovereign_plane.status(),
             "intelligence_plan": intelligence_plan,
+            "durability": durability,
         }
 
     def _binding(self, transition_id: str) -> TransitionBinding | None:
@@ -1036,6 +1346,28 @@ class Sol62CompleteClientRuntime:
             raise ConstraintError("CLIENT_MISSION_NOT_BOUND")
         mission = self._get("sol62.mission", mission_id)["value"]
 
+        interruptions = self.open_interruptions(mission_id)
+        if interruptions:
+            self._update_client_mission(
+                mission_id,
+                state="WAITING_INTERRUPT",
+                last_reason="DURABLE_INTERRUPTION_OPEN",
+                next_retry_epoch=0,
+            )
+            return {
+                "state": "WAITING_INTERRUPT",
+                "interruptions": [
+                    {
+                        "interruption_id": item["interruption_id"],
+                        "kind": item["kind"],
+                        "reason": item["reason"],
+                        "transition_id": item.get("transition_id", ""),
+                    }
+                    for item in interruptions
+                ],
+                "resume_packet": self.resume_packet(mission_id, reason="WAITING_INTERRUPT"),
+            }
+
         for _ in range(max_steps):
             client = self._get("sol62.client.mission", mission_id)
             proof_ids = tuple(client["value"].get("proof_ids", ()))
@@ -1204,8 +1536,10 @@ class Sol62CompleteClientRuntime:
         client = self._get("sol62.client.mission", mission_id)
         if not client:
             raise KeyError(mission_id)
+        checkpoint = self.durability_checkpoint(mission_id, reason=f"RESUME:{reason}")
         return {
             "schema": "SOL62_CLIENT_RESUME_PACKET_V1",
+            "schema_version": 2,
             "task_type": "SOL62_CLIENT_WAKE",
             "mission_id": mission_id,
             "reason": reason,
@@ -1218,4 +1552,9 @@ class Sol62CompleteClientRuntime:
             "route_portfolio_policy": self.sovereign_plane.contract.route_portfolio_policy,
             "truth_root": "SOL_6_2",
             "resident_executor": self.sovereign_plane.contract.resident_executor,
+            "durability_checkpoint_key": checkpoint["checkpoint_key"],
+            "durability_checkpoint_sha256": checkpoint["checkpoint_sha256"],
+            "event_history_head": checkpoint["event_head_before_checkpoint"],
+            "open_interruption_ids": list(checkpoint["open_interruption_ids"]),
+            "inflight_effect_ids": list(checkpoint["inflight_effect_ids"]),
         }
