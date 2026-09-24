@@ -18,6 +18,11 @@ from services.sol62_client_runtime.gateway_adapter import GatewayChatAdapter
 from services.sol62_client_runtime.autonomous_harvester import FuseAutonomousHarvester
 from services.sol62_client_runtime.capability_registry import compile_registry
 from services.sol62_client_runtime.runtime_upgrade_genome import UPGRADE_GENOME, genome_summary
+from services.sol62_client_runtime.browser_carrier_resilience import (
+    BrowserCarrierSupervisor,
+    CarrierRegistration,
+    SCHEMA as BROWSER_CARRIER_SCHEMA,
+)
 from sol_61_runtime.sol_62 import (
     GatewayPolicy,
     MissionSpec,
@@ -85,6 +90,35 @@ class WakeBody(BaseModel):
     inline: bool = False
 
 
+class CarrierRegisterBody(BaseModel):
+    carrier_id: str = Field(min_length=1, max_length=256)
+    session_id: str = Field(min_length=1, max_length=256)
+    client_kind: str = Field(default="CHATGPT_BROWSER", min_length=1, max_length=128)
+    route_id: str = Field(default="CHATGPT_BROWSER", min_length=1, max_length=128)
+    priority: int = Field(default=50, ge=0, le=1000)
+    conversation_ref_hash: str = Field(default="", max_length=256)
+    capabilities: list[str] = Field(default_factory=list, max_length=64)
+    failure_domain: str = Field(default="CHATGPT_BROWSER", min_length=1, max_length=128)
+
+
+class CarrierHeartbeatBody(BaseModel):
+    observed_state: str = Field(default="HEALTHY", min_length=1, max_length=32)
+    conversation_ref_hash: str = Field(default="", max_length=256)
+
+
+class CarrierFailureBody(BaseModel):
+    code: str = Field(min_length=1, max_length=128)
+
+
+class CarrierAttachBody(BaseModel):
+    carrier_id: str = Field(min_length=1, max_length=256)
+
+
+class CarrierFailoverBody(BaseModel):
+    failed_carrier_id: str = Field(min_length=1, max_length=256)
+    failure_code: str = Field(min_length=1, max_length=128)
+
+
 class WorkerIdentityProvider:
     """Server-side workload-identity binding. No browser/client credentials are accepted."""
 
@@ -144,6 +178,7 @@ class ServiceContext:
         self.sol = sol or _sol_runtime()
         self.sovereign_plane = Sol62SovereignPlaneBinding()
         self.client = Sol62CompleteClientRuntime(self.sol, sovereign_plane=self.sovereign_plane)
+        self.browser_carriers = BrowserCarrierSupervisor(self.client)
         self.worker_identity = WorkerIdentityProvider()
         self.genesis = Sol62GenesisWakeBridge(
             os.getenv("FUSE_GENESIS_HOST_ROOT", "./fuse-host-state")
@@ -210,6 +245,13 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "provider_specific_limits_are_mission_terminal": False,
             "capability_registry": compile_registry(gateway_execution_ready=ctx.gateway.execution_ready)["counts"],
             "runtime_upgrade_genome": genome_summary(),
+            "browser_carrier_resilience": {
+                "schema": BROWSER_CARRIER_SCHEMA,
+                "bound": True,
+                "chat_conversation_is_mission_authority": False,
+                "carrier_loss_is_mission_terminal": False,
+                "effect_replay_on_failover": False,
+            },
         }
 
     @app.get("/v1/capabilities")
@@ -244,6 +286,105 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
                 for gene in UPGRADE_GENOME
             ],
         }
+
+    @app.post("/v1/carriers/register")
+    async def register_carrier(
+        body: CarrierRegisterBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        return ctx.browser_carriers.register(
+            CarrierRegistration(
+                carrier_id=body.carrier_id,
+                owner_subject=owner.subject,
+                session_id=body.session_id,
+                client_kind=body.client_kind,
+                route_id=body.route_id,
+                priority=body.priority,
+                conversation_ref_hash=body.conversation_ref_hash,
+                capabilities=tuple(body.capabilities),
+                failure_domain=body.failure_domain,
+            )
+        )
+
+    @app.post("/v1/carriers/{carrier_id}/heartbeat")
+    async def carrier_heartbeat(
+        carrier_id: str,
+        body: CarrierHeartbeatBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        row = ctx.client._get("sol62.browser.carrier", carrier_id)
+        if not row or row["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "CARRIER_NOT_FOUND"})
+        return ctx.browser_carriers.heartbeat(
+            carrier_id,
+            observed_state=body.observed_state,
+            conversation_ref_hash=body.conversation_ref_hash,
+        )
+
+    @app.post("/v1/carriers/{carrier_id}/failure")
+    async def carrier_failure(
+        carrier_id: str,
+        body: CarrierFailureBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        row = ctx.client._get("sol62.browser.carrier", carrier_id)
+        if not row or row["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "CARRIER_NOT_FOUND"})
+        return ctx.browser_carriers.report_failure(carrier_id, code=body.code)
+
+    @app.post("/v1/missions/{mission_id}/carrier/attach")
+    async def attach_mission_carrier(
+        mission_id: str,
+        body: CarrierAttachBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        return ctx.browser_carriers.attach_mission(
+            mission_id,
+            owner_subject=owner.subject,
+            carrier_id=body.carrier_id,
+        )
+
+    @app.post("/v1/missions/{mission_id}/carrier/failover")
+    async def failover_mission_carrier(
+        mission_id: str,
+        body: CarrierFailoverBody,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        return ctx.browser_carriers.failover(
+            mission_id,
+            owner_subject=owner.subject,
+            failed_carrier_id=body.failed_carrier_id,
+            failure_code=body.failure_code,
+        )
+
+    @app.get("/v1/missions/{mission_id}/carrier/hydration")
+    async def mission_carrier_hydration(
+        mission_id: str,
+        carrier_id: str,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        owner = await identity(authorization, x_fuse_authorization)
+        client = ctx.client._get("sol62.client.mission", mission_id)
+        if not client or client["value"].get("owner_subject") != owner.subject:
+            raise HTTPException(status_code=404, detail={"status": "HELD", "reason": "MISSION_NOT_FOUND"})
+        return ctx.browser_carriers.hydration_packet(mission_id, carrier_id=carrier_id)
 
     @app.post("/v1/chat")
     async def chat(
