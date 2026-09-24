@@ -12,6 +12,10 @@ from superior_logic.hypercube_bottleneck_resolver import (
 )
 from sol_61_runtime.sol_62_complete_client_runtime import HarvestOutcome
 from services.sol62_client_runtime.runtime_upgrade_genome import genome_summary, select_upgrade_genes
+from services.sol62_client_runtime.alpha_omega_formation_binding import (
+    Sol62AlphaOmegaFormationBinding,
+    receipt_to_dict as alpha_omega_formation_receipt_to_dict,
+)
 from sol_61_runtime.sol_62_frontier_primitives import digest
 
 
@@ -27,6 +31,7 @@ class FuseAutonomousHarvester:
         self.source_frontier = source_frontier
         self.hypercube = HypercubeBottleneckResolver()
         self.acquirer = CapabilityAcquirer()
+        self.strategy = Sol62AlphaOmegaFormationBinding()
 
     async def harvest(
         self,
@@ -146,6 +151,25 @@ class FuseAutonomousHarvester:
             reason=reason,
             limit=12,
         )
+        strategy_receipt = self.strategy.compile(
+            mission_id=mission_id,
+            objective=objective,
+            reason=reason,
+            routes=(),
+            constraints=("proof-before-claim", "no-authority-expansion", "verified-reality-closure"),
+            preferred_surfaces=("FUSE_GATEWAY", "GENESIS", "LOCAL_FUSE"),
+            selected_upgrade_genes=tuple(
+                {
+                    "gene_id": gene.gene_id,
+                    "category": gene.category,
+                    "mechanism": gene.mechanism,
+                    "tags": list(gene.tags),
+                    "provenance": gene.provenance,
+                    "maturity": gene.maturity,
+                }
+                for gene in upgrade_genome
+            ),
+        )
         build_packet: dict[str, Any] = {
             "schema": "SOL62_FUSE_AUTOBUILD_PACKET_V1",
             "task_type": "SOL62_CLIENT_BUILD",
@@ -181,6 +205,7 @@ class FuseAutonomousHarvester:
                 "capability_decisions": [asdict(x) for x in system_plan.capability_decisions],
                 "owner_questions": list(system_plan.owner_questions),
             },
+            "alpha_omega_formation": alpha_omega_formation_receipt_to_dict(strategy_receipt),
             "runtime_upgrade_genome": {
                 "summary": genome_summary(),
                 "selected": [
