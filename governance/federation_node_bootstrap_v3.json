@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.7.0",
+  "version": "3.8.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -20,7 +20,8 @@
     "N_OMEGA_AGENTIC_FRONTIER_V1",
     "FUSE-ESTATE-RESOLUTION-START433",
     "FUSE-MISSION-ROUTE-PORTFOLIO-V2",
-    "FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2"
+    "FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2",
+    "FUSE-EXTERNAL-ALGORITHM-GENOME100-V1"
   ],
   "required_contracts": {
     "n_directive": "governance/federation_n_directive_v3.yaml",
@@ -43,7 +44,8 @@
     "estate_resolver": "REQUIRED_FOR_MATERIAL_CAPABILITY_ACCESS_AND_NO_ACCESS_DECISIONS",
     "mission_route_portfolio_v2": "REQUIRED_FOR_MATERIAL_NONTRIVIAL_MISSIONS",
     "more_autonomous_convergence_v2": "REQUIRED_ON_OWNER_MORE_AND_SAFE_POST_RESULT_CONTINUATION",
-    "frontier_resilience_interop": "REQUIRED_WHEN_AGF_054_063_SELECTED"
+    "frontier_resilience_interop": "REQUIRED_WHEN_AGF_054_063_SELECTED",
+    "external_algorithm_genome100": "LAZY_REQUIRED_ON_MORE_OR_MATERIAL_TRUE_RESIDUAL_GAP"
   },
   "required_sequence": [
     "PASS_FEDOMEGA_NODE_BOOTSTRAP_V2",
@@ -58,6 +60,9 @@
     "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
     "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
     "COMPILE_FRONTIER_CAPABILITY_SUPERSTACK",
+    "LAZY_MATCH_HG_EXTALG100_AND_COLLAPSE_EXISTING_MECHANISM_OVERLAP",
+    "REFRESH_PUBLIC_PRIMARY_SOURCE_ONLY_FOR_MATERIAL_EXTALG_CANDIDATES",
+    "SELECT_STRONGEST_EXTALG_DISPOSITION_REUSE_REBIND_REPAIR_EXTEND_COMPOSE_HARVEST_BUILD_MINIMUM_OR_REJECT",
     "COMPILE_FINITE_DEPENDENCY_DAG",
     "COMPILE_MULTIPLE_FEASIBLE_MISSION_ROUTE_PORTFOLIOS",
     "BUILD_ROUTE_FAILURE_DOMAIN_VECTORS_AND_PORTFOLIO_MIN_CUT",
@@ -159,7 +164,10 @@
     "global_hold_requires_proven_universal_causal_dependency": true,
     "route_portfolio_selected_is_execution": false,
     "more_cycle_executed_is_best_in_market_proven": false,
-    "best_in_market_internal_score_is_sufficient": false
+    "best_in_market_internal_score_is_sufficient": false,
+    "external_algorithm_genome_registered_is_implementation": false,
+    "external_algorithm_gene_source_is_runtime": false,
+    "external_algorithm_internal_score_is_superiority": false
   },
   "failure_state": "BOOTSTRAP_V3_BLOCKED_FAIL_CLOSED",
   "frontier_capability_adoption": {
@@ -528,6 +536,7 @@
       "MISSIONIR_DAG_READY_COLLISIONS",
       "PORTFOLIO_V2_TOURNAMENT",
       "SAFE_DISPATCH_WORK_STEAL",
+      "HG_EXTALG100_LAZY_GAP_MATCH_OVERLAP_COLLAPSE",
       "AUTO_HARVEST_TRUE_RESIDUALS",
       "AUTO_AUDIT",
       "MATCHED_FRONTIER_MARKET_BENCHMARK_WHEN_MATERIAL",
@@ -746,5 +755,123 @@
       "cross a matter wall to clear delivery debt",
       "expand provider authority merely to deliver a result"
     ]
+  },
+  "external_algorithm_genome100": {
+    "policy_id": "FUSE-EXTERNAL-ALGORITHM-GENOME100-V1",
+    "cohort": "HG-EXTALG-001..100",
+    "control_source": "START:FUSE_ONE-V4.37-EXTERNAL-ALGORITHM-GENOME100-20260924",
+    "capability_map_ref": "CFM-EXTALG100-001",
+    "load_policy": "METADATA_INDEX_ONLY_AT_BOOTSTRAP__DETAILS_ON_MATERIAL_MISSION_MATCH",
+    "families": {
+      "HG-EXTALG-001..020": "DELIBERATIVE_REASONING_PLANNING_SEARCH",
+      "HG-EXTALG-021..040": "OPTIMIZATION_EXPERIMENTATION_RESOURCE_ALLOCATION",
+      "HG-EXTALG-041..050": "SCHEDULING_FLOW_ROUTING",
+      "HG-EXTALG-051..065": "DISTRIBUTED_INTELLIGENCE_CONCURRENCY_RECOVERY",
+      "HG-EXTALG-066..078": "RETRIEVAL_MEMORY_KNOWLEDGE",
+      "HG-EXTALG-079..090": "CAUSAL_CURRENTNESS_DRIFT_UNCERTAINTY",
+      "HG-EXTALG-091..100": "PROOF_FALSIFICATION_DEBUGGING_EPISTEMICS"
+    },
+    "organ_bindings": {
+      "HG-EXTALG-001..020": [
+        "ALPHA_OMEGA",
+        "MISSION_IR",
+        "FORMATION",
+        "COGNITIVE_COUNCIL",
+        "FPPRE_RIF"
+      ],
+      "HG-EXTALG-021..040": [
+        "RAEFI",
+        "THROUGHPUT_INTELLIGENCE",
+        "CFBE_TOURNAMENTS",
+        "RESOURCE_ALLOCATOR"
+      ],
+      "HG-EXTALG-041..050": [
+        "PORTFOLIO_V2",
+        "EXECUTION_POWER_POOLS",
+        "THROUGHPUT_INTELLIGENCE"
+      ],
+      "HG-EXTALG-051..065": [
+        "FDOF",
+        "SICF",
+        "WORK_PLANE",
+        "PORTABLE_STATE",
+        "ARTIFACT_VAULT"
+      ],
+      "HG-EXTALG-066..078": [
+        "MEMORY_CONTINUUM",
+        "KDV",
+        "BIBLE_RETRIEVAL",
+        "EVIDENCEOPS",
+        "CAPABILITY_TRUTH"
+      ],
+      "HG-EXTALG-079..090": [
+        "PRECOG",
+        "AECL",
+        "FAILURE_HARVEST",
+        "REALITYGUARD"
+      ],
+      "HG-EXTALG-091..100": [
+        "PROOFOS",
+        "REALITY_JUDGE",
+        "FORMATION",
+        "SICF",
+        "FAILURE_HARVEST"
+      ]
+    },
+    "method": [
+      "MISSION_GAP_MATCH",
+      "MAP_TO_EXISTING_FUSE_MECHANISM",
+      "OVERLAP_EQUIVALENCE_SUPERSET_COLLAPSE",
+      "PUBLIC_PRIMARY_SOURCE_REFRESH_FOR_MATERIAL_CANDIDATES",
+      "REUSE_REBIND_REPAIR_EXTEND_COMPOSE_HARVEST_BUILD_MINIMUM_OR_REJECT",
+      "SOURCE_INDEPENDENT_MATCHED_INCUMBENT_CHALLENGER",
+      "UNTOUCHED_OR_FALSIFIER_CASES",
+      "PROOFOS_REALITY_JUDGE",
+      "SCOPED_SOURCE_RUNTIME_VALUE_PROOF",
+      "LEARNING_REGRET_UPDATE"
+    ],
+    "priority_tranche": [
+      "ReAct",
+      "Graph/Tree Search",
+      "Reflexion",
+      "MCTS/UCT",
+      "LPA*/D* Lite",
+      "Bayesian Optimization",
+      "Thompson Sampling",
+      "Hyperband/BOHB",
+      "CMA-ES",
+      "NSGA-II/MOEA-D",
+      "Max-Flow/Min-Cut",
+      "HEFT",
+      "Work-Stealing",
+      "Chandy-Lamport",
+      "SWIM/Phi Failure Detection",
+      "HNSW/RRF/ColBERT",
+      "FCI/NOTEARS",
+      "BOCPD/ADWIN",
+      "Conformal Prediction",
+      "QuickXplain",
+      "Delta Debugging",
+      "CEGAR/CEGIS"
+    ],
+    "proof_rules": {
+      "algorithm_name_or_paper_proves_capability_gap": false,
+      "registry_control_proves_source_implementation": false,
+      "source_implementation_proves_runtime": false,
+      "internal_score_proves_market_superiority": false,
+      "builders_self_certify": false,
+      "matched_incumbent_challenger_required": true,
+      "untouched_or_falsifier_required": true,
+      "independent_judge_required_before_promotion": true
+    },
+    "sovereignty": {
+      "consensus_replicated_state_or_alternate_truth_mechanisms_subordinate": true,
+      "may_replace_fuse_truth_authority_or_scheduler_root": false
+    },
+    "budget": {
+      "expensive_search_or_evolution_requires_information_gain": true,
+      "bounded_by_cost_privacy_and_terminal_relevance": true
+    },
+    "more_inheritance": true
   }
 }
