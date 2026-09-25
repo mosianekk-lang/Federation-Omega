@@ -1,0 +1,38 @@
+{
+  "schema": "FUSE_LOCALLLM_DESKTOP_PRODUCT_V1",
+  "version": "1.0.0",
+  "product_id": "FUSE-LOCALLLM-DESKTOP-V022",
+  "product_version": "0.2.2",
+  "source_root": "products/fuse_localllm_desktop/v0.2.2/upstream",
+  "custody_path": "products/fuse_localllm_desktop/v0.2.2/DRIVE_CUSTODY.json",
+  "windows_workflow": ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+  "expected_binaries": [
+    "FUSE-LocalLLM.exe",
+    "FUSE-LocalLLM-Desktop.exe"
+  ],
+  "localhost_port": 8999,
+  "model_runtime": {
+    "format": "GGUF",
+    "kernel": "llama.cpp",
+    "commit": "60081bb2b5b3294165a4d67c5cbeebe74c868014"
+  },
+  "current_maturity": "DRIVE_SOURCE_BYTE_CUSTODY_VERIFIED",
+  "next_maturity": [
+    "HOSTED_WINDOWS_BUILD_VERIFIED",
+    "HOSTED_WINDOWS_NO_MODEL_HEALTH_VERIFIED",
+    "PORTABLE_BINARY_PACKAGE_VERIFIED"
+  ],
+  "normal_user_external_runtime_dependencies": [
+    "NONE_REQUIRED_AFTER_BUILD"
+  ],
+  "open_terminal_debt": [
+    "OWNER_WINDOWS_RUNTIME_VERIFIED",
+    "MODEL_LOAD_AND_INFERENCE_VERIFIED",
+    "INSTALLER_REPAIR_UPGRADE_VERIFIED",
+    "OPENAI_DISABLED_VERIFIED",
+    "OFFLINE_CORE_VERIFIED",
+    "GOOGLE_DRIVE_RELEASE_VERIFIED",
+    "CROSS_PC_INSTALL_VERIFIED"
+  ],
+  "truth_boundary": "SOURCE_CUSTODY_AND_HOSTED_BUILD_CONTRACT != OWNER_PC_INSTALL != MODEL_INFERENCE != COMMERCIAL_READY"
+}

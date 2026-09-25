@@ -1,0 +1,90 @@
+{
+  "BUILD_INSTALL_LAUNCH_WINDOWS.cmd": {
+    "bytes": 365,
+    "sha256": "a24abba4114b4c1780d37b0b970c1477a566e8984cd07434632b7ca369ea6471"
+  },
+  "CMakeLists.txt": {
+    "bytes": 1001,
+    "sha256": "c3cfdd62d3be9822930a50dbe47bdd81c755bde13002d046005fe030cccadffc"
+  },
+  "README.md": {
+    "bytes": 2107,
+    "sha256": "a2f4f2e2ee511c053a58f909679c5df2772839028795c8037e6c2522d2d4cf12"
+  },
+  "docs/FAILURE_HARVEST_R1.json": {
+    "bytes": 1256,
+    "sha256": "a606d5535bdfffd056a30f2b8287ba5e3ce9da87a81410c8dd06336e367e4f84"
+  },
+  "docs/PRODUCT_PARITY_COURT.json": {
+    "bytes": 1771,
+    "sha256": "4aa9a3eca879e7f033d07260d90f0d3fcd211f38d9f04af0cbf3fb0ac7910092"
+  },
+  "docs/TEST_REPORT.json": {
+    "bytes": 2085,
+    "sha256": "2a818f0efb9ae53d7b3664445ae4f551aabd22284a09d610772c19ee93cdca16"
+  },
+  "include/fuse_core.hpp": {
+    "bytes": 1255,
+    "sha256": "26fb42049d01470207bcd2de608272fa371aa740ad548a3f4fa1824b892eca16"
+  },
+  "include/ui_embedded.hpp": {
+    "bytes": 21098,
+    "sha256": "c4c3f4b5aa94639cd3d250fd248f9992b613aeea978fb0768c415d50bc96afe5"
+  },
+  "scripts/build_windows.ps1": {
+    "bytes": 1504,
+    "sha256": "38f3854733de10e24fb77c15a9d95a91c951985e384acbd75033d14215a059e3"
+  },
+  "scripts/install_current_user.ps1": {
+    "bytes": 1161,
+    "sha256": "76ad8d188f28970c8d716b100078716839296ad3275273e86b7fc19a8be3ed77"
+  },
+  "scripts/uninstall_current_user.ps1": {
+    "bytes": 481,
+    "sha256": "b19bfa20c9998d5c3342a5eb7a52abba542b49c383f0d2d6fb75442f1884fe1d"
+  },
+  "src/desktop_launcher.cpp": {
+    "bytes": 1258,
+    "sha256": "f439a13c891bcdca33fbc533e60ffc661084f53004308533b486a7c296975389"
+  },
+  "src/fuse_core.cpp": {
+    "bytes": 7983,
+    "sha256": "37689f62ab277fd156e4b914729ca9f109da9db20233bd3450f34f80273f39c6"
+  },
+  "src/main.cpp": {
+    "bytes": 13790,
+    "sha256": "78072bcba6165ca43f17a3d74e986a32b11e6dfe0a640fbe796587207b5778cd"
+  },
+  "tests/__pycache__/test_product.cpython-313.pyc": {
+    "bytes": 3079,
+    "sha256": "7ad77bd83aec128c7ba2717be962a15a56a90b3c421f945c477a1a8c99080402"
+  },
+  "tests/ggml-backend.h": {
+    "bytes": 51,
+    "sha256": "453e372bc4543affae40033f31ffd7884f11b9dca00609fbee019a9afdda9c21"
+  },
+  "tests/llama.h": {
+    "bytes": 2210,
+    "sha256": "fac4c3a3cf8d0fe05e73c8c1e0fab87fb7493156821f013bc2f37d46d37538ed"
+  },
+  "tests/test_core.cpp": {
+    "bytes": 1493,
+    "sha256": "752d3ffc4d0e241f61e31ffbd0819136a59f76c5343a286a5dd46db41a9f049b"
+  },
+  "tests/test_product.py": {
+    "bytes": 1377,
+    "sha256": "e6e6779d9e8174624983f231017d29da4f0cbf8b154fa4bf77f88818f2e6b713"
+  },
+  "ui/app.css": {
+    "bytes": 6219,
+    "sha256": "12a3be5fccd07d4a25b0d9d396cedaae361d1988777dc157ecaf1aac6559b186"
+  },
+  "ui/app.js": {
+    "bytes": 9136,
+    "sha256": "e780ddb977f4427dae51749526a2a3478bc00ca5c66684766e1b8378a94a0f78"
+  },
+  "ui/index.html": {
+    "bytes": 5532,
+    "sha256": "fdeae5b8b2891bb4bb7d077f1eae3d45020c2e68cf2f5683121973cacc8b6900"
+  }
+}

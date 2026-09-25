@@ -1,0 +1,124 @@
+name: FUSE LocalLLM Desktop Windows Build v1
+on:
+  pull_request:
+    paths:
+      - "products/fuse_localllm_desktop/**"
+      - ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml"
+      - "governance/fuse_localllm_desktop_v1.json"
+      - "governance/proofos_omega_policy_extension_fuse_localllm_desktop_v1.json"
+      - "tests/test_fuse_localllm_desktop_source_v1.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fuse-localllm-desktop-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows-product:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      FEDERATION_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PRODUCT_ROOT: products\fuse_localllm_desktop\v0.2.2\upstream
+      BUILD_PRODUCT_ROOT: D:\fuse-v022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Enforce raw upstream checkout bytes
+        run: |
+          git config core.autocrlf false
+          git checkout-index -a -f
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Verify exact Drive custody
+        run: |
+          python -m unittest discover -s tests -p 'test_fuse_localllm_desktop_source_v1.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'LOCALLLM_SOURCE_CUSTODY_COURT_FAILED' }
+      - name: Run desktop source product court
+        run: |
+          python "$env:PRODUCT_ROOT\tests\test_product.py"
+          if ($LASTEXITCODE -ne 0) { throw 'LOCALLLM_PRODUCT_SOURCE_COURT_FAILED' }
+      - name: Build native Windows product from short deterministic staging path
+        run: |
+          Remove-Item -LiteralPath $env:BUILD_PRODUCT_ROOT -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $env:BUILD_PRODUCT_ROOT -Force | Out-Null
+          Copy-Item -Path "$env:PRODUCT_ROOT\*" -Destination $env:BUILD_PRODUCT_ROOT -Recurse -Force
+          & "$env:BUILD_PRODUCT_ROOT\scripts\build_windows.ps1" -BuildDir build
+          if ($LASTEXITCODE -ne 0) { throw 'LOCALLLM_WINDOWS_BUILD_FAILED' }
+          if (-not (Test-Path "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM.exe")) { throw 'LOCALLLM_RUNTIME_EXE_MISSING' }
+          if (-not (Test-Path "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM-Desktop.exe")) { throw 'LOCALLLM_DESKTOP_EXE_MISSING' }
+      - name: Prove no-model Windows runtime health
+        run: |
+          $empty=Join-Path $env:RUNNER_TEMP 'fuse-empty-models'; New-Item -ItemType Directory -Path $empty -Force | Out-Null
+          $env:FUSE_MODEL_DIR=$empty
+          $exe=Resolve-Path "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM.exe"
+          $proc=Start-Process -FilePath $exe -ArgumentList @('serve','--port','8999') -PassThru -WindowStyle Hidden
+          try {
+            $health=$null
+            for($i=0;$i -lt 40;$i++){ try { $health=Invoke-RestMethod -Uri 'http://127.0.0.1:8999/healthz' -TimeoutSec 2; break } catch { Start-Sleep -Milliseconds 500 } }
+            if($null -eq $health){ throw 'LOCALLLM_HEALTH_TIMEOUT' }
+            if($health.status -ne 'ok' -or $health.version -ne '0.2.2'){ throw 'LOCALLLM_HEALTH_SEMANTIC_MISMATCH' }
+            $runtime=Invoke-RestMethod -Uri 'http://127.0.0.1:8999/v1/fuse/runtime' -TimeoutSec 5
+            if($runtime.status -ne 'ok' -or $runtime.version -ne '0.2.2'){ throw 'LOCALLLM_RUNTIME_SEMANTIC_MISMATCH' }
+            New-Item -ItemType Directory -Path "$env:PRODUCT_ROOT\artifacts" -Force | Out-Null
+            [ordered]@{schema='FUSE-LOCALLLM-DESKTOP-HOSTED-WINDOWS-RUNTIME-PROOF-V1';source_sha=$env:FEDERATION_SOURCE_SHA;runner_os=$env:RUNNER_OS;health=$health;runtime=$runtime;model_required_for_health=$false} | ConvertTo-Json -Depth 8 | Set-Content "$env:PRODUCT_ROOT\artifacts\HOSTED_WINDOWS_RUNTIME_PROOF.json" -Encoding UTF8
+          } finally { if($proc -and -not $proc.HasExited){ Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } }
+      - name: Package portable Windows candidate
+        run: |
+          $releaseRoot="$env:PRODUCT_ROOT\artifacts\FUSE-LocalLLM-Desktop-v0.2.2-win-x64"
+          Remove-Item $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path $releaseRoot -Force | Out-Null
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM.exe" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM-Desktop.exe" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\BUILD_RECEIPT.json" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\install_current_user.ps1" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\uninstall_current_user.ps1" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\README.md" $releaseRoot
+          Copy-Item "products\fuse_localllm_desktop\v0.2.2\DRIVE_CUSTODY.json" $releaseRoot
+          Copy-Item "$env:PRODUCT_ROOT\artifacts\HOSTED_WINDOWS_RUNTIME_PROOF.json" $releaseRoot
+          $checksumLines = Get-ChildItem $releaseRoot -File | Sort-Object Name | ForEach-Object {
+            $h=(Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$h  $($_.Name)"
+          }
+          $checksumLines | Set-Content "$releaseRoot\SHA256SUMS.txt" -Encoding ascii
+          $sumLines=Get-Content "$releaseRoot\SHA256SUMS.txt"
+          foreach($line in $sumLines){
+            if($line -notmatch '^[0-9a-f]{64}  .+
+          Compress-Archive -Path "$releaseRoot\*" -DestinationPath $zip -CompressionLevel Optimal
+          [ordered]@{schema='FUSE-LOCALLLM-DESKTOP-WINDOWS-BUILD-PROOF-V1';product_version='0.2.2';source_sha=$env:FEDERATION_SOURCE_SHA;source_manifest_sha256='723a7cf4c3e8f87425884a0e8b8a077740e73b99d4d5875073f689d0ace45ffb';llama_cpp_commit='60081bb2b5b3294165a4d67c5cbeebe74c868014';runtime_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM.exe" -Algorithm SHA256).Hash.ToLower();desktop_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM-Desktop.exe" -Algorithm SHA256).Hash.ToLower();package_sha256=(Get-FileHash $zip -Algorithm SHA256).Hash.ToLower();hosted_runtime_health_verified=$true;owner_windows_runtime_verified=$false;model_inference_verified=$false;installer_exe_verified=$false} | ConvertTo-Json -Depth 6 | Set-Content "$env:PRODUCT_ROOT\artifacts\WINDOWS_BUILD_PROOF.json" -Encoding UTF8
+      - name: Upload Windows product candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-localllm-desktop-v0.2.2-win-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/FUSE-LocalLLM-Desktop-v0.2.2-win-x64.zip
+            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/WINDOWS_BUILD_PROOF.json
+            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/HOSTED_WINDOWS_RUNTIME_PROOF.json
+          if-no-files-found: error
+          retention-days: 30
+){ throw "MALFORMED_SHA256SUMS_LINE:$line" }
+            $parts=$line -split '  ',2
+            $target=Join-Path $releaseRoot $parts[1]
+            if(-not (Test-Path -LiteralPath $target)){ throw "SHA256SUMS_TARGET_MISSING:$($parts[1])" }
+            $actual=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+            if($actual -ne $parts[0]){ throw "SHA256SUMS_MISMATCH:$($parts[1])" }
+          }
+          $zip="$env:PRODUCT_ROOT\artifacts\FUSE-LocalLLM-Desktop-v0.2.2-win-x64.zip"; Remove-Item $zip -Force -ErrorAction SilentlyContinue
+          Compress-Archive -Path "$releaseRoot\*" -DestinationPath $zip -CompressionLevel Optimal
+          [ordered]@{schema='FUSE-LOCALLLM-DESKTOP-WINDOWS-BUILD-PROOF-V1';product_version='0.2.2';source_sha=$env:FEDERATION_SOURCE_SHA;source_manifest_sha256='723a7cf4c3e8f87425884a0e8b8a077740e73b99d4d5875073f689d0ace45ffb';llama_cpp_commit='60081bb2b5b3294165a4d67c5cbeebe74c868014';runtime_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM.exe" -Algorithm SHA256).Hash.ToLower();desktop_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM-Desktop.exe" -Algorithm SHA256).Hash.ToLower();package_sha256=(Get-FileHash $zip -Algorithm SHA256).Hash.ToLower();hosted_runtime_health_verified=$true;owner_windows_runtime_verified=$false;model_inference_verified=$false;installer_exe_verified=$false} | ConvertTo-Json -Depth 6 | Set-Content "$env:PRODUCT_ROOT\artifacts\WINDOWS_BUILD_PROOF.json" -Encoding UTF8
+      - name: Upload Windows product candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-localllm-desktop-v0.2.2-win-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/FUSE-LocalLLM-Desktop-v0.2.2-win-x64.zip
+            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/WINDOWS_BUILD_PROOF.json
+            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/HOSTED_WINDOWS_RUNTIME_PROOF.json
+          if-no-files-found: error
+          retention-days: 30

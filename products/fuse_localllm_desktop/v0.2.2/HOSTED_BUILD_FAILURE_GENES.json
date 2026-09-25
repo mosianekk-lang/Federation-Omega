@@ -1,0 +1,31 @@
+{
+  "schema": "FUSE_LOCALLLM_DESKTOP_HOSTED_BUILD_FAILURE_GENES_V1",
+  "version": "1.0.0",
+  "product_version": "0.2.2",
+  "failures": [
+    {
+      "id": "LOCALLLM-WINBUILD-001",
+      "fingerprint": "LLAMA_FETCHCONTENT_WINDOWS_PATH_TOO_LONG",
+      "observed_run": 36195105018,
+      "observed_head": "b50cfd80d4954e57d8f4ec3c63e14e72a9a2be58",
+      "first_divergence": "FetchContent git clone of pinned llama.cpp could not create deep tools/ui paths under long GitHub workspace path",
+      "unchanged_retry_forbidden": true,
+      "repair": "copy exact verified product source to D:\\\\fuse-v022 and compile from short staging path",
+      "product_source_bytes_changed": false,
+      "regression_gate": "hosted Windows build must compile from short deterministic staging path"
+    },
+    {
+      "id": "LOCALLLM-WINPKG-001",
+      "fingerprint": "SHA256SUMS_CONTAINED_POWERSHELL_EXPRESSION_LITERAL",
+      "observed_run": 36195371401,
+      "observed_head": "9cd1010cf3206e787f20713561888c73b43af5e8",
+      "first_divergence": "post-build artifact readback showed checksum lines beginning Microsoft.PowerShell.Commands.FileHashInfo.Hash.ToLower() instead of 64 lowercase hex chars",
+      "unchanged_retry_forbidden": true,
+      "repair": "assign Get-FileHash digest to scalar, emit lowercase digest, validate regex, target existence and recomputed hash before zip creation",
+      "binary_build_and_hosted_runtime_health_on_observed_run": true,
+      "release_admissible": false,
+      "regression_gate": "every SHA256SUMS line must be 64 lowercase hex + two spaces + filename and must recompute exactly"
+    }
+  ],
+  "learning_rule": "Every material product failure becomes a durable regression fixture before release promotion."
+}

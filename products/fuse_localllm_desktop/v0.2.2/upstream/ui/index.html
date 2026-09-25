@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>FUSE LocalLLM</title>
+<link rel="stylesheet" href="/app.css"/>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brandmark">F</div>
+      <div><strong>FUSE</strong><span>LocalLLM</span></div>
+    </div>
+
+    <button class="new-chat" id="newChat">＋ New chat</button>
+
+    <nav>
+      <button class="nav active" data-view="chat"><span>◫</span> Chat</button>
+      <button class="nav" data-view="models"><span>◈</span> Models</button>
+      <button class="nav" data-view="library"><span>▱</span> Library</button>
+      <button class="nav" data-view="apps"><span>⊞</span> Apps</button>
+      <button class="nav" data-view="settings"><span>⚙</span> Settings</button>
+    </nav>
+
+    <div class="history-title">Recent</div>
+    <div id="history" class="history"></div>
+
+    <div class="runtime-pill">
+      <i id="runtimeDot"></i>
+      <div><b id="runtimeLabel">Starting runtime…</b><small id="runtimeModel">No model loaded</small></div>
+    </div>
+  </aside>
+
+  <main>
+    <section class="view active" id="view-chat">
+      <div class="topbar">
+        <div>
+          <select id="modelPicker" class="model-picker"></select>
+        </div>
+        <button class="ghost" id="clearChat">Clear</button>
+      </div>
+
+      <div class="chat-scroll" id="chatScroll">
+        <div class="empty-state" id="emptyState">
+          <div class="orb">F</div>
+          <h1>What do you want to build?</h1>
+          <p>Private local inference on your machine. Your GGUF stays on your PC.</p>
+          <div class="chips">
+            <button data-prompt="Summarize the architecture of this project.">Summarize a project</button>
+            <button data-prompt="Help me design a creative concept.">Creative concept</button>
+            <button data-prompt="Review this idea and identify the strongest implementation path.">Review an idea</button>
+          </div>
+        </div>
+        <div id="messages" class="messages"></div>
+      </div>
+
+      <div class="composer-wrap">
+        <div id="attachmentBar" class="attachments"></div>
+        <div class="composer">
+          <button class="circle" id="attachBtn" title="Attach text/code file">＋</button>
+          <textarea id="prompt" placeholder="Send a message" rows="1"></textarea>
+          <button class="send" id="sendBtn">↑</button>
+        </div>
+        <div class="composer-meta">
+          <span>Local · FUSE-owned runtime</span>
+          <span id="perf"></span>
+        </div>
+      </div>
+      <input type="file" id="fileInput" hidden multiple accept=".txt,.md,.json,.csv,.py,.js,.ts,.cpp,.h,.hpp,.html,.css,.xml,.yaml,.yml"/>
+    </section>
+
+    <section class="view" id="view-models">
+      <div class="page">
+        <div class="page-head">
+          <div><h1>Models</h1><p>GGUF models detected on this PC.</p></div>
+          <button id="refreshModels">Refresh</button>
+        </div>
+        <div id="modelCards" class="cards"></div>
+        <div class="hint">
+          <b>Model folder</b>
+          <p>FUSE automatically scans <code>%USERPROFILE%\Downloads\Programs\FUSE</code> and <code>%LOCALAPPDATA%\FUSE\LocalLLM\models</code>.</p>
+          <button id="openModelFolder">Open local model folder</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-library">
+      <div class="page">
+        <h1>Library</h1>
+        <p>Reusable local context for chats. Text/code attachments stay inside this browser profile and are sent only to the local runtime.</p>
+        <div id="libraryItems" class="cards"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-apps">
+      <div class="page">
+        <h1>Apps</h1>
+        <p>Connect local tools to the same FUSE runtime without changing your model.</p>
+        <div class="cards">
+          <article><h3>OpenAI-compatible API</h3><p><code>http://127.0.0.1:8999/v1</code></p><span class="badge good">Ready</span></article>
+          <article><h3>Ollama-compatible surface</h3><p><code>/api/chat</code>, <code>/api/generate</code>, <code>/api/tags</code>, <code>/api/version</code></p><span class="badge good">Ready</span></article>
+          <article><h3>FUSE Sovereignty Plane</h3><p>SFCP local-private executor binding target.</p><span class="badge warn">Runtime proof pending</span></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-settings">
+      <div class="page">
+        <h1>Settings</h1>
+        <div class="settings-grid">
+          <label>Context window<input type="number" id="ctx" min="512" max="131072" step="512"/></label>
+          <label>Max output tokens<input type="number" id="maxTokens" min="16" max="8192"/></label>
+          <label>Temperature<input type="number" id="temperature" min="0" max="2" step="0.05"/></label>
+          <label>Top P<input type="number" id="topP" min="0.05" max="1" step="0.05"/></label>
+          <label>Top K<input type="number" id="topK" min="1" max="200"/></label>
+          <label class="check"><input type="checkbox" id="noThink"/> Hide model reasoning tags where supported</label>
+        </div>
+        <button id="saveSettings">Save settings</button>
+        <div class="status-panel">
+          <h3>Runtime</h3>
+          <pre id="runtimeJson">Loading…</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
