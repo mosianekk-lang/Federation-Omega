@@ -1,0 +1,28 @@
+{
+  "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
+  "version": "3.0.0",
+  "boot_kernel": "5.9.0",
+  "authority": "START:FUSE_ONE",
+  "enabled": true,
+  "output_mirror_required": true,
+  "output_mirror_min_version": "3.0.0",
+  "required_before_route_compilation": true,
+  "required_before_terminal_delivery": true,
+  "power_diary": {
+    "source_sha256": "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495",
+    "chapter_count": 40,
+    "required_family_count": 17,
+    "module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b"
+  },
+  "developer1000": {
+    "count": 1000,
+    "sha256": "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e"
+  },
+  "benchmark_court": {
+    "cases": 1000,
+    "dataset_sha256": "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510"
+  },
+  "fail_closed": true,
+  "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
+  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_ENFORCEMENT_VERIFIED; UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT_NOT_CLAIMED"
+}
