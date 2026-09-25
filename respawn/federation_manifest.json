@@ -64,6 +64,8 @@
     "load_recent_sync_events",
     "load_shared_learnings",
     "load_conflicts",
+    "load_bootstrap_memory_snapshot",
+    "validate_bootstrap_memory_snapshot",
     "load_runtime_sovereignty_contract",
     "load_owner_intent_and_debt",
     "run_already_solved_gate",
@@ -72,6 +74,7 @@
     "load_power_diary_contract",
     "load_output_mirror_v3_contract",
     "validate_output_mirror_v3_contract",
+    "run_bootstrap_self_improvement",
     "execute",
     "verify_and_judge",
     "run_output_mirror",
@@ -92,7 +95,9 @@
     "OUTPUT_MIRROR_V2_REQUIRED_BEFORE_TERMINAL_DELIVERY",
     "ZERO_FAIL_ACROSS_REQUIRED_MIRROR_DIMENSIONS",
     "DEVELOPER1000_COURT_BOUND",
-    "DIRECTIVE_FIDELITY_REQUIRED"
+    "DIRECTIVE_FIDELITY_REQUIRED",
+    "BOOTSTRAP_MEMORY_SNAPSHOT_REQUIRED",
+    "BOOTSTRAP_SELF_IMPROVEMENT_REQUIRED"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -192,5 +197,22 @@
       "NO_DOWNGRADE_FROM_EXECUTION_TO_ADVICE_WHEN_EXECUTION_IS_AVAILABLE"
     ],
     "failure_behavior": "HOLD_AND_RECOMPILE_SAME_MISSION"
+  },
+  "bootstrap_memory": {
+    "contract_id": "FUSE-BOOTSTRAP-MEMORY-V1",
+    "enabled": true,
+    "snapshot_path": "config/fuse-bootstrap-memory-snapshot-v1.json",
+    "restore_last_accepted_generation": true,
+    "preserve_previous_generation": true,
+    "volatile_state_must_refresh": true
+  },
+  "bootstrap_self_improvement": {
+    "contract_id": "FUSE-BOOTSTRAP-SELF-IMPROVEMENT-V1",
+    "enabled": true,
+    "config_path": "config/fuse-bootstrap-self-improvement-v1.json",
+    "candidate_limit": 3,
+    "promotion_requires": "MATCHED_NONREGRESSION_PROOF_AND_READBACK",
+    "tie_behavior": "KEEP_CURRENT_CHAMPION",
+    "rollback_required": true
   }
 }
