@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "boot_kernel": "5.10.1",
   "authority": "START:FUSE_ONE",
   "enabled": true,
@@ -24,7 +24,7 @@
   },
   "fail_closed": true,
   "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
-  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_ENFORCEMENT_VERIFIED; UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT_NOT_CLAIMED",
+  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_V3_PREEXISTING_ENFORCEMENT_VERIFIED; HIPB_SOURCE_BINDING_CANDIDATE_DOES_NOT_PROVE_OWNER_LOCAL_HIPB_RUNTIME_PROMOTION_OR_UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT",
   "hydrate_on": [
     "START:FUSE_ONE",
     "n",
@@ -49,6 +49,7 @@
     "POWER_DIARY_CONTRACT",
     "OUTPUT_MIRROR_V3",
     "AUTONOMOUS_IMPROVEMENT_10",
+    "HYPER_INTELLIGENCE_PERFORMANCE_BINDING",
     "ROUTE_COMPILE",
     "EXECUTE",
     "READBACK",
@@ -57,7 +58,7 @@
     "OUTPUT_MIRROR_V3_RELEASE",
     "TERMINAL_DELIVERY"
   ],
-  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_AND_APPLICABLE_POWER_DIARY_CONTRACTS",
+  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_APPLICABLE_POWER_DIARY_AND_HIPB_CONTRACTS",
   "engineering_dimensions": [
     "intent_fidelity",
     "execution_finality",
@@ -140,5 +141,16 @@
       "completed_record_iterations": 1290,
       "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
     }
+  },
+  "hyper_intelligence_performance": {
+    "contract_id": "FUSE-HIPB-001",
+    "schema": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "required_before_route_compilation": true,
+    "matched_benchmark_required_for_hyper_performance_claim": true,
+    "module_path": "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+    "court_path": "benchmarks/hyper_intelligence_performance_court_v1.mjs",
+    "source_candidate_runtime_promotion_pending": true
   }
 }
