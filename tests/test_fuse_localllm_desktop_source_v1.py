@@ -25,10 +25,19 @@ class FuseLocalLLMDesktopSourceTests(unittest.TestCase):
         self.assertIn("60081bb2b5b3294165a4d67c5cbeebe74c868014",cmake)
         self.assertIn("project(FUSE_LocalLLM_Desktop VERSION 0.2.2",cmake)
         self.assertIn("add_executable(FUSE-LocalLLM ",cmake); self.assertIn("add_executable(FUSE-LocalLLM-Desktop WIN32",cmake)
+    def test_airlock_registration(self):
+        policy=json.loads((ROOT/"governance"/"github_airlock_policy.json").read_text(encoding="utf-8"))
+        workflow=".github/workflows/fuse-localllm-desktop-windows-build-v1.yml"
+        self.assertIn(workflow,policy["active_workflow_allowlist"])
+        self.assertIn(workflow,policy["execution_quarantine"]["keep_active"])
+        self.assertEqual(policy["allowed_events"][workflow],["pull_request","workflow_dispatch"])
+        self.assertNotIn(workflow,policy["oidc_workflow_allowlist"])
+        self.assertNotIn(workflow,policy["provider_mutation_workflow_allowlist"])
+
     def test_product_source_court(self):
         ui=(SRC/"ui"/"index.html").read_text(encoding="utf-8"); app=(SRC/"ui"/"app.js").read_text(encoding="utf-8")
         main=(SRC/"src"/"main.cpp").read_text(encoding="utf-8"); launcher=(SRC/"src"/"desktop_launcher.cpp").read_text(encoding="utf-8")
         for token in ("view-chat","view-models","view-library","view-apps","view-settings"): self.assertIn(token,ui)
-        self.assertIn("/v1/chat/completions",app); self.assertIn("GET /healthz",main); self.assertIn('"version":"0.2.2"',main)
+        self.assertIn("/v1/chat/completions",app); self.assertIn("GET /healthz",main); self.assertIn('FUSE-LocalLLM-0.2.2',main)
         self.assertIn("CREATE_NO_WINDOW",launcher); self.assertIn("msedge.exe",launcher)
 if __name__=="__main__": unittest.main()
