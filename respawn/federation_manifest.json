@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4",
+  "schema_version": "1.5",
   "owner_alias": "federation-owner",
   "control_plane": {
     "drive_folder_id": "env:FEDERATION_DRIVE_FOLDER_ID",
@@ -75,6 +75,8 @@
     "load_output_mirror_v3_contract",
     "validate_output_mirror_v3_contract",
     "run_bootstrap_self_improvement",
+    "run_autonomous_improvement_10_iterations",
+    "enroll_new_historical_chat_captures",
     "execute",
     "verify_and_judge",
     "run_output_mirror",
@@ -97,7 +99,10 @@
     "DEVELOPER1000_COURT_BOUND",
     "DIRECTIVE_FIDELITY_REQUIRED",
     "BOOTSTRAP_MEMORY_SNAPSHOT_REQUIRED",
-    "BOOTSTRAP_SELF_IMPROVEMENT_REQUIRED"
+    "BOOTSTRAP_SELF_IMPROVEMENT_REQUIRED",
+    "AUTONOMOUS_IMPROVEMENT_10_ITERATIONS_REQUIRED",
+    "HISTORICAL_CHAT_BACKFILL_AUTO_ENROLL",
+    "NATIVE_TRANSCRIPT_UNAVAILABLE_IS_NOT_ABSENCE"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -207,12 +212,38 @@
     "volatile_state_must_refresh": true
   },
   "bootstrap_self_improvement": {
-    "contract_id": "FUSE-BOOTSTRAP-SELF-IMPROVEMENT-V1",
+    "contract_id": "FUSE-BOOTSTRAP-SELF-IMPROVEMENT-V2",
     "enabled": true,
     "config_path": "config/fuse-bootstrap-self-improvement-v1.json",
-    "candidate_limit": 3,
-    "promotion_requires": "MATCHED_NONREGRESSION_PROOF_AND_READBACK",
+    "iterations_per_cycle": 10,
+    "exact_iteration_count": true,
+    "inhouse_default": true,
+    "build_to_completion": true,
+    "promotion_requires": "MATCHED_NONREGRESSION_PROOF_READBACK_ROLLBACK_AND_PROVENANCE",
     "tie_behavior": "KEEP_CURRENT_CHAMPION",
-    "rollback_required": true
+    "rollback_required": true,
+    "worker_path": "fuse_runtime/autonomous_improvement_loop_v1.mjs",
+    "worker_sha256": "1b8d8b2ed2f9d846cfa0c985686284189a2ffb0d24c4509c0490355c5e7da7be"
+  },
+  "historical_chat_backfill": {
+    "contract_id": "FUSE-HISTORICAL-CHAT-BACKFILL-V1",
+    "enabled": true,
+    "iterations_per_recovered_chat": 10,
+    "current_exact_recovered_chat_records": 37,
+    "current_completed_iterations": 370,
+    "summary_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+    "recoverable_corpus_sha256": "27356353cab01e2f09017b38d617a84c235f11ea8f92ac4067a087bb7f1c865e",
+    "future_capture_auto_enroll": true,
+    "source_precedence": [
+      "OFFICIAL_OPENAI_EXPORT_IF_AVAILABLE",
+      "SESSION_PROVIDER_GRAPH_IF_AVAILABLE",
+      "CHATBRIDGE_FULL_FIDELITY",
+      "DRIVE_CHAT_ARCHIVES",
+      "GMAIL_CHATGPT_BACKUPS",
+      "LIVE_BIBLE_AND_TURN_CAPTURE"
+    ],
+    "native_account_totality": "UNVERIFIED",
+    "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
+    "false_totality_claim_forbidden": true
   }
 }
