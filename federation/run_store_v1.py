@@ -83,6 +83,17 @@ class RunStore:
               payload_json TEXT NOT NULL,
               created_at REAL NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS terminal_debt(
+              mission_id TEXT NOT NULL,
+              debt_id TEXT NOT NULL,
+              state TEXT NOT NULL,
+              payload_json TEXT NOT NULL,
+              payload_sha256 TEXT NOT NULL,
+              updated_at REAL NOT NULL,
+              PRIMARY KEY(mission_id,debt_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_terminal_debt_mission_state
+              ON terminal_debt(mission_id,state);
             """
         )
         self.db.commit()
@@ -158,3 +169,68 @@ class RunStore:
             "SELECT * FROM reentry_queue WHERE mission_id=? AND state='READY' ORDER BY created_at,reentry_id", (mission_id,)
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+    def upsert_terminal_debt(
+        self,
+        mission_id: str,
+        debt_id: str,
+        payload: Mapping[str, Any],
+        *,
+        state: str,
+    ) -> str:
+        """Persist one terminal-debt item idempotently by mission/debt identity."""
+        body = dict(payload)
+        body_sha = digest(body)
+        now = time.time()
+        with self.db:
+            self.db.execute(
+                """
+                INSERT INTO terminal_debt(mission_id,debt_id,state,payload_json,payload_sha256,updated_at)
+                VALUES(?,?,?,?,?,?)
+                ON CONFLICT(mission_id,debt_id) DO UPDATE SET
+                  state=excluded.state,
+                  payload_json=excluded.payload_json,
+                  payload_sha256=excluded.payload_sha256,
+                  updated_at=excluded.updated_at
+                """,
+                (mission_id, debt_id, state, canonical(body), body_sha, now),
+            )
+        return body_sha
+
+    def terminal_debts(self, mission_id: str, *, state: str | None = None) -> list[dict[str, Any]]:
+        if state is None:
+            rows = self.db.execute(
+                "SELECT mission_id,debt_id,state,payload_json,payload_sha256,updated_at "
+                "FROM terminal_debt WHERE mission_id=? ORDER BY debt_id",
+                (mission_id,),
+            ).fetchall()
+        else:
+            rows = self.db.execute(
+                "SELECT mission_id,debt_id,state,payload_json,payload_sha256,updated_at "
+                "FROM terminal_debt WHERE mission_id=? AND state=? ORDER BY debt_id",
+                (mission_id, state),
+            ).fetchall()
+        out = []
+        for row in rows:
+            payload = json.loads(row["payload_json"])
+            if digest(payload) != row["payload_sha256"]:
+                raise RuntimeError("TERMINAL_DEBT_DIGEST_MISMATCH")
+            out.append(
+                {
+                    "mission_id": row["mission_id"],
+                    "debt_id": row["debt_id"],
+                    "state": row["state"],
+                    "payload": payload,
+                    "payload_sha256": row["payload_sha256"],
+                    "updated_at": row["updated_at"],
+                }
+            )
+        return out
+
+    def terminal_debt_counts(self, mission_id: str) -> dict[str, int]:
+        rows = self.db.execute(
+            "SELECT state,COUNT(*) AS n FROM terminal_debt WHERE mission_id=? GROUP BY state",
+            (mission_id,),
+        ).fetchall()
+        return {str(row["state"]): int(row["n"]) for row in rows}
