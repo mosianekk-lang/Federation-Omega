@@ -82,7 +82,7 @@
   "hyper_intelligence_performance": {
     "contract_id": "FUSE-HIPB-001",
     "schema": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "enabled": true,
     "required_for_substantial_tasks": true,
     "matched_benchmark_required_for_hyper_performance_claim": true,
@@ -94,7 +94,26 @@
     "owner_rescue_ceiling": 0,
     "module_path": "fuse_runtime/hyper_intelligence_performance_v1.mjs",
     "court_path": "benchmarks/hyper_intelligence_performance_court_v1.mjs",
-    "module_sha256": "6dec77c4df406c4a01ab177ea5634dee9a8792f2af884d0c383e9aaa0d149911",
-    "court_sha256": "33a3867709f8a3ddd50d9356617cc1f91e1aaa64a1f56ba63767716024095660"
-  }
+    "module_sha256": "68be521e13c2eb1d97404e1a72aa27e0d9e442abcb23a4f5b9b96b7d0da2b753",
+    "court_sha256": "22bbb1b4de33ced515d2f847d46ede106db5d971f70549d89a0e6192f56333b0",
+    "owner_intent_drift_ceiling": 0,
+    "unrequested_recurrence_ceiling": 0,
+    "executable_next_action_withheld_ceiling": 0,
+    "self_repair_required_on_assistant_caused_reversible_drift": true,
+    "common_mode_evidence_detection": true,
+    "forecast_calibration_required": true,
+    "sovereign_kernel_hooks": [
+      "PRE_COMPILE",
+      "PRE_EFFECT",
+      "POST_EFFECT"
+    ]
+  },
+  "non_compensating_owner_intent_gates": [
+    "OWNER_INTENT_DIFF_PASS",
+    "NO_UNREQUESTED_RECURRENCE",
+    "NO_UNREQUESTED_EFFECT",
+    "OWNER_RESCUE_REQUIRED_FALSE",
+    "NO_EXECUTABLE_SAFE_NEXT_ACTION_WITHHELD",
+    "ASSISTANT_CAUSED_REVERSIBLE_DRIFT_REPAIRED"
+  ]
 }

@@ -1,84 +1,136 @@
-# FUSE Hyper-Intelligence & Hyper-Performance Binding v1 — HIPB-001
+# FUSE Hyper-Intelligence & Hyper-Performance Binding v2 — HIPB-001
 
-Status: additive source implementation; no new controller, scheduler, authority root, truth root, proof root, memory root, mission bus, or provider runtime.
+Status: additive Sovereign Kernel cognitive policy/source implementation. No new controller, scheduler, authority root, truth root, proof root, memory root, mission bus or provider runtime.
 
 ## Mission
 
-HIPB-001 makes the existing FUSE intelligence and execution organs operate as one measurable adaptive system rather than a collection of individually strong mechanisms.
+HIPB-001 v2 upgrades the existing FUSE Sovereign Plane into a closed-loop adaptive cognitive system without replacing any existing authority or execution organ.
 
-It binds, without replacing:
+`OWNER INTENT -> FUSE Sovereign Plane -> HIPB PRE_COMPILE -> MissionIR / route portfolio -> HIPB PRE_EFFECT -> Hybrid Execution / SOL 6.2 -> FDOF/SICF -> provider/local/device carrier -> effect readback -> HIPB POST_EFFECT -> ProofOS / Reality Judge -> Output Mirror -> owner result -> Federation Learning -> replan`.
 
-`START:FUSE_ONE -> FUSE Sovereign Plane -> Active Cognition / world-state model -> uncertainty + causal graph + future envelope + value-of-information -> ten-pass autonomous improvement when required -> route tournament -> safe parallel execution -> SOL 6.2 -> FDOF/SICF -> Genesis -> effect readback -> ProofOS/Reality Judge -> Output Mirror -> owner result`.
+The binding is subordinate to current FUSE authority. It can rank, challenge, forecast, prepare, replan and recommend rollback; it cannot mint authority, provider effects, source ownership, proof or completion.
+
+## v2 cognitive upgrades
+
+HIPB v2 adds:
+
+- exact owner-intent compilation and non-compensating `OwnerIntentDiff`;
+- fail-closed detection of unrequested recurrence, effect classes and target-scope expansion;
+- automatic rollback recommendation for assistant-caused reversible owner-intent drift;
+- adaptive reasoning pressure from impact, uncertainty, irreversibility, authority risk, proof burden and information value;
+- value-of-information ranking so research targets only decision-changing unknowns;
+- explicit FutureEnvelope with first and second-order blockers, early-warning signals, no-regret preparation, expiry and falsifiers;
+- forecast calibration as HIT / PARTIAL / MISS / REGIME_BREAK;
+- common-mode evidence detection so repeated observations from one root do not inflate confidence;
+- causal blast-radius propagation and selective requalification instead of whole-mission resets;
+- pre-mortem and counterfactual challenge for high-consequence work;
+- compact CognitiveCheckpoint state for cross-chat/client continuation;
+- three FUSE Sovereign Kernel hooks: `PRE_COMPILE`, `PRE_EFFECT`, `POST_EFFECT`;
+- Output Mirror floors for zero owner-intent drift, zero unrequested recurrence and zero withheld executable safe next actions.
+
+## Sovereign Kernel hook contract
+
+### PRE_COMPILE
+
+Runs before route/MissionIR compilation.
+
+Required checks:
+
+- currentness valid;
+- OwnerIntentDiff pass;
+- world/uncertainty/causal model available where material;
+- future envelope and decision-relevant VOI;
+- reuse/repair/compose before new build.
+
+Failure behavior: `REPLAN` the same mission. No authority expansion.
+
+### PRE_EFFECT
+
+Runs immediately before a material effect.
+
+Required checks:
+
+- OwnerIntentDiff pass;
+- exact target and action-specific authority;
+- security/privacy hard floors;
+- bounded cost;
+- unknown-effect strategy;
+- pre-mortem/counterfactual where high consequence;
+- rollback or compensation where applicable.
+
+Failure behavior: `HOLD` only the affected effect lane for hard authority/security/privacy/cost failure, otherwise `REPLAN`.
+
+### POST_EFFECT
+
+Runs after effect execution and before proof promotion.
+
+Required checks:
+
+- effect state known or explicit READBACK_EFFECT;
+- semantic readback;
+- anomaly/surprise classification;
+- causal blast-radius update;
+- forecast calibration;
+- changed-mechanism/negative-knowledge learning;
+- READY-set recompile.
+
+Failure behavior: `REPLAN` or effect-local readback hold. Never global-stall unrelated READY work.
 
 ## Hyper-intelligence engineering definition
 
-"Hyper-intelligence" is a bounded engineering objective for:
+“Hyper-intelligence” is an engineering objective for adaptive, evidence-grounded orchestration:
 
-- adaptive reasoning depth rather than always-deep reasoning;
-- explicit world-state and uncertainty modelling;
-- causal/dependency reasoning instead of narrative plausibility;
-- value-of-information selection of only decision-changing unknowns;
-- future-envelope forecasting with falsifiers and expiry;
-- collective cognition without majority-vote truth;
-- independent challengers and Judge isolation;
-- reuse, repair, extend and compose before build;
-- mechanism change after repeated same-semantic failure;
-- learning that improves future route selection without inheriting authority.
+- world-state modelling;
+- uncertainty and causal reasoning;
+- value-of-information;
+- calibrated forecasting;
+- counterfactual and adversarial challenge;
+- safe parallelism;
+- selective blast-radius repair;
+- self-repair of reversible assistant-caused drift;
+- continual empirical learning.
 
-It does **not** mean sentience, omniscience, supernatural foresight, inaccessible-provider knowledge, hidden prompts, private weights, or fabricated system access.
+It does **not** mean sentience, omniscience, supernatural foresight, hidden prompts, private weights or access to unavailable systems.
 
-## Hyper-performance engineering definition
+## Hyper-performance proof
 
-"Hyper-performance" is a proof state, not a slogan.
+“Hyper-performance” remains a proof state, never a branding claim.
 
-A route may be promoted to `HYPER_PERFORMANCE_VERIFIED` only on a matched empirical benchmark that passes all applicable non-compensating floors:
+Promotion requires a matched empirical benchmark and all applicable non-compensating floors:
 
 - latency speedup >= 1.5x;
-- tool-call reduction >= 20% when a comparable baseline exists;
-- owner-prompt reduction >= 50% when a comparable baseline exists;
+- tool-call reduction >= 20% where comparable;
+- owner-prompt reduction >= 50% where comparable;
 - quality delta nonnegative;
 - zero false-green outcomes;
 - zero unintended writes;
 - zero unchanged retries;
-- zero owner rescues.
+- zero owner rescues;
+- zero owner-intent drift;
+- zero unrequested recurrence;
+- zero executable safe next-action withholding.
 
-A faster result that weakens truth, proof, security, privacy, legality, recovery, or owner value does not qualify.
+Any hard-floor regression makes the result non-promoting regardless of speed.
 
-## Adaptive cognition
+## Authority separation
 
-HIPB selects one of four reasoning modes:
+HIPB v2 does not replace:
 
-1. `FAST` — deterministic, low-risk, high-confidence work.
-2. `ADAPTIVE` — substantial work requiring bounded currentness and orchestration.
-3. `DEEP` — consequential ambiguity, architecture, security/privacy, or elevated uncertainty.
-4. `FORMATION` — unknown effects, repeated same-semantic failure, or high-consequence uncertainty requiring changed-mechanism challenge.
+- START:FUSE_ONE as startup/currentness authority;
+- FUSE Sovereign Plane as mission authority;
+- SOL 6.2 as transactional mission/effect state;
+- FDOF/SICF as source/effect authority and state-integrity controls;
+- Hybrid Execution / providers / local runtimes as replaceable carriers;
+- ProofOS / Reality Judge as independent certification;
+- Output Mirror as terminal delivery gate;
+- Federation Learning as empirical promotion/negative-knowledge plane.
 
-This prevents both underthinking consequential work and wasting latency/cost on trivial work.
+## Current source/runtime boundary
 
-## Route tournament
+The v2 source integration intentionally avoids foreign F348's three SOL62 source paths.
 
-Authority, security, privacy, legality, truth and proof are hard floors. They cannot be compensated by speed or cost.
+Therefore:
 
-Eligible routes are then compared on terminal unlock, correctness, current callability, proof strength, recovery quality, information gain, future option value, sovereignty, latency, cost, coordination tax, failure correlation, architecture entropy and owner burden.
+`HIPB_V2_SOURCE_AND_BOOTSTRAP_HOOKS_BOUND != SOL62_RUNTIME_ATTACHMENT_UPDATED != OWNER_LOCAL_RUNTIME_VERIFIED != UNIVERSAL_PROVIDER_ENFORCEMENT != COMPLETE`.
 
-## Safe parallelism
-
-HIPB compiles independent READY nodes into execution waves. It serializes:
-
-- overlapping writes;
-- write/read collisions;
-- shared effects;
-- canonical-state work;
-- unknown scopes.
-
-Disjoint work continues even when another lane is blocked.
-
-## Proof boundaries
-
-`POLICY_BOUND != SOURCE_VERIFIED != RUNTIME_VERIFIED != MATCHED_PERFORMANCE_VERIFIED != OWNER_VALUE_VERIFIED != COMPLETE`.
-
-The source policy and deterministic court can prove the binding semantics. They do not prove that an owner-local Windows runtime is currently enforcing HIPB, that every provider/receiver is bound, or that every workload achieves the performance floors.
-
-## Current deployment boundary
-
-The existing owner-local Sovereign Plane remains the intended runtime attachment point. Deployment and live canary proof must be performed through a currently callable lawful owner-runtime route. Until then the HIPB source candidate must remain source-level and must not be described as universal live enforcement.
+Direct modification of the SOL62 Sovereign Plane binding remains a separate runtime-source transition that must respect the current FDOF writer/fence and receive exact-head proof before promotion.

@@ -159,13 +159,24 @@ def hyper_intelligence_performance_bootstrap_guard(payload: Optional[Dict[str, A
         issues.append("HIPB_CONTRACT_ID_MISMATCH")
     if contract.get("schema") != "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1":
         issues.append("HIPB_SCHEMA_MISMATCH")
+    if contract.get("version") != "2.0.0":
+        issues.append("HIPB_VERSION_MISMATCH")
     if "load_hyper_intelligence_performance_contract" not in order:
         issues.append("HIPB_LOAD_STEP_MISSING")
     if "compile_hyper_intelligence_plan" not in order:
         issues.append("HIPB_COMPILE_STEP_MISSING")
+    for hook in ("hyper_pre_compile_gate", "hyper_pre_effect_gate", "hyper_post_effect_update"):
+        if hook not in order:
+            issues.append(f"HIPB_KERNEL_HOOK_MISSING:{hook}")
     if "execute" in order and "compile_hyper_intelligence_plan" in order:
         if order.index("compile_hyper_intelligence_plan") > order.index("execute"):
             issues.append("HIPB_COMPILE_AFTER_EXECUTE")
+    if "execute" in order and "hyper_pre_compile_gate" in order and order.index("hyper_pre_compile_gate") > order.index("execute"):
+        issues.append("HIPB_PRE_COMPILE_AFTER_EXECUTE")
+    if "execute" in order and "hyper_pre_effect_gate" in order and order.index("hyper_pre_effect_gate") > order.index("execute"):
+        issues.append("HIPB_PRE_EFFECT_AFTER_EXECUTE")
+    if "execute" in order and "hyper_post_effect_update" in order and order.index("hyper_post_effect_update") < order.index("execute"):
+        issues.append("HIPB_POST_EFFECT_BEFORE_EXECUTE")
     measured_module_sha256 = hashlib.sha256(HIPB_MODULE_PATH.read_bytes()).hexdigest() if HIPB_MODULE_PATH.exists() else None
     measured_court_sha256 = hashlib.sha256(HIPB_COURT_PATH.read_bytes()).hexdigest() if HIPB_COURT_PATH.exists() else None
     if measured_module_sha256 is None:
@@ -187,6 +198,8 @@ def hyper_intelligence_performance_bootstrap_guard(payload: Optional[Dict[str, A
         "module_sha256": contract.get("module_sha256"),
         "court_sha256": contract.get("court_sha256"),
         "runtime_promotion_proven": False,
+        "kernel_hook_schema": contract.get("kernel_hooks", {}).get("schema"),
+        "kernel_hooks_bound": all(hook in order for hook in ("hyper_pre_compile_gate", "hyper_pre_effect_gate", "hyper_post_effect_update")),
         "truth_boundary": contract.get("truth_boundary"),
     }
 
