@@ -1,0 +1,84 @@
+{
+  "schema": "FUSE_ESTATE_AUTOMATION_PROMPTS_V1A",
+  "version": "1.0.0",
+  "parent": "FUSE_PARALLEL_FRONTEND_CONTINUITY_V1",
+  "chapter_range": "281-295",
+  "chapter_count": 15,
+  "chapters": [
+    {
+      "chapter": 281,
+      "id": "ESTATE_AUTOMATION_MASTER",
+      "prompt": "Treat the full governed 2026 FUSE estate as one automation portfolio. Fresh-read all current project, startup, mission and Work Plane registries, classify terminal vs nonterminal, and automatically advance every eligible nonterminal mission without reviving completed or superseded work."
+    },
+    {
+      "chapter": 282,
+      "id": "FRONTEND_BACKEND_SEPARATION",
+      "prompt": "Treat owner chat/UI as a detachable frontend projection. Backend mission execution, deployments, tests and provider work continue independently unless the new owner directive explicitly intersects that exact lane."
+    },
+    {
+      "chapter": 283,
+      "id": "INPUT_AS_EVENT_NOT_RESET",
+      "prompt": "Every new owner message becomes an intent event against durable mission state. Do not interpret a new turn as a restart, cancellation or global pause."
+    },
+    {
+      "chapter": 284,
+      "id": "INDEPENDENT_INPUT_PARALLEL_LANE",
+      "prompt": "When a new owner request is independent of current in-flight work, create a bounded parallel lane under the existing system/product family and let both proceed concurrently."
+    },
+    {
+      "chapter": 285,
+      "id": "SAME_OBJECTIVE_BRANCH_RECONCILE",
+      "prompt": "When the owner refines an active objective, preserve the running checkpoint, create an intent branch for the refinement, and reconcile at the earliest safe merge point."
+    },
+    {
+      "chapter": 286,
+      "id": "CONFLICTING_INPUT_LOCAL_RECOMPILE",
+      "prompt": "When new intent conflicts with in-flight work, pause/checkpoint only the intersecting subgraph, recompile that scope, and keep all unrelated lanes running."
+    },
+    {
+      "chapter": 287,
+      "id": "STATUS_QUERY_NONINTERRUPTING",
+      "prompt": "A status question must read current verified projections and receipts without taking ownership of, pausing or restarting backend execution."
+    },
+    {
+      "chapter": 288,
+      "id": "FRONTEND_FAST_PATH",
+      "prompt": "Serve the owner frontend from the latest verified projection while long work continues durably in the background. Do not make frontend latency determine mission continuity."
+    },
+    {
+      "chapter": 289,
+      "id": "BACKGROUND_LANE_PERSISTENCE",
+      "prompt": "Any long-running build, deploy, research, test, render or proof lane must persist enough state to survive chat detachment and resume without owner reconstruction."
+    },
+    {
+      "chapter": 290,
+      "id": "PARALLEL_SAFE_WIDTH",
+      "prompt": "Maximize pairwise-independent safe execution width across read, research, test, build, creative and proof lanes while serializing overlapping source/canonical/effect writes."
+    },
+    {
+      "chapter": 291,
+      "id": "FANIN_WITH_PROOF",
+      "prompt": "Merge parallel branch results only after identity, currentness, compatibility and proof checks. Preserve contradictions instead of forcing false convergence."
+    },
+    {
+      "chapter": 292,
+      "id": "COMPLETED_WORK_FREEZE",
+      "prompt": "Completed, superseded or explicitly cancelled work remains closed. Reopen only on fresh regression, drift or an explicit new objective that genuinely requires it."
+    },
+    {
+      "chapter": 293,
+      "id": "ACTIVE_WORK_AUTOCONTINUE",
+      "prompt": "Every current nonterminal mission with dependency-ready machine-safe work continues automatically without owner prompting."
+    },
+    {
+      "chapter": 294,
+      "id": "AUTO_HARVEST_GAP",
+      "prompt": "When a future or current lane lacks a capability, automatically search the estate, repair/extend/compose first, then harvest public mechanisms and build only the true residual."
+    },
+    {
+      "chapter": 295,
+      "id": "AUTO_BUILD_RESIDUAL",
+      "prompt": "A new build is allowed only for the minimum capability still missing after reuse, rebind, repair, extend and composition; register the result inside the existing family and resume the parent mission."
+    }
+  ]
+}
