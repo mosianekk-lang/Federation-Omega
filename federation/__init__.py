@@ -19,6 +19,16 @@ from .finality_guard_v1 import (
 )
 from .prompt_scientist_v2 import PromptGenome, PromptScientistV2
 from .run_store_v1 import RunStore
+from .terminal_debt_v1 import (
+    AutonomousDebtBurner,
+    DebtOutcome,
+    DebtState,
+    MaturityVector,
+    TerminalDebtItem,
+    TerminalDebtLedger,
+    TerminalDebtSpec,
+    specs_from_profile,
+)
 
 
 __all__ = [
@@ -34,6 +44,14 @@ __all__ = [
     "PromptGenome",
     "PromptScientistV2",
     "RunStore",
+    "AutonomousDebtBurner",
+    "DebtOutcome",
+    "DebtState",
+    "MaturityVector",
+    "TerminalDebtItem",
+    "TerminalDebtLedger",
+    "TerminalDebtSpec",
+    "specs_from_profile",
     "RuntimeMode",
     "MissionPresentationState",
     "TerminalAcceptance",
