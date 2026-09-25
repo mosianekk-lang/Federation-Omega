@@ -14,7 +14,10 @@
         "fuse_runtime/output_mirror_v3.mjs",
         "config/fuse-output-mirror-v3.json",
         "config/fuse-bootstrap-inheritance-v3.json",
-        "respawn/federation_manifest.json"
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "respawn/chatgpt_context.py",
+        "tests/test_respawn_chatgpt_context_contract.py"
       ],
       "reason": "FUSE_HYPER_INTELLIGENCE_AND_MATCHED_PERFORMANCE_BINDING"
     }
@@ -32,7 +35,10 @@
         "fuse_runtime/output_mirror_v3.mjs",
         "config/fuse-output-mirror-v3.json",
         "config/fuse-bootstrap-inheritance-v3.json",
-        "respawn/federation_manifest.json"
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "respawn/chatgpt_context.py",
+        "tests/test_respawn_chatgpt_context_contract.py"
       ],
       "depends_on": [
         "FEDERATION_CORE"
@@ -52,7 +58,10 @@
         "governance/hyper_intelligence_performance_binding_v1.json",
         "config/fuse-output-mirror-v3.json",
         "config/fuse-bootstrap-inheritance-v3.json",
-        "respawn/federation_manifest.json"
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "respawn/chatgpt_context.py",
+        "tests/test_respawn_chatgpt_context_contract.py"
       ],
       "subsystems": [
         "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_V1"
