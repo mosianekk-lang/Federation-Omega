@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 MANIFEST_PATH = ROOT / "federation_manifest.json"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
-app = FastAPI(title="Federation Respawn Bootstrap", version="1.2.0")
+app = FastAPI(title="Federation Respawn Bootstrap", version="1.3.0")
 
 
 def utcnow() -> str:
@@ -52,6 +52,39 @@ def manifest() -> Dict[str, Any]:
 
 def resolved_control_plane() -> Dict[str, Any]:
     return resolve_runtime_alias(manifest().get("control_plane", {}))
+
+
+def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("output_mirror_bootstrap", {})
+    issues: List[str] = []
+    if contract.get("enabled") is not True:
+        issues.append("OUTPUT_MIRROR_BOOTSTRAP_DISABLED_OR_MISSING")
+    if contract.get("contract_id") != "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V2":
+        issues.append("OUTPUT_MIRROR_BOOTSTRAP_CONTRACT_ID_MISMATCH")
+    if contract.get("release_policy") != "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS":
+        issues.append("OUTPUT_MIRROR_RELEASE_POLICY_MISMATCH")
+    required = set(contract.get("required_dimensions", []))
+    expected = {
+        "intent_fidelity", "execution_finality", "proof_evidence", "design_code_health",
+        "testing", "security_privacy", "reliability_recovery", "performance_cost",
+        "currentness_reproducibility", "owner_value",
+    }
+    missing = sorted(expected - required)
+    issues.extend(f"MISSING_OUTPUT_MIRROR_DIMENSION:{name}" for name in missing)
+    if contract.get("developer1000", {}).get("sha256") != "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e":
+        issues.append("DEVELOPER1000_CORPUS_MISMATCH")
+    if contract.get("benchmark_court", {}).get("dataset_sha256") != "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510":
+        issues.append("OUTPUT_MIRROR_BENCHMARK_COURT_MISMATCH")
+    return {
+        "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V2",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "boot_kernel_min_version": contract.get("boot_kernel_min_version"),
+        "mirror_min_version": contract.get("mirror_min_version"),
+        "required_dimension_count": len(required),
+    }
 
 
 def state() -> Dict[str, Any]:
@@ -161,6 +194,13 @@ def already_solved(req: SolvedRequest) -> Dict[str, Any]:
 @app.post("/bootstrap")
 def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     validate_system(req.system)
+    source_manifest = manifest()
+    mirror_guard = output_mirror_bootstrap_guard(source_manifest)
+    if not mirror_guard["ok"]:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard},
+        )
     s = state()
     solved = search_state(
         SolvedRequest(system=req.system, matter=req.matter, problem=req.objective or "", terms=req.terms)
@@ -188,8 +228,10 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "chat_ref": req.chat_ref,
         "bootstrap_order": manifest().get("bootstrap_order", []),
         "bootstrap_invariants": manifest().get("bootstrap_invariants", []),
-        "runtime_sovereignty": manifest().get("runtime_sovereignty", {}),
-        "delivery_rule": manifest().get("delivery_rule"),
+        "runtime_sovereignty": source_manifest.get("runtime_sovereignty", {}),
+        "output_mirror_bootstrap": source_manifest.get("output_mirror_bootstrap", {}),
+        "output_mirror_bootstrap_guard": mirror_guard,
+        "delivery_rule": source_manifest.get("delivery_rule"),
         "control_plane": resolved_control_plane(),
         "already_solved_candidates": solved,
         "recent_deltas": recent,
