@@ -38,13 +38,13 @@
     "failure_fingerprint": "GEMINI_LEGACY_FREE_TEXT_NONCE_RETURNED_1",
     "unchanged_free_text_retry_forbidden": true
   },
-  "owner_directive": "HYPERCUBE_FAIL_FORWARD_STRUCTURED_RECOVERY",
+  "owner_directive": "SOVARA_GEMINI_GLOBAL_PRIMARY_PROVIDER_ROUTING",
   "project_id": "sov-hybrid-suite",
   "project_number": "257649435135",
   "promotion_rule": "GREEN only after one structured zero-private-data response has status VERIFIED and exact nonce, plus provider request/model/usage receipt.",
   "provider": "GOOGLE_GEMINI_DEVELOPER_API",
   "provider_mutation_allowed": false,
-  "request_id": "HYPERCUBE-GEMINI-STRUCTURED-SEMANTIC-20260918-001",
+  "request_id": "SOVARA-GEMINI-PRIMARY-ROUTE-CANARY-20260925-001",
   "schema": "SOVARA_AI_STUDIO_SEMANTIC_CANARY_REQUEST_V1",
   "secret_mutation_allowed": false,
   "secret_value_logging_allowed": false,
@@ -86,5 +86,12 @@
     "temperature": 0
   },
   "traffic_change_allowed": false,
-  "truth_boundary": "One bounded structured Gemini semantic canary only. No IAM/WIF/secret/deployment/traffic/case-data/external-communication effect."
+  "truth_boundary": "One bounded structured Gemini semantic canary only. No IAM/WIF/secret/deployment/traffic/case-data/external-communication effect.",
+  "trigger_context": {
+    "mission": "GLOBAL_FUSE_SOVARA_GEMINI_PRIMARY_PROVIDER_ROUTING",
+    "purpose": "Prove current task-scoped Gemini semantic execution before promoting Gemini-primary routing from policy-bound to provider-semantic verified.",
+    "privacy": "ZERO_PRIVATE_DATA",
+    "effects": "NONE",
+    "initiated_by": "OWNER_DIRECTIVE_2026-09-25"
+  }
 }
