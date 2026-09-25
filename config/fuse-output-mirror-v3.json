@@ -4,7 +4,7 @@
   "boot_kernel": "5.9.0",
   "enabled": true,
   "question": "Did I give the best and most powerful solution available to me as ChatGPT / AI assistant for representing OpenAI and what the user actually asked for?",
-  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_AND_APPLICABLE_POWER_DIARY_CONTRACTS",
+  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_APPLICABLE_POWER_DIARY_AND_HIPB_CONTRACTS",
   "engineering_base": {
     "inherited_from": "FUSE_OUTPUT_MIRROR_POLICY_V2",
     "required_dimensions": [
@@ -78,5 +78,21 @@
     "research_hold_receipt": "5ff1c0f1f74611c45ccc9b5c7a950b1adcab28d826fc7ec869c30c16b2c861b1",
     "bootstrap_guard_ok": true
   },
-  "truth_boundary": "POWER_DIARY_INTEGRATION_PRESERVES_HIGHER_PLATFORM_DEVELOPER_SAFETY_LEGAL_PRIVACY_PERMISSION_PROVIDER_BOUNDARIES; DOES_NOT_CLAIM_UNIVERSAL_OPENAI_HOST_ENFORCEMENT"
+  "truth_boundary": "POWER_DIARY_AND_HIPB_INTEGRATION_PRESERVES_HIGHER_PLATFORM_DEVELOPER_SAFETY_LEGAL_PRIVACY_PERMISSION_PROVIDER_BOUNDARIES; HYPER_INTELLIGENCE_IS_ENGINEERING_ORCHESTRATION_NOT_SENTIENCE; HYPER_PERFORMANCE_REQUIRES_MATCHED_EMPIRICAL_PROOF; SOURCE_BINDING_DOES_NOT_CLAIM_UNIVERSAL_OPENAI_HOST_OR_OWNER_LOCAL_RUNTIME_ENFORCEMENT",
+  "hyper_intelligence_performance": {
+    "contract_id": "FUSE-HIPB-001",
+    "schema": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "required_for_substantial_tasks": true,
+    "matched_benchmark_required_for_hyper_performance_claim": true,
+    "latency_speedup_floor": 1.5,
+    "tool_call_reduction_floor": 0.2,
+    "owner_prompt_reduction_floor": 0.5,
+    "false_green_ceiling": 0,
+    "unchanged_retry_ceiling": 0,
+    "owner_rescue_ceiling": 0,
+    "module_path": "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+    "court_path": "benchmarks/hyper_intelligence_performance_court_v1.mjs"
+  }
 }
