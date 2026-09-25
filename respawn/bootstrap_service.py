@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 MANIFEST_PATH = ROOT / "federation_manifest.json"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
-app = FastAPI(title="Federation Respawn Bootstrap", version="1.3.0")
+app = FastAPI(title="Federation Respawn Bootstrap", version="1.4.0")
 
 
 def utcnow() -> str:
@@ -60,7 +60,7 @@ def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> D
     issues: List[str] = []
     if contract.get("enabled") is not True:
         issues.append("OUTPUT_MIRROR_BOOTSTRAP_DISABLED_OR_MISSING")
-    if contract.get("contract_id") != "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V2":
+    if contract.get("contract_id") != "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V3":
         issues.append("OUTPUT_MIRROR_BOOTSTRAP_CONTRACT_ID_MISMATCH")
     if contract.get("release_policy") != "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS":
         issues.append("OUTPUT_MIRROR_RELEASE_POLICY_MISMATCH")
@@ -77,7 +77,7 @@ def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> D
     if contract.get("benchmark_court", {}).get("dataset_sha256") != "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510":
         issues.append("OUTPUT_MIRROR_BENCHMARK_COURT_MISMATCH")
     return {
-        "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V2",
+        "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V3",
         "ok": not issues,
         "issues": issues,
         "contract_id": contract.get("contract_id"),
