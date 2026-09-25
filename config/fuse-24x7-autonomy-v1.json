@@ -144,5 +144,15 @@
     "native_totality": "UNVERIFIED",
     "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
     "no_false_totality_claim": true
+  },
+  "live_proof": {
+    "boot_kernel": "5.10.0",
+    "guard_schema": "FUSE_BOOTSTRAP_GUARD_V4",
+    "guard_ok": true,
+    "exact_iterations": 10,
+    "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17",
+    "historical_chat_summary_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+    "historical_chat_iterations": 370,
+    "mission_canary_receipt_sha256": "88107c4a8ef7017b6976cfab93e8b2ed4512b86bd8fbc9223f7ac7fac36965bd"
   }
 }
