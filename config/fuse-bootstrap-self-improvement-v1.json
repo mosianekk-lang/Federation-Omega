@@ -1,0 +1,55 @@
+{
+  "schema": "FUSE_BOOTSTRAP_SELF_IMPROVEMENT_V1",
+  "version": "1.0.0",
+  "parent": "FUSE_BOOTSTRAP_MEMORY_SNAPSHOT_V1",
+  "purpose": "Make every bootstrap restore the last accepted settings, fresh-read current reality, then search for provable capability improvements before route compilation.",
+  "loop": [
+    "LOAD_LAST_ACCEPTED_GENERATION",
+    "VERIFY_GENERATION_INTEGRITY",
+    "FRESH_READ_VOLATILE_STATE",
+    "LOAD_OWNER_INTENT_AND_FAILURE_LEARNING",
+    "CENSUS_CURRENT_CAPABILITIES",
+    "DETECT_GAPS_DRIFT_AND_REGRESSION",
+    "GENERATE_UP_TO_THREE_IMPROVEMENT_CANDIDATES",
+    "REUSE_REPAIR_EXTEND_COMPOSE_BEFORE_BUILD",
+    "RUN_MATCHED_TESTS_AND_ADVERSARIAL_COURTS",
+    "COMPARE_TO_CURRENT_CHAMPION",
+    "PROMOTE_ONLY_NONREGRESSING_WINNER",
+    "WRITE_NEW_GENERATION",
+    "KEEP_PREVIOUS_GENERATION_AS_ROLLBACK",
+    "CONTINUE_BOOTSTRAP"
+  ],
+  "promotion_gate": {
+    "require_material_gain": true,
+    "require_no_regression": [
+      "intent_fidelity",
+      "proof",
+      "security_privacy",
+      "recovery",
+      "owner_value"
+    ],
+    "require_readback": true,
+    "require_rollback": true,
+    "tie_behavior": "KEEP_CURRENT_CHAMPION",
+    "failure_behavior": "REJECT_CANDIDATE_AND_CONTINUE_WITH_LAST_ACCEPTED_GENERATION"
+  },
+  "improvement_sources": [
+    "OWNER_CORRECTIONS",
+    "OWNER_INTENT_DEBT",
+    "FAILURE_LEDGER",
+    "OUTPUT_MIRROR_FALSE_PASSES",
+    "ROUTE_PERFORMANCE",
+    "PROVIDER_DRIFT",
+    "CAPABILITY_GAPS",
+    "NEW_QUALIFIED_PUBLIC_MECHANISMS",
+    "NEW_INTERNAL_BENCHMARK_RESULTS"
+  ],
+  "constraints": [
+    "NO_NEW_CONTROLLER_FOR_IMPROVEMENT",
+    "NO_SILENT_OWNER_INTENT_MUTATION",
+    "NO_AUTOMATIC_MATURITY_INHERITANCE",
+    "NO_REBUILD_WHEN_REUSE_OR_REPAIR_WINS",
+    "NO_PROMOTION_ON_SELF_SCORE_ONLY"
+  ],
+  "truth_boundary": "A bootstrap may generate and prove candidates automatically; only evidence-backed non-regressing improvements become the next accepted generation."
+}
