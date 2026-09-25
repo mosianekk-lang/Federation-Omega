@@ -416,6 +416,38 @@ class AutonomousDebtBurner:
         return tuple(results)
 
 
+def specs_from_profile(profile: Mapping[str, object]) -> tuple[TerminalDebtSpec, ...]:
+    """Compile a governance terminal-predicate profile into debt specs."""
+    rows = profile.get("terminal_predicates", ())
+    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes)):
+        raise ValueError("TERMINAL_PREDICATES_REQUIRED")
+    specs = []
+    for raw in rows:
+        if not isinstance(raw, Mapping):
+            raise ValueError("TERMINAL_PREDICATE_MAPPING_REQUIRED")
+        predicate = str(raw.get("id") or raw.get("predicate") or "").upper()
+        if not predicate:
+            raise ValueError("TERMINAL_PREDICATE_ID_REQUIRED")
+        specs.append(
+            TerminalDebtSpec(
+                debt_id=predicate,
+                predicate=predicate,
+                family=str(raw.get("family", "GENERAL")).upper(),
+                dependencies=tuple(str(x).upper() for x in raw.get("deps", raw.get("dependencies", ())) or ()),
+                collision_keys=tuple(str(x) for x in raw.get("collision_keys", ()) or ()),
+                required_maturity=tuple(str(x).upper() for x in raw.get("maturity", DEFAULT_MATURITY_STAGES) or DEFAULT_MATURITY_STAGES),
+                priority=int(raw.get("priority", 50)),
+                unlock_value=float(raw.get("unlock_value", 1.0)),
+                estimated_cost=float(raw.get("estimated_cost", 1.0)),
+                owner_only=bool(raw.get("owner_only", False)),
+                effect_class=str(raw.get("effect_class", "BUILD_TEST")),
+                mandatory=bool(raw.get("mandatory", True)),
+                next_action=str(raw.get("next_action", "")),
+            )
+        )
+    return tuple(specs)
+
+
 def compile_predicate_specs(
     predicates: Iterable[str],
     *,
@@ -445,5 +477,6 @@ __all__ = [
     "TerminalDebtLedger",
     "TerminalDebtSpec",
     "compile_predicate_specs",
+    "specs_from_profile",
     "failure_fingerprint",
 ]
