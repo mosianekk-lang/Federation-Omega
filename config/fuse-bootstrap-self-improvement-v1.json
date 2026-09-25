@@ -115,7 +115,7 @@
     "external_mechanism_must_be_clean_room": true
   },
   "live_proof": {
-    "worker_sha256": "3a8fade2b4c664f1c14c786e7597821b883ed816677b2d92432ea248d9ac4257",
+    "worker_sha256": "fa2a89f2e102d4eff45299db1113203723527498d79290ec730b0919e9e88271",
     "current_estate_iterations": 10,
     "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17",
     "server_sha256": "057ed8979051fe8783ca0b4f2def21a141bebd9d0f5c52faec9590543cc75545",

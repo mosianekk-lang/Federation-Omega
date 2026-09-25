@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import os from 'node:os';
+import { pathToFileURL } from 'node:url';
 
 const ROOT=path.join(process.env.LOCALAPPDATA||path.join(os.homedir(),'AppData','Local'),'FUSE','SovereignPlane');
 const STATE=path.join(ROOT,'state','autonomous-improvement');
@@ -155,7 +156,7 @@ export function runHistoricalCorpus(manifestPath){
  summary.receipt_sha256=sha(summary);
  fs.writeFileSync(path.join(dir,'SUMMARY-'+summary.receipt_sha256.slice(0,16)+'.json'),JSON.stringify(summary,null,2));
  return {summary,receipts};
-}const invoked=process.argv[1]&&import.meta.url===new URL('file:///'+process.argv[1].replaceAll('\\','/')).href;
+}const invoked=Boolean(process.argv[1])&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href;
 if(invoked){
  const mode=process.argv[2]||'selftest';
  if(mode==='backfill'){

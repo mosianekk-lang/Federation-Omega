@@ -1,4 +1,4 @@
-import { createMirrorV2 } from './output-mirror-v2.mjs';
+import { createMirrorV2 } from './output_mirror_v2.mjs';
 
 export const POWER_DIARY_SOURCE_SHA256='3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495';
 export const POWER_DIARY_CHAPTER_COUNT=40;

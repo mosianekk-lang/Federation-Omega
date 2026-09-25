@@ -55,7 +55,7 @@
       "command_semantics",
       "reality_clause"
     ],
-    "module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b",
+    "module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f",
     "behavioral_court": {
       "sha256": "c66819fb81a6239c5511b86728de097cca69dc2bc989a9c80953b0dca9d9dfa5",
       "static_coverage_40_of_40": true,
@@ -73,7 +73,7 @@
   "live_proof": {
     "server_sha256": "5046ebc62be5874127d9b64e60d7286384940bf7c1227008a45f11cc2679c2ee",
     "kernel_sha256": "678cf5e8c0fb114593a13e2720e0fcd4e9ec2eea588be72975cbc4a515814846",
-    "mirror_module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b",
+    "mirror_module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f",
     "planning_canary_receipt": "6967479fe64a929aa09d93bb8bd22aff8aef9ecede858c1c65df6b1caf83ebc2",
     "research_hold_receipt": "5ff1c0f1f74611c45ccc9b5c7a950b1adcab28d826fc7ec869c30c16b2c861b1",
     "bootstrap_guard_ok": true

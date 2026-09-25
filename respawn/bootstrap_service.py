@@ -17,6 +17,7 @@ BOOTSTRAP_MEMORY_PATH = CONFIG_ROOT / "fuse-bootstrap-memory-snapshot-v1.json"
 BOOTSTRAP_IMPROVEMENT_PATH = CONFIG_ROOT / "fuse-bootstrap-self-improvement-v1.json"
 AUTONOMY_PATH = CONFIG_ROOT / "fuse-24x7-autonomy-v1.json"
 AUTONOMOUS_WORKER_PATH = ROOT.parent / "fuse_runtime" / "autonomous_improvement_loop_v1.mjs"
+OUTPUT_MIRROR_V3_PATH = ROOT.parent / "fuse_runtime" / "output_mirror_v3.mjs"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
@@ -179,8 +180,13 @@ def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> D
         issues.append("POWER_DIARY_CHAPTER_COUNT_MISMATCH")
     if diary.get("required_family_count") != 17:
         issues.append("POWER_DIARY_FAMILY_COUNT_MISMATCH")
-    if diary.get("module_sha256") != "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b":
-        issues.append("POWER_DIARY_MODULE_HASH_MISMATCH")
+    measured_mirror_sha256 = None
+    if not OUTPUT_MIRROR_V3_PATH.exists():
+        issues.append("OUTPUT_MIRROR_MODULE_MISSING")
+    else:
+        measured_mirror_sha256 = hashlib.sha256(OUTPUT_MIRROR_V3_PATH.read_bytes()).hexdigest()
+        if diary.get("module_sha256") != measured_mirror_sha256:
+            issues.append("POWER_DIARY_MODULE_HASH_MISMATCH")
     return {
         "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V3",
         "ok": not issues,

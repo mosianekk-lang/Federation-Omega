@@ -12,7 +12,7 @@
     "source_sha256": "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495",
     "chapter_count": 40,
     "required_family_count": 17,
-    "module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b"
+    "module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f"
   },
   "developer1000": {
     "count": 1000,
@@ -80,9 +80,9 @@
   "live_proof": {
     "server_sha256": "057ed8979051fe8783ca0b4f2def21a141bebd9d0f5c52faec9590543cc75545",
     "boot_sha256": "b6ed3dddb4da7e3210c34bfa2bd5077bd849cd4f18ace2488f2ab8d5f015280a",
-    "mirror_module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b",
+    "mirror_module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f",
     "bootstrap_guard_ok": true,
-    "autonomous_worker_sha256": "3a8fade2b4c664f1c14c786e7597821b883ed816677b2d92432ea248d9ac4257",
+    "autonomous_worker_sha256": "fa2a89f2e102d4eff45299db1113203723527498d79290ec730b0919e9e88271",
     "bootstrap_guard_schema": "FUSE_BOOTSTRAP_GUARD_V4",
     "mission_canary_ms": 484,
     "mission_canary_improvement_receipt": "88107c4a8ef7017b6976cfab93e8b2ed4512b86bd8fbc9223f7ac7fac36965bd",
@@ -98,7 +98,7 @@
     "inhouse_default": true,
     "build_to_completion": true,
     "worker_path": "fuse_runtime/autonomous_improvement_loop_v1.mjs",
-    "worker_sha256": "3a8fade2b4c664f1c14c786e7597821b883ed816677b2d92432ea248d9ac4257",
+    "worker_sha256": "fa2a89f2e102d4eff45299db1113203723527498d79290ec730b0919e9e88271",
     "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17",
     "historical_chat_backfill": {
       "iterations_per_recovered_chat": 10,
