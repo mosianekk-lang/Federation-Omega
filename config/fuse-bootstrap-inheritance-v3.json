@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "boot_kernel": "5.10.1",
   "authority": "START:FUSE_ONE",
   "enabled": true,
@@ -12,7 +12,7 @@
     "source_sha256": "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495",
     "chapter_count": 40,
     "required_family_count": 17,
-    "module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f"
+    "module_sha256": "cf1df89f529644b467d060ff1fc5d9be71bbe034c5005a5c4c2e9efba7b94433"
   },
   "developer1000": {
     "count": 1000,
@@ -24,7 +24,7 @@
   },
   "fail_closed": true,
   "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
-  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_ENFORCEMENT_VERIFIED; UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT_NOT_CLAIMED",
+  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_V3_PREEXISTING_ENFORCEMENT_VERIFIED; HIPB_SOURCE_BINDING_CANDIDATE_DOES_NOT_PROVE_OWNER_LOCAL_HIPB_RUNTIME_PROMOTION_OR_UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT",
   "hydrate_on": [
     "START:FUSE_ONE",
     "n",
@@ -49,6 +49,7 @@
     "POWER_DIARY_CONTRACT",
     "OUTPUT_MIRROR_V3",
     "AUTONOMOUS_IMPROVEMENT_10",
+    "HYPER_INTELLIGENCE_PERFORMANCE_BINDING",
     "ROUTE_COMPILE",
     "EXECUTE",
     "READBACK",
@@ -57,7 +58,7 @@
     "OUTPUT_MIRROR_V3_RELEASE",
     "TERMINAL_DELIVERY"
   ],
-  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_AND_APPLICABLE_POWER_DIARY_CONTRACTS",
+  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_APPLICABLE_POWER_DIARY_AND_HIPB_CONTRACTS",
   "engineering_dimensions": [
     "intent_fidelity",
     "execution_finality",
@@ -140,5 +141,18 @@
       "completed_record_iterations": 1290,
       "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
     }
+  },
+  "hyper_intelligence_performance": {
+    "contract_id": "FUSE-HIPB-001",
+    "schema": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "required_before_route_compilation": true,
+    "matched_benchmark_required_for_hyper_performance_claim": true,
+    "module_path": "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+    "court_path": "benchmarks/hyper_intelligence_performance_court_v1.mjs",
+    "source_candidate_runtime_promotion_pending": true,
+    "module_sha256": "6dec77c4df406c4a01ab177ea5634dee9a8792f2af884d0c383e9aaa0d149911",
+    "court_sha256": "33a3867709f8a3ddd50d9356617cc1f91e1aaa64a1f56ba63767716024095660"
   }
 }

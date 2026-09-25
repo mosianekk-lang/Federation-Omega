@@ -1,0 +1,74 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+        "benchmarks/hyper_intelligence_performance_court_v1.mjs",
+        "tests/test_hyper_intelligence_performance_binding_v1.py",
+        "governance/hyper_intelligence_performance_binding_v1.json",
+        "governance/proofos_omega_policy_extension_hyper_intelligence_performance_v1.json",
+        "docs/architecture/FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1.md",
+        "fuse_runtime/output_mirror_v3.mjs",
+        "config/fuse-output-mirror-v3.json",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "respawn/chatgpt_context.py",
+        "tests/test_respawn_chatgpt_context_contract.py"
+      ],
+      "reason": "FUSE_HYPER_INTELLIGENCE_AND_MATCHED_PERFORMANCE_BINDING"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_V1",
+      "patterns": [
+        "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+        "benchmarks/hyper_intelligence_performance_court_v1.mjs",
+        "tests/test_hyper_intelligence_performance_binding_v1.py",
+        "governance/hyper_intelligence_performance_binding_v1.json",
+        "governance/proofos_omega_policy_extension_hyper_intelligence_performance_v1.json",
+        "docs/architecture/FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1.md",
+        "fuse_runtime/output_mirror_v3.mjs",
+        "config/fuse-output-mirror-v3.json",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "respawn/chatgpt_context.py",
+        "tests/test_respawn_chatgpt_context_contract.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "hyper_intelligence_performance_v1",
+      "kind": "unittest_glob",
+      "target": "test_hyper_intelligence_performance_binding_v1.py",
+      "patterns": [
+        "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+        "benchmarks/hyper_intelligence_performance_court_v1.mjs",
+        "tests/test_hyper_intelligence_performance_binding_v1.py",
+        "governance/hyper_intelligence_performance_binding_v1.json",
+        "config/fuse-output-mirror-v3.json",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "respawn/chatgpt_context.py",
+        "tests/test_respawn_chatgpt_context_contract.py"
+      ],
+      "subsystems": [
+        "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}

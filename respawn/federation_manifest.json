@@ -76,6 +76,8 @@
     "validate_output_mirror_v3_contract",
     "run_bootstrap_self_improvement",
     "run_autonomous_improvement_10_iterations",
+    "load_hyper_intelligence_performance_contract",
+    "compile_hyper_intelligence_plan",
     "enroll_new_historical_chat_captures",
     "execute",
     "verify_and_judge",
@@ -102,7 +104,9 @@
     "BOOTSTRAP_SELF_IMPROVEMENT_REQUIRED",
     "AUTONOMOUS_IMPROVEMENT_10_ITERATIONS_REQUIRED",
     "HISTORICAL_CHAT_BACKFILL_AUTO_ENROLL",
-    "NATIVE_TRANSCRIPT_UNAVAILABLE_IS_NOT_ABSENCE"
+    "NATIVE_TRANSCRIPT_UNAVAILABLE_IS_NOT_ABSENCE",
+    "HYPER_INTELLIGENCE_PERFORMANCE_BINDING_REQUIRED",
+    "HYPER_PERFORMANCE_CLAIMS_REQUIRE_MATCHED_EMPIRICAL_PROOF"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -123,7 +127,12 @@
       "output_mirror_enforcement",
       "checkpoint_recovery",
       "provider_neutral_routing",
-      "terminal_delivery_assurance"
+      "terminal_delivery_assurance",
+      "adaptive_intelligence_depth",
+      "safe_parallelism",
+      "value_of_information",
+      "causal_and_future_envelope",
+      "matched_performance_proof"
     ],
     "target_delivery_path": [
       "OWNER_INTENT",
@@ -188,7 +197,7 @@
       "source_sha256": "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495",
       "chapter_count": 40,
       "required_family_count": 17,
-      "module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f"
+      "module_sha256": "cf1df89f529644b467d060ff1fc5d9be71bbe034c5005a5c4c2e9efba7b94433"
     }
   },
   "directive_fidelity_bootstrap": {
@@ -274,5 +283,27 @@
     "recoverable_record_instances": 129,
     "completed_record_iterations": 1290,
     "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
+  },
+  "hyper_intelligence_performance": {
+    "contract_id": "FUSE-HIPB-001",
+    "schema": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "runtime_role": "ADDITIVE_POLICY_OVER_EXISTING_SOVEREIGN_PLANE_SOL62_FDOF_GENESIS_PROOFOS_OUTPUT_MIRROR",
+    "required_properties": [
+      "adaptive_reasoning_depth",
+      "world_and_uncertainty_model",
+      "causal_dependency_reasoning",
+      "future_envelope",
+      "value_of_information",
+      "collective_cognition_with_independent_challenge",
+      "safe_parallelism",
+      "hard_floor_route_tournament",
+      "changed_mechanism_on_repeated_failure",
+      "matched_performance_proof_before_hyper_performance_promotion"
+    ],
+    "truth_boundary": "SOURCE_BOOTSTRAP_BINDING_DOES_NOT_BY_ITSELF_PROVE_OWNER_LOCAL_RUNTIME_PROMOTION_OR_UNIVERSAL_PROVIDER_ENFORCEMENT",
+    "module_sha256": "6dec77c4df406c4a01ab177ea5634dee9a8792f2af884d0c383e9aaa0d149911",
+    "court_sha256": "33a3867709f8a3ddd50d9356617cc1f91e1aaa64a1f56ba63767716024095660"
   }
 }

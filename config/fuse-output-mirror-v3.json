@@ -4,7 +4,7 @@
   "boot_kernel": "5.9.0",
   "enabled": true,
   "question": "Did I give the best and most powerful solution available to me as ChatGPT / AI assistant for representing OpenAI and what the user actually asked for?",
-  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_AND_APPLICABLE_POWER_DIARY_CONTRACTS",
+  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_APPLICABLE_POWER_DIARY_AND_HIPB_CONTRACTS",
   "engineering_base": {
     "inherited_from": "FUSE_OUTPUT_MIRROR_POLICY_V2",
     "required_dimensions": [
@@ -55,7 +55,7 @@
       "command_semantics",
       "reality_clause"
     ],
-    "module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f",
+    "module_sha256": "cf1df89f529644b467d060ff1fc5d9be71bbe034c5005a5c4c2e9efba7b94433",
     "behavioral_court": {
       "sha256": "c66819fb81a6239c5511b86728de097cca69dc2bc989a9c80953b0dca9d9dfa5",
       "static_coverage_40_of_40": true,
@@ -78,5 +78,23 @@
     "research_hold_receipt": "5ff1c0f1f74611c45ccc9b5c7a950b1adcab28d826fc7ec869c30c16b2c861b1",
     "bootstrap_guard_ok": true
   },
-  "truth_boundary": "POWER_DIARY_INTEGRATION_PRESERVES_HIGHER_PLATFORM_DEVELOPER_SAFETY_LEGAL_PRIVACY_PERMISSION_PROVIDER_BOUNDARIES; DOES_NOT_CLAIM_UNIVERSAL_OPENAI_HOST_ENFORCEMENT"
+  "truth_boundary": "POWER_DIARY_AND_HIPB_INTEGRATION_PRESERVES_HIGHER_PLATFORM_DEVELOPER_SAFETY_LEGAL_PRIVACY_PERMISSION_PROVIDER_BOUNDARIES; HYPER_INTELLIGENCE_IS_ENGINEERING_ORCHESTRATION_NOT_SENTIENCE; HYPER_PERFORMANCE_REQUIRES_MATCHED_EMPIRICAL_PROOF; SOURCE_BINDING_DOES_NOT_CLAIM_UNIVERSAL_OPENAI_HOST_OR_OWNER_LOCAL_RUNTIME_ENFORCEMENT",
+  "hyper_intelligence_performance": {
+    "contract_id": "FUSE-HIPB-001",
+    "schema": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "required_for_substantial_tasks": true,
+    "matched_benchmark_required_for_hyper_performance_claim": true,
+    "latency_speedup_floor": 1.5,
+    "tool_call_reduction_floor": 0.2,
+    "owner_prompt_reduction_floor": 0.5,
+    "false_green_ceiling": 0,
+    "unchanged_retry_ceiling": 0,
+    "owner_rescue_ceiling": 0,
+    "module_path": "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+    "court_path": "benchmarks/hyper_intelligence_performance_court_v1.mjs",
+    "module_sha256": "6dec77c4df406c4a01ab177ea5634dee9a8792f2af884d0c383e9aaa0d149911",
+    "court_sha256": "33a3867709f8a3ddd50d9356617cc1f91e1aaa64a1f56ba63767716024095660"
+  }
 }

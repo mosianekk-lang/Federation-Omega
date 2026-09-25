@@ -1,4 +1,5 @@
 import { createMirrorV2 } from './output_mirror_v2.mjs';
+import { assessHyperBinding } from './hyper_intelligence_performance_v1.mjs';
 
 export const POWER_DIARY_SOURCE_SHA256='3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495';
 export const POWER_DIARY_CHAPTER_COUNT=40;
@@ -132,10 +133,13 @@ export function createMirrorV3({trustContext}){
         reality_clause:gate(true,r.overclaim!==true&&cfg.reality_clause_preserved!==false,'NON_OVERRIDABLE_REALITY_OR_TRUTH_BOUNDARY_VIOLATION')
       };
       const diaryIssues=Object.entries(diary_contracts).filter(([,v])=>v.required&&v.state==='FAIL').map(([k,v])=>'DIARY_'+k.toUpperCase()+':'+v.reason);
-      const allIssues=[...baseIssues,...diaryIssues];
-      const release=baseRelease&&diaryIssues.length===0;
+      const hyper=assessHyperBinding(prompt,r,meta,cfg.hyper_intelligence_performance||{});
+      const hyperIssues=hyper.required&&!hyper.pass?hyper.issues.map(issue=>'HIPB:'+issue):[];
+      const allIssues=[...baseIssues,...diaryIssues,...hyperIssues];
+      const release=baseRelease&&diaryIssues.length===0&&hyperIssues.length===0;
       return {...base,schema:'FUSE_OUTPUT_MIRROR_V3',version:String(cfg.version||'3.0.0'),
         release_allowed:release,state:release?(hardBoundary?'PASS_BEST_AVAILABLE_WITH_HARD_BOUNDARY':'PASS_BEST_AVAILABLE_RESULT'):'FAIL_RECOMPILE_OUTPUT',issues:allIssues,
+        hyper_binding:hyper,
         power_diary:{source_sha256:cfg.power_diary?.source_sha256||POWER_DIARY_SOURCE_SHA256,chapter_count:40,
           covered_chapters:ALL_CHAPTERS,family_count:Object.keys(FAMILY_MAP).length,families:FAMILY_MAP},
         diary_profile:dp,diary_contracts,

@@ -168,6 +168,11 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
         )
         self.assertFalse(result["coverage"]["full_account_history_proven"])
         self.assertTrue(result["next_executable_action"])
+        self.assertEqual(
+            result["hyper_intelligence_performance"]["contract_id"],
+            "FUSE-HIPB-001",
+        )
+        self.assertTrue(result["hyper_intelligence_performance_guard"]["ok"])
 
     def test_bootstrap_exposes_runtime_sovereignty_contract(self) -> None:
         self._set_state({"deltas": [], "patterns": [], "bibliography": [], "conflicts": []})
@@ -190,6 +195,9 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
         self.assertTrue(result["output_mirror_bootstrap_guard"]["ok"])
         self.assertEqual(result["output_mirror_bootstrap"]["mirror_min_version"], "3.0.0")
         self.assertTrue(result["delivery_rule"])
+        self.assertEqual(result["hyper_intelligence_performance"]["contract_id"], "FUSE-HIPB-001")
+        self.assertTrue(result["hyper_intelligence_performance_guard"]["ok"])
+        self.assertFalse(result["hyper_intelligence_performance_guard"]["runtime_promotion_proven"])
 
     def test_output_mirror_v3_bootstrap_contract_is_required(self) -> None:
         payload = bs.manifest()
