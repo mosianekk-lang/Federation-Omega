@@ -327,7 +327,7 @@
       "matched_performance_proof_before_hyper_performance_promotion"
     ],
     "truth_boundary": "SOURCE_BOOTSTRAP_AND_SOVEREIGN_HOOK_CONTRACT_BOUND_DOES_NOT_BY_ITSELF_PROVE_OWNER_LOCAL_RUNTIME_PROMOTION_OR_UNIVERSAL_PROVIDER_ENFORCEMENT",
-    "module_sha256": "3d8a57c9082e168cb359121d1e019085035f1ec0d143e6ff79469ba8458ab771",
+    "module_sha256": "68be521e13c2eb1d97404e1a72aa27e0d9e442abcb23a4f5b9b96b7d0da2b753",
     "court_sha256": "22bbb1b4de33ced515d2f847d46ede106db5d971f70549d89a0e6192f56333b0",
     "kernel_hooks": {
       "schema": "FUSE_SOVEREIGN_ADAPTIVE_COGNITION_HOOK_V2",
