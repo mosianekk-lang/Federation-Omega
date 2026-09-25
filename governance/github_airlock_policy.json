@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.38",
+  "version": "2.9.39",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -67,7 +67,8 @@
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
     ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
     ".github/workflows/work-plane-private-gcp-canary-v1.yml",
-    ".github/workflows/sol62-client-runtime-canary.yml"
+    ".github/workflows/sol62-client-runtime-canary.yml",
+    ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -244,6 +245,10 @@
     ],
     ".github/workflows/sol62-client-runtime-canary.yml": [
       "issues"
+    ],
+    ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml": [
+      "pull_request",
+      "workflow_dispatch"
     ]
   },
   "required_push_branches": {
@@ -665,7 +670,8 @@
       ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
       ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
       ".github/workflows/work-plane-private-gcp-canary-v1.yml",
-      ".github/workflows/sol62-client-runtime-canary.yml"
+      ".github/workflows/sol62-client-runtime-canary.yml",
+      ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
