@@ -76,6 +76,13 @@ def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> D
         issues.append("DEVELOPER1000_CORPUS_MISMATCH")
     if contract.get("benchmark_court", {}).get("dataset_sha256") != "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510":
         issues.append("OUTPUT_MIRROR_BENCHMARK_COURT_MISMATCH")
+    diary = contract.get("power_diary", {})
+    if diary.get("source_sha256") != "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495":
+        issues.append("POWER_DIARY_SOURCE_MISMATCH")
+    if diary.get("chapter_count") != 40:
+        issues.append("POWER_DIARY_CHAPTER_COUNT_MISMATCH")
+    if diary.get("required_family_count") != 17:
+        issues.append("POWER_DIARY_FAMILY_COUNT_MISMATCH")
     return {
         "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V3",
         "ok": not issues,
