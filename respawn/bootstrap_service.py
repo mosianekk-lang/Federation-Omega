@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 MANIFEST_PATH = ROOT / "federation_manifest.json"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
-app = FastAPI(title="Federation Respawn Bootstrap", version="1.1.0")
+app = FastAPI(title="Federation Respawn Bootstrap", version="1.2.0")
 
 
 def utcnow() -> str:
@@ -187,6 +187,9 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "matter": req.matter,
         "chat_ref": req.chat_ref,
         "bootstrap_order": manifest().get("bootstrap_order", []),
+        "bootstrap_invariants": manifest().get("bootstrap_invariants", []),
+        "runtime_sovereignty": manifest().get("runtime_sovereignty", {}),
+        "delivery_rule": manifest().get("delivery_rule"),
         "control_plane": resolved_control_plane(),
         "already_solved_candidates": solved,
         "recent_deltas": recent,
