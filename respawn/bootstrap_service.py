@@ -12,6 +12,9 @@ from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST_PATH = ROOT / "federation_manifest.json"
+CONFIG_ROOT = ROOT.parent / "config"
+BOOTSTRAP_MEMORY_PATH = CONFIG_ROOT / "fuse-bootstrap-memory-snapshot-v1.json"
+BOOTSTRAP_IMPROVEMENT_PATH = CONFIG_ROOT / "fuse-bootstrap-self-improvement-v1.json"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.4.0")
@@ -52,6 +55,17 @@ def manifest() -> Dict[str, Any]:
 
 def resolved_control_plane() -> Dict[str, Any]:
     return resolve_runtime_alias(manifest().get("control_plane", {}))
+
+
+def bootstrap_memory_bundle() -> Dict[str, Any]:
+    snapshot = load_json(BOOTSTRAP_MEMORY_PATH, {})
+    improvement = load_json(BOOTSTRAP_IMPROVEMENT_PATH, {})
+    issues: List[str] = []
+    if snapshot.get("schema") != "FUSE_BOOTSTRAP_MEMORY_SNAPSHOT_V1":
+        issues.append("BOOTSTRAP_MEMORY_SNAPSHOT_MISSING_OR_INVALID")
+    if improvement.get("schema") != "FUSE_BOOTSTRAP_SELF_IMPROVEMENT_V1":
+        issues.append("BOOTSTRAP_SELF_IMPROVEMENT_MISSING_OR_INVALID")
+    return {"ok": not issues, "issues": issues, "snapshot": snapshot, "self_improvement": improvement}
 
 
 def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -215,10 +229,11 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     validate_system(req.system)
     source_manifest = manifest()
     mirror_guard = output_mirror_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"]:
+    memory_bundle = bootstrap_memory_bundle()
+    if not mirror_guard["ok"] or not memory_bundle["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}},
         )
     s = state()
     solved = search_state(
@@ -248,6 +263,8 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "bootstrap_order": manifest().get("bootstrap_order", []),
         "bootstrap_invariants": manifest().get("bootstrap_invariants", []),
         "runtime_sovereignty": source_manifest.get("runtime_sovereignty", {}),
+        "bootstrap_memory_snapshot": memory_bundle["snapshot"],
+        "bootstrap_self_improvement": memory_bundle["self_improvement"],
         "directive_fidelity_bootstrap": source_manifest.get("directive_fidelity_bootstrap", {}),
         "output_mirror_bootstrap": source_manifest.get("output_mirror_bootstrap", {}),
         "output_mirror_bootstrap_guard": mirror_guard,
