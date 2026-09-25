@@ -76,6 +76,8 @@
     "validate_output_mirror_v3_contract",
     "run_bootstrap_self_improvement",
     "run_autonomous_improvement_10_iterations",
+    "load_hyper_intelligence_performance_contract",
+    "compile_hyper_intelligence_plan",
     "enroll_new_historical_chat_captures",
     "execute",
     "verify_and_judge",
@@ -102,7 +104,9 @@
     "BOOTSTRAP_SELF_IMPROVEMENT_REQUIRED",
     "AUTONOMOUS_IMPROVEMENT_10_ITERATIONS_REQUIRED",
     "HISTORICAL_CHAT_BACKFILL_AUTO_ENROLL",
-    "NATIVE_TRANSCRIPT_UNAVAILABLE_IS_NOT_ABSENCE"
+    "NATIVE_TRANSCRIPT_UNAVAILABLE_IS_NOT_ABSENCE",
+    "HYPER_INTELLIGENCE_PERFORMANCE_BINDING_REQUIRED",
+    "HYPER_PERFORMANCE_CLAIMS_REQUIRE_MATCHED_EMPIRICAL_PROOF"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -123,7 +127,12 @@
       "output_mirror_enforcement",
       "checkpoint_recovery",
       "provider_neutral_routing",
-      "terminal_delivery_assurance"
+      "terminal_delivery_assurance",
+      "adaptive_intelligence_depth",
+      "safe_parallelism",
+      "value_of_information",
+      "causal_and_future_envelope",
+      "matched_performance_proof"
     ],
     "target_delivery_path": [
       "OWNER_INTENT",
@@ -274,5 +283,25 @@
     "recoverable_record_instances": 129,
     "completed_record_iterations": 1290,
     "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
+  },
+  "hyper_intelligence_performance": {
+    "contract_id": "FUSE-HIPB-001",
+    "schema": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "runtime_role": "ADDITIVE_POLICY_OVER_EXISTING_SOVEREIGN_PLANE_SOL62_FDOF_GENESIS_PROOFOS_OUTPUT_MIRROR",
+    "required_properties": [
+      "adaptive_reasoning_depth",
+      "world_and_uncertainty_model",
+      "causal_dependency_reasoning",
+      "future_envelope",
+      "value_of_information",
+      "collective_cognition_with_independent_challenge",
+      "safe_parallelism",
+      "hard_floor_route_tournament",
+      "changed_mechanism_on_repeated_failure",
+      "matched_performance_proof_before_hyper_performance_promotion"
+    ],
+    "truth_boundary": "SOURCE_BOOTSTRAP_BINDING_DOES_NOT_BY_ITSELF_PROVE_OWNER_LOCAL_RUNTIME_PROMOTION_OR_UNIVERSAL_PROVIDER_ENFORCEMENT"
   }
 }
