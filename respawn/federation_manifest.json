@@ -244,6 +244,35 @@
     ],
     "native_account_totality": "UNVERIFIED",
     "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
-    "false_totality_claim_forbidden": true
+    "false_totality_claim_forbidden": true,
+    "evidence_classes": {
+      "exact_chat_records": {
+        "records": 37,
+        "iterations": 370,
+        "receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+        "counts_as_exact_native_chat": true
+      },
+      "chatbridge_registry_identities": {
+        "records": 10,
+        "iterations": 100,
+        "receipt_sha256": "111549ca8c9f413fc476035b6d337d98c5d0ea105e5ac3ba5c65f855ef47cfdf",
+        "counts_as_exact_native_chat": false
+      },
+      "gmail_chatgpt_backup_artifacts": {
+        "records": 62,
+        "iterations": 620,
+        "receipt_sha256": "074eaea99329c669721db94ab422ee42aa41708fb24162424ed1651ed4f1e528",
+        "counts_as_exact_native_chat": false
+      },
+      "account_memory_incidents": {
+        "records": 20,
+        "iterations": 200,
+        "receipt_sha256": "02e698a9b6b9d43342d1da2fcb2afc405561b5e3b8ef8e9eb0d098edd8f38f13",
+        "counts_as_exact_native_chat": false
+      }
+    },
+    "recoverable_record_instances": 129,
+    "completed_record_iterations": 1290,
+    "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
   }
 }
