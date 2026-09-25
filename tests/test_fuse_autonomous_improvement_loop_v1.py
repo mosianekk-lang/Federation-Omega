@@ -30,3 +30,21 @@ def test_source_contracts_require_ten_iterations_and_history_backfill():
     assert a["historical_chat_backfill"]["current_completed_chat_iterations"]==370
     assert a["historical_chat_backfill"]["native_totality"]=="UNVERIFIED"
     assert a["historical_chat_backfill"]["no_false_totality_claim"] is True
+
+
+def test_respawn_and_bootstrap_bind_live_ten_pass_contract():
+    bootstrap=json.loads((ROOT/"config"/"fuse-bootstrap-inheritance-v3.json").read_text(encoding="utf-8"))
+    manifest=json.loads((ROOT/"respawn"/"federation_manifest.json").read_text(encoding="utf-8"))
+    service=(ROOT/"respawn"/"bootstrap_service.py").read_text(encoding="utf-8")
+    assert bootstrap["boot_kernel"]=="5.10.0"
+    assert bootstrap["autonomous_improvement"]["exact_iterations"]==10
+    assert bootstrap["autonomous_improvement"]["historical_chat_backfill"]["current_completed_iterations"]==370
+    assert bootstrap["live_proof"]["bootstrap_guard_schema"]=="FUSE_BOOTSTRAP_GUARD_V4"
+    assert manifest["schema_version"]=="1.5"
+    assert manifest["bootstrap_self_improvement"]["iterations_per_cycle"]==10
+    assert manifest["historical_chat_backfill"]["current_exact_recovered_chat_records"]==37
+    assert manifest["historical_chat_backfill"]["native_account_totality"]=="UNVERIFIED"
+    assert "autonomous_improvement_bootstrap_guard" in service
+    assert "AUTONOMOUS_IMPROVEMENT_ITERATION_COUNT_MISMATCH" in service
+    assert "HISTORICAL_CHAT_COMPLETED_ITERATIONS_MISMATCH" in service
+    assert "NATIVE_CHAT_TOTALITY_FALSE_CLAIM" in service
