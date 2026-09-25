@@ -28,6 +28,12 @@ def test_source_contracts_require_ten_iterations_and_history_backfill():
     assert a["historical_chat_backfill"]["iterations_per_recovered_chat"]==10
     assert a["historical_chat_backfill"]["current_exact_recoverable_chat_records"]==37
     assert a["historical_chat_backfill"]["current_completed_chat_iterations"]==370
+    assert a["historical_chat_backfill"]["recoverable_record_instances"]==129
+    assert a["historical_chat_backfill"]["completed_record_iterations"]==1290
+    assert a["historical_chat_backfill"]["evidence_classes"]["exact_chat_records"]["records"]==37
+    assert a["historical_chat_backfill"]["evidence_classes"]["gmail_chatgpt_backup_artifacts"]["records"]==62
+    assert a["historical_chat_backfill"]["evidence_classes"]["chatbridge_registry_identities"]["records"]==10
+    assert a["historical_chat_backfill"]["evidence_classes"]["account_memory_incidents"]["records"]==20
     assert a["historical_chat_backfill"]["native_totality"]=="UNVERIFIED"
     assert a["historical_chat_backfill"]["no_false_totality_claim"] is True
 
@@ -47,4 +53,6 @@ def test_respawn_and_bootstrap_bind_live_ten_pass_contract():
     assert "autonomous_improvement_bootstrap_guard" in service
     assert "AUTONOMOUS_IMPROVEMENT_ITERATION_COUNT_MISMATCH" in service
     assert "HISTORICAL_CHAT_COMPLETED_ITERATIONS_MISMATCH" in service
+    assert "HISTORICAL_BACKFILL_RECOVERABLE_BASELINE_REGRESSED" in service
+    assert "HISTORICAL_BACKFILL_ITERATION_BASELINE_REGRESSED" in service
     assert "NATIVE_CHAT_TOTALITY_FALSE_CLAIM" in service
