@@ -1,0 +1,46 @@
+{
+  "schema": "FUSE_CONSTRAINT_ROUTING_V1",
+  "version": "1.0.0",
+  "parent": "FUSE_UNIFIED_CAPABILITY_FABRIC_V1",
+  "creates_new_controller": false,
+  "purpose": "Keep missions moving when a route, provider, tool, capability, capacity or currentness dependency fails.",
+  "classes": {
+    "provider": "ALTERNATE_PROVIDER_OR_LOCAL",
+    "platform_feature": "COMPOSE_OR_MINIMUM_RESIDUAL",
+    "capability_gap": "REUSE_REPAIR_EXTEND_COMPOSE_HARVEST_BUILD",
+    "capacity": "SHARD_PARALLELIZE_CACHE_CHECKPOINT_REROUTE",
+    "currentness": "REFRESH_AND_REVALIDATE",
+    "source_fence": "HOLD_INTERSECTING_LANE_CONTINUE_DISJOINT",
+    "tool_failure": "CHANGED_MECHANISM_OR_ALTERNATE_TOOL",
+    "authority": "PREPARE_SAFE_PREREQUISITES_HOLD_EFFECT_ONLY",
+    "external_condition": "PRESERVE_CHECKPOINT_AND_RESUME_ON_CHANGE"
+  },
+  "order": [
+    "REUSE",
+    "REBIND",
+    "REPAIR",
+    "EXTEND",
+    "COMPOSE",
+    "ALTERNATE_PROVIDER",
+    "LOCAL_ROUTE",
+    "PARALLEL_CANDIDATES",
+    "HARVEST",
+    "BUILD_MINIMUM_RESIDUAL"
+  ],
+  "laws": [
+    "FAILED_ROUTE_NE_MISSION_FAILURE",
+    "LOCAL_BLOCKER_NE_GLOBAL_STALL",
+    "SAME_MECHANISM_RETRY_MAX_ONE_WITHOUT_STATE_CHANGE",
+    "UNKNOWN_EFFECT_REQUIRES_READBACK",
+    "PREQUALIFY_FAILOVER",
+    "BUILD_ONLY_TRUE_RESIDUALS",
+    "NO_DUPLICATE_MISSION_OR_CONTROLLER"
+  ],
+  "parallelism": {
+    "read_only": "SAFE_PARALLEL",
+    "reversible_internal": "BOUNDED_PARALLEL",
+    "effectful": "EFFECT_ID_SERIALIZED"
+  },
+  "live_receipt_ref": "FUSE-1790299345281-d05df2",
+  "truth_boundary": "Source contract only; live estate-wide enforcement requires admitted source and receiver convergence."
+}
