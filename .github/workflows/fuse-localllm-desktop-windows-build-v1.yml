@@ -20,6 +20,7 @@ jobs:
     env:
       FEDERATION_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PRODUCT_ROOT: products\fuse_localllm_desktop\v0.2.2\upstream
+      BUILD_PRODUCT_ROOT: D:\fuse-v022
     defaults:
       run:
         shell: pwsh
@@ -44,17 +45,20 @@ jobs:
         run: |
           python "$env:PRODUCT_ROOT\tests\test_product.py"
           if ($LASTEXITCODE -ne 0) { throw 'LOCALLLM_PRODUCT_SOURCE_COURT_FAILED' }
-      - name: Build native Windows product
+      - name: Build native Windows product from short deterministic staging path
         run: |
-          & "$env:PRODUCT_ROOT\scripts\build_windows.ps1" -BuildDir build
+          Remove-Item -LiteralPath $env:BUILD_PRODUCT_ROOT -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $env:BUILD_PRODUCT_ROOT -Force | Out-Null
+          Copy-Item -Path "$env:PRODUCT_ROOT\*" -Destination $env:BUILD_PRODUCT_ROOT -Recurse -Force
+          & "$env:BUILD_PRODUCT_ROOT\scripts\build_windows.ps1" -BuildDir build
           if ($LASTEXITCODE -ne 0) { throw 'LOCALLLM_WINDOWS_BUILD_FAILED' }
-          if (-not (Test-Path "$env:PRODUCT_ROOT\dist\FUSE-LocalLLM.exe")) { throw 'LOCALLLM_RUNTIME_EXE_MISSING' }
-          if (-not (Test-Path "$env:PRODUCT_ROOT\dist\FUSE-LocalLLM-Desktop.exe")) { throw 'LOCALLLM_DESKTOP_EXE_MISSING' }
+          if (-not (Test-Path "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM.exe")) { throw 'LOCALLLM_RUNTIME_EXE_MISSING' }
+          if (-not (Test-Path "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM-Desktop.exe")) { throw 'LOCALLLM_DESKTOP_EXE_MISSING' }
       - name: Prove no-model Windows runtime health
         run: |
           $empty=Join-Path $env:RUNNER_TEMP 'fuse-empty-models'; New-Item -ItemType Directory -Path $empty -Force | Out-Null
           $env:FUSE_MODEL_DIR=$empty
-          $exe=Resolve-Path "$env:PRODUCT_ROOT\dist\FUSE-LocalLLM.exe"
+          $exe=Resolve-Path "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM.exe"
           $proc=Start-Process -FilePath $exe -ArgumentList @('serve','--port','8999') -PassThru -WindowStyle Hidden
           try {
             $health=$null
@@ -70,12 +74,12 @@ jobs:
         run: |
           $releaseRoot="$env:PRODUCT_ROOT\artifacts\FUSE-LocalLLM-Desktop-v0.2.2-win-x64"
           Remove-Item $releaseRoot -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path $releaseRoot -Force | Out-Null
-          Copy-Item "$env:PRODUCT_ROOT\dist\FUSE-LocalLLM.exe" $releaseRoot
-          Copy-Item "$env:PRODUCT_ROOT\dist\FUSE-LocalLLM-Desktop.exe" $releaseRoot
-          Copy-Item "$env:PRODUCT_ROOT\dist\BUILD_RECEIPT.json" $releaseRoot
-          Copy-Item "$env:PRODUCT_ROOT\scripts\install_current_user.ps1" $releaseRoot
-          Copy-Item "$env:PRODUCT_ROOT\scripts\uninstall_current_user.ps1" $releaseRoot
-          Copy-Item "$env:PRODUCT_ROOT\README.md" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM.exe" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM-Desktop.exe" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\BUILD_RECEIPT.json" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\install_current_user.ps1" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\uninstall_current_user.ps1" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\README.md" $releaseRoot
           Copy-Item "products\fuse_localllm_desktop\v0.2.2\DRIVE_CUSTODY.json" $releaseRoot
           Copy-Item "$env:PRODUCT_ROOT\artifacts\HOSTED_WINDOWS_RUNTIME_PROOF.json" $releaseRoot
           Get-ChildItem $releaseRoot -File | Sort-Object Name | ForEach-Object { "$(Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()  $($_.Name)" } | Set-Content "$releaseRoot\SHA256SUMS.txt" -Encoding ascii
