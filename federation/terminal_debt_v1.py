@@ -16,12 +16,17 @@ from enum import StrEnum
 from hashlib import sha256
 import json
 from typing import Callable, Iterable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 
 from .run_store_v1 import RunStore
 
 
 SCHEMA = "FUSE-TERMINAL-DEBT-V1"
 VERSION = "1.0.0"
+
+PARALLEL_SAFE_DEBT_EFFECTS = frozenset({
+    "READ_ONLY", "LOCAL_REVERSIBLE", "BUILD_TEST", "CI_VALIDATION", "PROVIDER_READ"
+})
 
 DEFAULT_MATURITY_STAGES = (
     "DESIGN",
@@ -339,6 +344,12 @@ class TerminalDebtLedger:
             keys = set(item.spec.collision_keys)
             if keys & occupied:
                 continue
+            parallel_safe = item.spec.effect_class in PARALLEL_SAFE_DEBT_EFFECTS
+            if not parallel_safe:
+                if selected:
+                    continue
+                selected.append(item)
+                break
             selected.append(item)
             occupied |= keys
             if len(selected) >= max(1, limit):
@@ -399,21 +410,28 @@ class AutonomousDebtBurner:
             owner_authority=owner_authority,
             limit=limit,
         )
-        results = []
-        for item in plan:
+        def invoke(item: TerminalDebtItem) -> DebtOutcome:
             handler = self.handlers.get(item.spec.family) or self.handlers.get("*")
             if handler is None:
-                outcome = DebtOutcome(
+                return DebtOutcome(
                     False,
                     blocker_keys=(f"NO_HANDLER:{item.spec.family}",),
                     failure_fingerprint=failure_fingerprint("NO_HANDLER", item.spec.family),
                 )
-            else:
-                outcome = handler(item)
-                if not isinstance(outcome, DebtOutcome):
-                    raise TypeError("DEBT_HANDLER_MUST_RETURN_DEBT_OUTCOME")
-            results.append(self.ledger.apply_outcome(item, outcome))
-        return tuple(results)
+            outcome = handler(item)
+            if not isinstance(outcome, DebtOutcome):
+                raise TypeError("DEBT_HANDLER_MUST_RETURN_DEBT_OUTCOME")
+            return outcome
+
+        if len(plan) > 1 and all(item.spec.effect_class in PARALLEL_SAFE_DEBT_EFFECTS for item in plan):
+            with ThreadPoolExecutor(max_workers=len(plan)) as pool:
+                outcomes = list(pool.map(invoke, plan))
+        else:
+            outcomes = [invoke(item) for item in plan]
+        return tuple(
+            self.ledger.apply_outcome(item, outcome)
+            for item, outcome in zip(plan, outcomes)
+        )
 
 
 def specs_from_profile(profile: Mapping[str, object]) -> tuple[TerminalDebtSpec, ...]:
@@ -473,6 +491,7 @@ __all__ = [
     "DebtState",
     "DEFAULT_MATURITY_STAGES",
     "MaturityVector",
+    "PARALLEL_SAFE_DEBT_EFFECTS",
     "TerminalDebtItem",
     "TerminalDebtLedger",
     "TerminalDebtSpec",
