@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "risk_rules": [
     {
       "risk": "R2_SHARED",
@@ -11,7 +11,8 @@
         "respawn/test_chatgpt_context.py",
         "respawn/Dockerfile",
         ".github/workflows/federation-respawn-private-canary-v1.yml",
-        "governance/proofos_omega_policy_extension_respawn_v1.json"
+        "governance/proofos_omega_policy_extension_respawn_v1.json",
+        "respawn/federation_manifest.json"
       ],
       "reason": "RESPAWN_CHATGPT_CONTEXT_AND_PRIVATE_PROVIDER_CANARY_RUNTIME"
     }
@@ -28,7 +29,9 @@
         ".github/workflows/federation-respawn-private-canary-v1.yml",
         "governance/proofos_omega_policy_extension_respawn_v1.json",
         "tests/test_respawn_chatgpt_context_contract.py",
-        "tests/test_respawn_private_canary_workflow.py"
+        "tests/test_respawn_private_canary_workflow.py",
+        "respawn/federation_manifest.json",
+        "tests/test_respawn_directive_fidelity_bootstrap.py"
       ],
       "depends_on": [
         "FEDERATION_CORE"
@@ -48,7 +51,8 @@
         "respawn/test_chatgpt_context.py",
         "respawn/Dockerfile",
         "governance/proofos_omega_policy_extension_respawn_v1.json",
-        "tests/test_respawn_chatgpt_context_contract.py"
+        "tests/test_respawn_chatgpt_context_contract.py",
+        "respawn/federation_manifest.json"
       ],
       "subsystems": [
         "RESPAWN"
@@ -65,6 +69,22 @@
         ".github/workflows/federation-respawn-private-canary-v1.yml",
         "governance/proofos_omega_policy_extension_respawn_v1.json",
         "tests/test_respawn_private_canary_workflow.py"
+      ],
+      "subsystems": [
+        "RESPAWN"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "respawn_directive_fidelity_bootstrap",
+      "kind": "unittest_glob",
+      "target": "test_respawn_directive_fidelity_bootstrap.py",
+      "patterns": [
+        "respawn/bootstrap_service.py",
+        "respawn/federation_manifest.json",
+        "tests/test_respawn_directive_fidelity_bootstrap.py"
       ],
       "subsystems": [
         "RESPAWN"
