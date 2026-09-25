@@ -59,11 +59,7 @@ class FuseOutputMirrorRuntimeProofOSMappingTests(unittest.TestCase):
         self.assertFalse(manifest.selector_state["fallback_full_suite_activated"])
         self.assertNotIn("full_federation_fallback", selected)
         for required in (
-            "fuse_autonomous_improvement_loop_v1",
-            "fuse_bootstrap_memory_self_improvement_v1",
-            "output_mirror_source_contract_v1",
-            "output_mirror_v2_developer1000_court",
-            "output_mirror_v3_power_diary",
+            "fuse_output_mirror_runtime_contract_court",
             "proofos_fuse_output_mirror_runtime_mapping",
         ):
             self.assertIn(required, selected)
