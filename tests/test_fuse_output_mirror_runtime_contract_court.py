@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import json
 import runpy
+import traceback
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = ROOT / "tests"
+DIAGNOSTIC_PATH = ROOT / "airlock-output" / "fuse-runtime-contract-diagnostics.json"
 
 SOURCE_CONTRACT_MODULES = [
     "test_fuse_24x7_autonomy_v1.py",
@@ -19,12 +22,13 @@ SOURCE_CONTRACT_MODULES = [
     "test_fuse_unified_capability_fabric_v1.py",
     "test_output_mirror_source_contract_v1.py",
     "test_output_mirror_v2_developer1000_court.py",
-    "test_output_mirror_v3_power_diary.py"
+    "test_output_mirror_v3_power_diary.py",
 ]
 
 class FuseOutputMirrorRuntimeContractCourt(unittest.TestCase):
     def test_all_source_contract_functions_execute(self) -> None:
         total = 0
+        diagnostics = []
         for filename in SOURCE_CONTRACT_MODULES:
             namespace = runpy.run_path(
                 str(TESTS / filename),
@@ -35,11 +39,50 @@ class FuseOutputMirrorRuntimeContractCourt(unittest.TestCase):
                 for name, fn in namespace.items()
                 if name.startswith("test_") and callable(fn)
             )
-            self.assertTrue(functions, f"NO_TEST_FUNCTIONS_DISCOVERED:{filename}")
+            if not functions:
+                diagnostics.append(
+                    {
+                        "file": filename,
+                        "test": None,
+                        "error_type": "NO_TEST_FUNCTIONS_DISCOVERED",
+                        "message": "",
+                        "traceback_tail": [],
+                    }
+                )
+                continue
             for name, fn in functions:
-                with self.subTest(file=filename, test=name):
+                total += 1
+                try:
                     fn()
-                    total += 1
+                except Exception as exc:
+                    diagnostics.append(
+                        {
+                            "file": filename,
+                            "test": name,
+                            "error_type": type(exc).__name__,
+                            "message": str(exc)[:500],
+                            "traceback_tail": traceback.format_exc(limit=4).splitlines()[-12:],
+                        }
+                    )
+
+        if diagnostics:
+            DIAGNOSTIC_PATH.parent.mkdir(parents=True, exist_ok=True)
+            DIAGNOSTIC_PATH.write_text(
+                json.dumps(
+                    {
+                        "schema": "FUSE_OUTPUT_MIRROR_RUNTIME_DIAGNOSTIC_V1",
+                        "total_functions_executed": total,
+                        "failure_count": len(diagnostics),
+                        "failures": diagnostics,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self.fail(f"RUNTIME_CONTRACT_FAILURES:{len(diagnostics)}")
+
         self.assertGreaterEqual(total, 24)
 
 if __name__ == "__main__":
