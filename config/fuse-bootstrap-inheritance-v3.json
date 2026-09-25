@@ -1,7 +1,7 @@
 {
   "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
-  "version": "3.1.0",
-  "boot_kernel": "5.10.0",
+  "version": "3.2.0",
+  "boot_kernel": "5.10.1",
   "authority": "START:FUSE_ONE",
   "enabled": true,
   "output_mirror_required": true,
@@ -79,14 +79,16 @@
   "currentness_precedence": "PROVIDER_SEMANTIC_READBACK>SIGNED_SOURCE_RELEASE>KDV_REDUCER>SYNC_WORKPLANE_EVENTS>HEARTBEAT>DASHBOARD>CHAT_MEMORY",
   "live_proof": {
     "server_sha256": "057ed8979051fe8783ca0b4f2def21a141bebd9d0f5c52faec9590543cc75545",
-    "boot_sha256": "3e28d2be5458ab37ee5d076ac02d1b4fd1c6999397440c9aafa80b22f5db2b31",
+    "boot_sha256": "b6ed3dddb4da7e3210c34bfa2bd5077bd849cd4f18ace2488f2ab8d5f015280a",
     "mirror_module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b",
     "bootstrap_guard_ok": true,
     "autonomous_worker_sha256": "1b8d8b2ed2f9d846cfa0c985686284189a2ffb0d24c4509c0490355c5e7da7be",
     "bootstrap_guard_schema": "FUSE_BOOTSTRAP_GUARD_V4",
     "mission_canary_ms": 484,
     "mission_canary_improvement_receipt": "88107c4a8ef7017b6976cfab93e8b2ed4512b86bd8fbc9223f7ac7fac36965bd",
-    "mission_canary_receipt": "dddfa72a5dc3acf995b43b9875720fc7dc24b0f6d3fcf9bed6ebe6e249294f47"
+    "mission_canary_receipt": "dddfa72a5dc3acf995b43b9875720fc7dc24b0f6d3fcf9bed6ebe6e249294f47",
+    "recoverable_record_instances": 129,
+    "completed_record_iterations": 1290
   },
   "autonomous_improvement": {
     "schema": "FUSE_AUTONOMOUS_IMPROVEMENT_LOOP_V1",
@@ -107,7 +109,36 @@
       "future_capture_auto_enroll": true,
       "native_account_totality": "UNVERIFIED",
       "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
-      "false_totality_claim_forbidden": true
+      "false_totality_claim_forbidden": true,
+      "evidence_classes": {
+        "exact_chat_records": {
+          "records": 37,
+          "iterations": 370,
+          "receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+          "counts_as_exact_native_chat": true
+        },
+        "chatbridge_registry_identities": {
+          "records": 10,
+          "iterations": 100,
+          "receipt_sha256": "111549ca8c9f413fc476035b6d337d98c5d0ea105e5ac3ba5c65f855ef47cfdf",
+          "counts_as_exact_native_chat": false
+        },
+        "gmail_chatgpt_backup_artifacts": {
+          "records": 62,
+          "iterations": 620,
+          "receipt_sha256": "074eaea99329c669721db94ab422ee42aa41708fb24162424ed1651ed4f1e528",
+          "counts_as_exact_native_chat": false
+        },
+        "account_memory_incidents": {
+          "records": 20,
+          "iterations": 200,
+          "receipt_sha256": "02e698a9b6b9d43342d1da2fcb2afc405561b5e3b8ef8e9eb0d098edd8f38f13",
+          "counts_as_exact_native_chat": false
+        }
+      },
+      "recoverable_record_instances": 129,
+      "completed_record_iterations": 1290,
+      "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
     }
   }
 }
