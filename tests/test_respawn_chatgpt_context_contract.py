@@ -169,6 +169,59 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
         self.assertFalse(result["coverage"]["full_account_history_proven"])
         self.assertTrue(result["next_executable_action"])
 
+    def test_bootstrap_exposes_runtime_sovereignty_contract(self) -> None:
+        self._set_state({"deltas": [], "patterns": [], "bibliography": [], "conflicts": []})
+        with mock.patch.object(
+            bs, "provider_adapter", return_value={"available": False, "reason": "test"}
+        ):
+            result = bs.bootstrap(bs.SpawnRequest(system="Federation Omega"))
+        self.assertIn("INSTRUCTION_WITHOUT_ENFORCEMENT_IS_NOT_CONTROL", result["bootstrap_invariants"])
+        self.assertEqual(
+            result["runtime_sovereignty"]["contract_id"],
+            "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
+        )
+        self.assertEqual(
+            result["runtime_sovereignty"]["chatgpt_role"],
+            "Replaceable intelligence/execution provider and detachable client; not FUSE mission owner or sovereign terminal-delivery authority.",
+        )
+        self.assertIn("load_output_mirror_v3_contract", result["bootstrap_order"])
+        self.assertIn("run_output_mirror", result["bootstrap_order"])
+        self.assertIn("terminal_delivery_gate", result["bootstrap_order"])
+        self.assertTrue(result["output_mirror_bootstrap_guard"]["ok"])
+        self.assertEqual(result["output_mirror_bootstrap"]["mirror_min_version"], "3.0.0")
+        self.assertTrue(result["delivery_rule"])
+
+    def test_output_mirror_v3_bootstrap_contract_is_required(self) -> None:
+        payload = bs.manifest()
+        guard = bs.output_mirror_bootstrap_guard(payload)
+        self.assertTrue(guard["ok"])
+        self.assertEqual(guard["contract_id"], "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V3")
+        self.assertEqual(guard["boot_kernel_min_version"], "5.9.0")
+        self.assertEqual(guard["mirror_min_version"], "3.0.0")
+        self.assertEqual(guard["required_dimension_count"], 10)
+        self.assertEqual(payload["output_mirror_bootstrap"]["power_diary"]["chapter_count"], 40)
+        self.assertEqual(payload["output_mirror_bootstrap"]["power_diary"]["required_family_count"], 17)
+        self.assertEqual(payload["output_mirror_bootstrap"]["power_diary"]["source_sha256"], "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495")
+        self.assertIn("load_output_mirror_v3_contract", payload["bootstrap_order"])
+        self.assertLess(
+            payload["bootstrap_order"].index("load_output_mirror_v3_contract"),
+            payload["bootstrap_order"].index("execute"),
+        )
+
+    def test_output_mirror_v3_bootstrap_guard_fails_closed_on_dimension_loss(self) -> None:
+        payload = json.loads(json.dumps(bs.manifest()))
+        payload["output_mirror_bootstrap"]["required_dimensions"].remove("testing")
+        guard = bs.output_mirror_bootstrap_guard(payload)
+        self.assertFalse(guard["ok"])
+        self.assertIn("MISSING_OUTPUT_MIRROR_DIMENSION:testing", guard["issues"])
+
+    def test_output_mirror_v3_bootstrap_guard_fails_closed_on_power_diary_loss(self) -> None:
+        payload = json.loads(json.dumps(bs.manifest()))
+        payload["output_mirror_bootstrap"]["power_diary"]["chapter_count"] = 39
+        guard = bs.output_mirror_bootstrap_guard(payload)
+        self.assertFalse(guard["ok"])
+        self.assertIn("POWER_DIARY_CHAPTER_COUNT_MISMATCH", guard["issues"])
+
     def test_respawn_paths_select_scoped_court_without_full_fallback(self) -> None:
         policy = ProofPolicy.from_path(POLICY)
         changed = [

@@ -1,0 +1,13 @@
+{
+  "schema": "FUSE_DEVELOPER1000_PUBLIC_SIGNAL_MANIFEST_V1",
+  "captured_at": "2026-09-24T23:32:43.4298809Z",
+  "count": 1000,
+  "corpus_sha256": "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e",
+  "query": "type:user followers:>100 repos:>10",
+  "sort": "followers desc",
+  "pages": 10,
+  "per_page": 100,
+  "qualification": "Public-signal proxy cohort. Popularity/followers are not an objective measure of engineering skill; independent engineering practices and benchmark suites determine harvested mechanisms.",
+  "local_evidence_path": "%LOCALAPPDATA%\\FUSE\\SovereignPlane\\benchmarks\\developer1000-20260925.json",
+  "privacy": "Public GitHub profile metadata only; no private profile data harvested."
+}

@@ -1,0 +1,144 @@
+{
+  "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
+  "version": "3.2.0",
+  "boot_kernel": "5.10.1",
+  "authority": "START:FUSE_ONE",
+  "enabled": true,
+  "output_mirror_required": true,
+  "output_mirror_min_version": "3.0.0",
+  "required_before_route_compilation": true,
+  "required_before_terminal_delivery": true,
+  "power_diary": {
+    "source_sha256": "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495",
+    "chapter_count": 40,
+    "required_family_count": 17,
+    "module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f"
+  },
+  "developer1000": {
+    "count": 1000,
+    "sha256": "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e"
+  },
+  "benchmark_court": {
+    "cases": 1000,
+    "dataset_sha256": "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510"
+  },
+  "fail_closed": true,
+  "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
+  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_ENFORCEMENT_VERIFIED; UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT_NOT_CLAIMED",
+  "hydrate_on": [
+    "START:FUSE_ONE",
+    "n",
+    "continue",
+    "proceed",
+    "restore",
+    "reroute",
+    "do all",
+    "audit",
+    "build",
+    "harvest",
+    "finish",
+    "better",
+    "more"
+  ],
+  "required_order": [
+    "FRESH_CANON",
+    "HISTORICAL_RECALL",
+    "ESTATE_CENSUS",
+    "CURRENTNESS_RECONCILE",
+    "AUTHORITY_EFFECT_PREFLIGHT",
+    "POWER_DIARY_CONTRACT",
+    "OUTPUT_MIRROR_V3",
+    "AUTONOMOUS_IMPROVEMENT_10",
+    "ROUTE_COMPILE",
+    "EXECUTE",
+    "READBACK",
+    "VERIFY",
+    "JUDGE",
+    "OUTPUT_MIRROR_V3_RELEASE",
+    "TERMINAL_DELIVERY"
+  ],
+  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_AND_APPLICABLE_POWER_DIARY_CONTRACTS",
+  "engineering_dimensions": [
+    "intent_fidelity",
+    "execution_finality",
+    "proof_evidence",
+    "design_code_health",
+    "testing",
+    "security_privacy",
+    "reliability_recovery",
+    "performance_cost",
+    "currentness_reproducibility",
+    "owner_value"
+  ],
+  "preserve_mission_identity": true,
+  "preserve_completed_effects": true,
+  "preserve_checkpoints": true,
+  "preserve_fences": true,
+  "unknown_effect_requires_readback": true,
+  "owner_burden_machine_route_first": true,
+  "currentness_precedence": "PROVIDER_SEMANTIC_READBACK>SIGNED_SOURCE_RELEASE>KDV_REDUCER>SYNC_WORKPLANE_EVENTS>HEARTBEAT>DASHBOARD>CHAT_MEMORY",
+  "live_proof": {
+    "server_sha256": "057ed8979051fe8783ca0b4f2def21a141bebd9d0f5c52faec9590543cc75545",
+    "boot_sha256": "b6ed3dddb4da7e3210c34bfa2bd5077bd849cd4f18ace2488f2ab8d5f015280a",
+    "mirror_module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f",
+    "bootstrap_guard_ok": true,
+    "autonomous_worker_sha256": "fa2a89f2e102d4eff45299db1113203723527498d79290ec730b0919e9e88271",
+    "bootstrap_guard_schema": "FUSE_BOOTSTRAP_GUARD_V4",
+    "mission_canary_ms": 484,
+    "mission_canary_improvement_receipt": "88107c4a8ef7017b6976cfab93e8b2ed4512b86bd8fbc9223f7ac7fac36965bd",
+    "mission_canary_receipt": "dddfa72a5dc3acf995b43b9875720fc7dc24b0f6d3fcf9bed6ebe6e249294f47",
+    "recoverable_record_instances": 129,
+    "completed_record_iterations": 1290
+  },
+  "autonomous_improvement": {
+    "schema": "FUSE_AUTONOMOUS_IMPROVEMENT_LOOP_V1",
+    "enabled": true,
+    "exact_iterations": 10,
+    "required_before_route_compilation": true,
+    "inhouse_default": true,
+    "build_to_completion": true,
+    "worker_path": "fuse_runtime/autonomous_improvement_loop_v1.mjs",
+    "worker_sha256": "fa2a89f2e102d4eff45299db1113203723527498d79290ec730b0919e9e88271",
+    "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17",
+    "historical_chat_backfill": {
+      "iterations_per_recovered_chat": 10,
+      "current_exact_records": 37,
+      "current_completed_iterations": 370,
+      "summary_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+      "recoverable_corpus_sha256": "27356353cab01e2f09017b38d617a84c235f11ea8f92ac4067a087bb7f1c865e",
+      "future_capture_auto_enroll": true,
+      "native_account_totality": "UNVERIFIED",
+      "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
+      "false_totality_claim_forbidden": true,
+      "evidence_classes": {
+        "exact_chat_records": {
+          "records": 37,
+          "iterations": 370,
+          "receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+          "counts_as_exact_native_chat": true
+        },
+        "chatbridge_registry_identities": {
+          "records": 10,
+          "iterations": 100,
+          "receipt_sha256": "111549ca8c9f413fc476035b6d337d98c5d0ea105e5ac3ba5c65f855ef47cfdf",
+          "counts_as_exact_native_chat": false
+        },
+        "gmail_chatgpt_backup_artifacts": {
+          "records": 62,
+          "iterations": 620,
+          "receipt_sha256": "074eaea99329c669721db94ab422ee42aa41708fb24162424ed1651ed4f1e528",
+          "counts_as_exact_native_chat": false
+        },
+        "account_memory_incidents": {
+          "records": 20,
+          "iterations": 200,
+          "receipt_sha256": "02e698a9b6b9d43342d1da2fcb2afc405561b5e3b8ef8e9eb0d098edd8f38f13",
+          "counts_as_exact_native_chat": false
+        }
+      },
+      "recoverable_record_instances": 129,
+      "completed_record_iterations": 1290,
+      "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
+    }
+  }
+}

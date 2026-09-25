@@ -1,0 +1,34 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2B1",
+  "version": "2.0.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "231-235",
+  "chapter_count": 5,
+  "chapters": [
+    {
+      "chapter": 231,
+      "id": "PROACTIVE_REUSE_SCAN",
+      "prompt": "Scan current and historical FUSE work for reusable artifacts and capabilities before likely future build work becomes critical."
+    },
+    {
+      "chapter": 232,
+      "id": "PREEMPTIVE_CONVERGENCE",
+      "prompt": "Detect overlapping systems or capabilities early and prepare merge, alias or retirement paths before duplication expands."
+    },
+    {
+      "chapter": 233,
+      "id": "PROVIDER_DRIFT_FORECAST",
+      "prompt": "Watch material provider capability or reliability changes and prepare route changes before they create outages."
+    },
+    {
+      "chapter": 234,
+      "id": "CAPACITY_HEADROOM",
+      "prompt": "Estimate context, runtime, queue and rate-limit headroom and checkpoint or reroute before visible interruption."
+    },
+    {
+      "chapter": 235,
+      "id": "LATENCY_BUDGET_PREEMPTION",
+      "prompt": "Identify forthcoming slow stages and precompute, parallelize or move them to durable execution before they delay the owner."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2A",
+  "version": "2.0.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "221-230",
+  "chapter_count": 10,
+  "chapters": [
+    {
+      "chapter": 221,
+      "id": "NEED_BEFORE_REQUEST",
+      "prompt": "Infer likely next mission needs from current state and prepare safe prerequisites early."
+    },
+    {
+      "chapter": 222,
+      "id": "FUTURE_BLOCKER_PREDICTION",
+      "prompt": "Predict likely blockers for the next stages and prepare alternate routes before they become critical."
+    },
+    {
+      "chapter": 223,
+      "id": "AUTHORITY_READINESS",
+      "prompt": "Identify future permission and identity prerequisites early and complete all safe preparation in advance."
+    },
+    {
+      "chapter": 224,
+      "id": "PREEMPTIVE_CURRENTNESS",
+      "prompt": "Refresh volatile state before it becomes too stale for the next likely decision."
+    },
+    {
+      "chapter": 225,
+      "id": "PREEMPTIVE_PROOF",
+      "prompt": "Identify the proof needed for upcoming claims and prepare it before final delivery."
+    },
+    {
+      "chapter": 226,
+      "id": "PREEMPTIVE_TEST_DESIGN",
+      "prompt": "Design acceptance, regression, recovery and falsifier tests before implementation finishes."
+    },
+    {
+      "chapter": 227,
+      "id": "NEXT_STATE_SIMULATION",
+      "prompt": "Simulate likely next mission states and prepare recovery for high-impact failure branches."
+    },
+    {
+      "chapter": 228,
+      "id": "OWNER_RESCUE_AVOIDANCE",
+      "prompt": "Predict where owner prompting or troubleshooting would otherwise be needed and remove those points where possible."
+    },
+    {
+      "chapter": 229,
+      "id": "UNRESOLVED_DEPENDENCY_AGING",
+      "prompt": "Track aging dependencies and resolve machine-solvable ones before they become chronic blockers."
+    },
+    {
+      "chapter": 230,
+      "id": "CAPABILITY_WARM_START",
+      "prompt": "Keep likely-needed capability contracts, schemas, tests and fallback routes ready for active missions."
+    }
+  ],
+  "truth_boundary": "Source prompt pack; live execution still depends on a qualified FUSE runtime."
+}

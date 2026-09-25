@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.5",
   "owner_alias": "federation-owner",
   "control_plane": {
     "drive_folder_id": "env:FEDERATION_DRIVE_FOLDER_ID",
@@ -30,12 +30,32 @@
     "CASEFORGE-Omega"
   ],
   "domain_authority": {
-    "systems_runtime": ["Bubbles", "Federation Omega", "Kim Dataverse"],
-    "legal": ["Lex Advocate"],
-    "evidence_truth_state": ["TruthGrid", "EvidenceOps", "JFRIE"],
-    "directive_logic": ["Superior Logic Doctrine", "KIOAS"],
-    "repair_continuity": ["Omega-AUTOFIX", "ChatBridge"],
-    "scientific_evolution": ["CASEFORGE-Omega", "KAIO Omega", "Omega-SCIENTIA"]
+    "systems_runtime": [
+      "Bubbles",
+      "Federation Omega",
+      "Kim Dataverse"
+    ],
+    "legal": [
+      "Lex Advocate"
+    ],
+    "evidence_truth_state": [
+      "TruthGrid",
+      "EvidenceOps",
+      "JFRIE"
+    ],
+    "directive_logic": [
+      "Superior Logic Doctrine",
+      "KIOAS"
+    ],
+    "repair_continuity": [
+      "Omega-AUTOFIX",
+      "ChatBridge"
+    ],
+    "scientific_evolution": [
+      "CASEFORGE-Omega",
+      "KAIO Omega",
+      "Omega-SCIENTIA"
+    ]
   },
   "bootstrap_order": [
     "identify_spawn",
@@ -44,12 +64,215 @@
     "load_recent_sync_events",
     "load_shared_learnings",
     "load_conflicts",
+    "load_bootstrap_memory_snapshot",
+    "validate_bootstrap_memory_snapshot",
+    "load_runtime_sovereignty_contract",
+    "load_owner_intent_and_debt",
     "run_already_solved_gate",
     "reuse_or_supersede",
+    "load_directive_fidelity_contract",
+    "load_power_diary_contract",
+    "load_output_mirror_v3_contract",
+    "validate_output_mirror_v3_contract",
+    "run_bootstrap_self_improvement",
+    "run_autonomous_improvement_10_iterations",
+    "enroll_new_historical_chat_captures",
     "execute",
+    "verify_and_judge",
+    "run_output_mirror",
+    "terminal_delivery_gate",
     "publish_delta",
     "publish_bibliography"
   ],
   "proof_rule": "No provider-side action may be marked completed without provider/tool evidence.",
-  "privacy_rule": "Provider object identifiers and credentials are runtime configuration, not public-source constants."
+  "privacy_rule": "Provider object identifiers and credentials are runtime configuration, not public-source constants.",
+  "bootstrap_invariants": [
+    "INSTRUCTION_WITHOUT_ENFORCEMENT_IS_NOT_CONTROL",
+    "FUSE_OWNS_OWNER_INTENT_ENFORCEMENT",
+    "SOL62_OWNS_TRANSACTIONAL_RUNTIME_STATE",
+    "PROVIDERS_AND_CHAT_CLIENTS_ARE_REPLACEABLE_PROCESSORS",
+    "VERIFY_JUDGE_OUTPUT_MIRROR_PRECEDE_TERMINAL_DELIVERY",
+    "NO_PROVIDER_OR_CHAT_LAYER_MAY_SILENTLY_REDEFINE_OWNER_OUTCOME",
+    "OUTPUT_MIRROR_V2_REQUIRED_BEFORE_ROUTE_COMPILATION",
+    "OUTPUT_MIRROR_V2_REQUIRED_BEFORE_TERMINAL_DELIVERY",
+    "ZERO_FAIL_ACROSS_REQUIRED_MIRROR_DIMENSIONS",
+    "DEVELOPER1000_COURT_BOUND",
+    "DIRECTIVE_FIDELITY_REQUIRED",
+    "BOOTSTRAP_MEMORY_SNAPSHOT_REQUIRED",
+    "BOOTSTRAP_SELF_IMPROVEMENT_REQUIRED",
+    "AUTONOMOUS_IMPROVEMENT_10_ITERATIONS_REQUIRED",
+    "HISTORICAL_CHAT_BACKFILL_AUTO_ENROLL",
+    "NATIVE_TRANSCRIPT_UNAVAILABLE_IS_NOT_ABSENCE"
+  ],
+  "runtime_sovereignty": {
+    "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
+    "rationale": "SOL 6.2 exists so critical FUSE directives become runtime-enforced properties rather than advisory conversational instructions.",
+    "principle": "instruction_without_enforcement_is_not_control",
+    "owner_intent_role": "Defines FUSE mission intent, desired outcome and owner-authorized consequential effects inside lawful provider/platform boundaries.",
+    "fuse_role": "Owns durable mission state, orchestration policy, continuity, verification, Output Mirror and terminal-delivery gating.",
+    "sol62_role": "Provider-neutral transactional execution-state spine and runtime enforcement surface for governed FUSE work when task-fit.",
+    "chatgpt_role": "Replaceable intelligence/execution provider and detachable client; not FUSE mission owner or sovereign terminal-delivery authority.",
+    "provider_role": "Replaceable capability/execution carrier subject to provider rules, permissions, safety, privacy, law and action-specific authority.",
+    "required_runtime_properties": [
+      "owner_intent_fidelity",
+      "prompt_zero_safe_continuation",
+      "reuse_before_build",
+      "solve_before_report",
+      "source_to_runtime_to_outcome_closure",
+      "proof_before_claim",
+      "output_mirror_enforcement",
+      "checkpoint_recovery",
+      "provider_neutral_routing",
+      "terminal_delivery_assurance"
+    ],
+    "target_delivery_path": [
+      "OWNER_INTENT",
+      "FUSE_OWNED_RUNTIME",
+      "MODEL_TOOL_PROVIDER_FEDERATION",
+      "READBACK_VERIFY_JUDGE",
+      "OUTPUT_MIRROR",
+      "FUSE_OWNED_TERMINAL_DELIVERY",
+      "OWNER"
+    ],
+    "prohibited_substitution": "A provider/model/chat client may constrain execution within its own lawful boundary but may not silently mutate the canonical owner objective or convert an intermediate checkpoint into terminal success.",
+    "truth_boundary": "BOOTSTRAP_CONTRACT_BOUND != EVERY_RECEIVER_RUNTIME_ENFORCED != EVERY_PROVIDER_BOUND != COMPLETE_VERIFIED"
+  },
+  "delivery_rule": "Governed owner-facing output is terminal only after the FUSE verification/Judge/Output-Mirror chain passes, or a genuine hard boundary is explicitly proven; otherwise continue the same mission from the smallest unfinished stage.",
+  "output_mirror_bootstrap": {
+    "contract_id": "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V3",
+    "boot_kernel_min_version": "5.9.0",
+    "mirror_min_version": "3.0.0",
+    "enabled": true,
+    "required_before_route_compilation": true,
+    "required_before_terminal_delivery": true,
+    "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS",
+    "required_dimensions": [
+      "intent_fidelity",
+      "execution_finality",
+      "proof_evidence",
+      "design_code_health",
+      "testing",
+      "security_privacy",
+      "reliability_recovery",
+      "performance_cost",
+      "currentness_reproducibility",
+      "owner_value"
+    ],
+    "developer1000": {
+      "count": 1000,
+      "sha256": "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e",
+      "role": "PUBLIC_SIGNAL_PROXY_NOT_SKILL_RANKING"
+    },
+    "benchmark_court": {
+      "cases": 1000,
+      "dataset_sha256": "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510",
+      "v1_1_false_passes": 500,
+      "v2_false_passes": 0
+    },
+    "external_benchmarks": {
+      "swe_bench_verified": 500,
+      "swe_bench_multilingual": 300,
+      "programbench": 200,
+      "aider_polyglot_shadow": 225,
+      "codeclash_shadow": true
+    },
+    "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
+    "fail_closed": true,
+    "preserve_mission_identity": true,
+    "preserve_completed_effects": true,
+    "preserve_fences": true,
+    "unknown_effect_requires_readback": true,
+    "owner_burden_machine_route_first": true,
+    "truth_boundary": "SOURCE_BOOTSTRAP_CONTRACT_DOES_NOT_BY_ITSELF_PROVE_EVERY_RUNTIME_RECEIVER_OR_UNIVERSAL_OPENAI_PLATFORM_ENFORCEMENT",
+    "power_diary": {
+      "source_sha256": "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495",
+      "chapter_count": 40,
+      "required_family_count": 17,
+      "module_sha256": "7d68d3084236af56062299044829ca99e122ad8d836148cfd5ec6c196443e55f"
+    }
+  },
+  "directive_fidelity_bootstrap": {
+    "contract_id": "FUSE-DIRECTIVE-FIDELITY-V1",
+    "enabled": true,
+    "config_path": "config/fuse-directive-fidelity-v1.json",
+    "required_checks": [
+      "PRESERVE_CANONICAL_OWNER_OBJECTIVE",
+      "PRESERVE_DIRECTIVE_VERB_FORCE",
+      "CONSTRAINTS_ARE_EXECUTION_STATE_NOT_NEW_INTENT",
+      "NO_DOWNGRADE_FROM_EXECUTION_TO_ADVICE_WHEN_EXECUTION_IS_AVAILABLE"
+    ],
+    "failure_behavior": "HOLD_AND_RECOMPILE_SAME_MISSION"
+  },
+  "bootstrap_memory": {
+    "contract_id": "FUSE-BOOTSTRAP-MEMORY-V1",
+    "enabled": true,
+    "snapshot_path": "config/fuse-bootstrap-memory-snapshot-v1.json",
+    "restore_last_accepted_generation": true,
+    "preserve_previous_generation": true,
+    "volatile_state_must_refresh": true
+  },
+  "bootstrap_self_improvement": {
+    "contract_id": "FUSE-BOOTSTRAP-SELF-IMPROVEMENT-V2",
+    "enabled": true,
+    "config_path": "config/fuse-bootstrap-self-improvement-v1.json",
+    "iterations_per_cycle": 10,
+    "exact_iteration_count": true,
+    "inhouse_default": true,
+    "build_to_completion": true,
+    "promotion_requires": "MATCHED_NONREGRESSION_PROOF_READBACK_ROLLBACK_AND_PROVENANCE",
+    "tie_behavior": "KEEP_CURRENT_CHAMPION",
+    "rollback_required": true,
+    "worker_path": "fuse_runtime/autonomous_improvement_loop_v1.mjs",
+    "worker_sha256": "fa2a89f2e102d4eff45299db1113203723527498d79290ec730b0919e9e88271"
+  },
+  "historical_chat_backfill": {
+    "contract_id": "FUSE-HISTORICAL-CHAT-BACKFILL-V1",
+    "enabled": true,
+    "iterations_per_recovered_chat": 10,
+    "current_exact_recovered_chat_records": 37,
+    "current_completed_iterations": 370,
+    "summary_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+    "recoverable_corpus_sha256": "27356353cab01e2f09017b38d617a84c235f11ea8f92ac4067a087bb7f1c865e",
+    "future_capture_auto_enroll": true,
+    "source_precedence": [
+      "OFFICIAL_OPENAI_EXPORT_IF_AVAILABLE",
+      "SESSION_PROVIDER_GRAPH_IF_AVAILABLE",
+      "CHATBRIDGE_FULL_FIDELITY",
+      "DRIVE_CHAT_ARCHIVES",
+      "GMAIL_CHATGPT_BACKUPS",
+      "LIVE_BIBLE_AND_TURN_CAPTURE"
+    ],
+    "native_account_totality": "UNVERIFIED",
+    "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
+    "false_totality_claim_forbidden": true,
+    "evidence_classes": {
+      "exact_chat_records": {
+        "records": 37,
+        "iterations": 370,
+        "receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+        "counts_as_exact_native_chat": true
+      },
+      "chatbridge_registry_identities": {
+        "records": 10,
+        "iterations": 100,
+        "receipt_sha256": "111549ca8c9f413fc476035b6d337d98c5d0ea105e5ac3ba5c65f855ef47cfdf",
+        "counts_as_exact_native_chat": false
+      },
+      "gmail_chatgpt_backup_artifacts": {
+        "records": 62,
+        "iterations": 620,
+        "receipt_sha256": "074eaea99329c669721db94ab422ee42aa41708fb24162424ed1651ed4f1e528",
+        "counts_as_exact_native_chat": false
+      },
+      "account_memory_incidents": {
+        "records": 20,
+        "iterations": 200,
+        "receipt_sha256": "02e698a9b6b9d43342d1da2fcb2afc405561b5e3b8ef8e9eb0d098edd8f38f13",
+        "counts_as_exact_native_chat": false
+      }
+    },
+    "recoverable_record_instances": 129,
+    "completed_record_iterations": 1290,
+    "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
+  }
 }

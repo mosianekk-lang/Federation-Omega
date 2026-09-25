@@ -1,0 +1,58 @@
+{
+  "schema": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "version": "1.0.0",
+  "parent": "FUSE_UNIFIED_CAPABILITY_FABRIC_V1",
+  "forest": "FOREST_V2",
+  "creates_new_controller": false,
+  "purpose": "Advance safe preparatory work before owner rescue is needed.",
+  "loop": [
+    "SENSE",
+    "PREDICT_NEXT_GATES",
+    "RANK",
+    "PREPARE_SAFE_WORK",
+    "REFRESH_PROOF_CURRENTNESS",
+    "QUALIFY_FAILOVER",
+    "ADVANCE_READY_NODES",
+    "VERIFY",
+    "UPDATE_FOREST"
+  ],
+  "laws": [
+    "KNOWN_NEXT_ACTION_CONTINUES_WITHOUT_REPEAT_PROMPT",
+    "SAFE_CURRENTNESS_REFRESH_HAPPENS_BEFORE_STALENESS",
+    "FAILOVER_IS_PREQUALIFIED_WHEN_SAFE",
+    "DISJOINT_READY_WORK_CONTINUES_AROUND_LOCAL_BLOCKERS",
+    "CHECKPOINT_BEFORE_CONTEXT_OR_CAPACITY_RISK",
+    "REPEATED_FAILURE_TRIGGERS_PREVENTION_BUILD",
+    "MISSING_PROOF_IS_DETECTED_BEFORE_TERMINAL_DELIVERY",
+    "EXISTING_CAPABILITY_IS_REUSED_REPAIRED_OR_EXTENDED_BEFORE_NEW_BUILD"
+  ],
+  "signals": [
+    "READY_NODE",
+    "EXPECTED_NEXT_ACTION",
+    "PROOF_EXPIRY_RISK",
+    "CURRENTNESS_RISK",
+    "PROVIDER_DEGRADATION",
+    "REPEATED_FAILURE",
+    "CAPABILITY_GAP",
+    "FANIN_WAIT",
+    "BLOCKER_WITH_DISJOINT_READY_WORK"
+  ],
+  "safe_preparation": [
+    "read_only_refresh",
+    "route_compile",
+    "artifact_prepare",
+    "test_simulation",
+    "rollback_prepare",
+    "checkpoint",
+    "cache_safe_evidence",
+    "candidate_branch_work"
+  ],
+  "effect_rule": "Only execute consequential effects under the mission's existing action-specific authority; preparation may continue without widening authority.",
+  "owner_surface": {
+    "healthy": "QUIET_CONTINUATION",
+    "material_result": "DELIVER",
+    "owner_only_decision": "SURFACE_PREPARED_DECISION",
+    "recoverable_failure": "REPAIR_AND_CONTINUE"
+  },
+  "truth_boundary": "Source contract only; continuous behavior requires a live qualified executor."
+}

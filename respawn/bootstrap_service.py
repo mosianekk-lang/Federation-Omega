@@ -12,9 +12,15 @@ from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST_PATH = ROOT / "federation_manifest.json"
+CONFIG_ROOT = ROOT.parent / "config"
+BOOTSTRAP_MEMORY_PATH = CONFIG_ROOT / "fuse-bootstrap-memory-snapshot-v1.json"
+BOOTSTRAP_IMPROVEMENT_PATH = CONFIG_ROOT / "fuse-bootstrap-self-improvement-v1.json"
+AUTONOMY_PATH = CONFIG_ROOT / "fuse-24x7-autonomy-v1.json"
+AUTONOMOUS_WORKER_PATH = ROOT.parent / "fuse_runtime" / "autonomous_improvement_loop_v1.mjs"
+OUTPUT_MIRROR_V3_PATH = ROOT.parent / "fuse_runtime" / "output_mirror_v3.mjs"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
-app = FastAPI(title="Federation Respawn Bootstrap", version="1.1.0")
+app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
 
 
 def utcnow() -> str:
@@ -52,6 +58,149 @@ def manifest() -> Dict[str, Any]:
 
 def resolved_control_plane() -> Dict[str, Any]:
     return resolve_runtime_alias(manifest().get("control_plane", {}))
+
+
+def bootstrap_memory_bundle() -> Dict[str, Any]:
+    snapshot = load_json(BOOTSTRAP_MEMORY_PATH, {})
+    improvement = load_json(BOOTSTRAP_IMPROVEMENT_PATH, {})
+    autonomy = load_json(AUTONOMY_PATH, {})
+    issues: List[str] = []
+    if snapshot.get("schema") != "FUSE_BOOTSTRAP_MEMORY_SNAPSHOT_V1":
+        issues.append("BOOTSTRAP_MEMORY_SNAPSHOT_MISSING_OR_INVALID")
+    if improvement.get("schema") != "FUSE_BOOTSTRAP_SELF_IMPROVEMENT_V1":
+        issues.append("BOOTSTRAP_SELF_IMPROVEMENT_MISSING_OR_INVALID")
+    policy = improvement.get("iteration_policy", {})
+    if improvement.get("version") != "2.0.0":
+        issues.append("BOOTSTRAP_SELF_IMPROVEMENT_VERSION_MISMATCH")
+    if policy.get("exact_iterations_per_cycle") != 10:
+        issues.append("AUTONOMOUS_IMPROVEMENT_ITERATION_COUNT_MISMATCH")
+    if policy.get("inhouse_default") is not True:
+        issues.append("AUTONOMOUS_IMPROVEMENT_INHOUSE_DISABLED")
+    if policy.get("build_to_completion") is not True:
+        issues.append("AUTONOMOUS_IMPROVEMENT_COMPLETION_DISABLED")
+    if not AUTONOMOUS_WORKER_PATH.exists():
+        issues.append("AUTONOMOUS_IMPROVEMENT_WORKER_MISSING")
+        worker_sha256 = None
+    else:
+        worker_sha256 = hashlib.sha256(AUTONOMOUS_WORKER_PATH.read_bytes()).hexdigest()
+        if worker_sha256 != improvement.get("live_proof", {}).get("worker_sha256"):
+            issues.append("AUTONOMOUS_IMPROVEMENT_WORKER_HASH_MISMATCH")
+    if autonomy.get("schema") != "FUSE_24X7_AUTONOMY_V1":
+        issues.append("AUTONOMY_CONTRACT_MISSING_OR_INVALID")
+    backfill = autonomy.get("historical_chat_backfill", {})
+    if autonomy.get("auto_repeat", {}).get("iterations") != 10:
+        issues.append("AUTONOMY_REPEAT_COUNT_MISMATCH")
+    if backfill.get("iterations_per_recovered_chat") != 10:
+        issues.append("HISTORICAL_CHAT_ITERATION_COUNT_MISMATCH")
+    if backfill.get("current_exact_recoverable_chat_records") != 37:
+        issues.append("HISTORICAL_CHAT_RECORD_COUNT_MISMATCH")
+    if backfill.get("current_completed_chat_iterations") != 370:
+        issues.append("HISTORICAL_CHAT_COMPLETED_ITERATIONS_MISMATCH")
+    if backfill.get("native_totality") != "UNVERIFIED":
+        issues.append("NATIVE_CHAT_TOTALITY_FALSE_CLAIM")
+    if backfill.get("no_false_totality_claim") is not True:
+        issues.append("NATIVE_CHAT_TOTALITY_GUARD_MISSING")
+    return {
+        "ok": not issues,
+        "issues": issues,
+        "snapshot": snapshot,
+        "self_improvement": improvement,
+        "autonomy": autonomy,
+        "worker_sha256": worker_sha256,
+    }
+
+def autonomous_improvement_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("bootstrap_self_improvement", {})
+    history = source.get("historical_chat_backfill", {})
+    issues: List[str] = []
+    if contract.get("contract_id") != "FUSE-BOOTSTRAP-SELF-IMPROVEMENT-V2":
+        issues.append("AUTONOMOUS_IMPROVEMENT_CONTRACT_ID_MISMATCH")
+    if contract.get("iterations_per_cycle") != 10 or contract.get("exact_iteration_count") is not True:
+        issues.append("AUTONOMOUS_IMPROVEMENT_MANIFEST_ITERATION_MISMATCH")
+    measured_worker_sha256 = hashlib.sha256(AUTONOMOUS_WORKER_PATH.read_bytes()).hexdigest() if AUTONOMOUS_WORKER_PATH.exists() else None
+    if contract.get("worker_sha256") != measured_worker_sha256:
+        issues.append("AUTONOMOUS_IMPROVEMENT_MANIFEST_WORKER_MISMATCH")
+    if history.get("iterations_per_recovered_chat") != 10:
+        issues.append("HISTORICAL_BACKFILL_MANIFEST_ITERATION_MISMATCH")
+    if history.get("current_exact_recovered_chat_records") != 37:
+        issues.append("HISTORICAL_BACKFILL_MANIFEST_RECORD_MISMATCH")
+    if history.get("current_completed_iterations") != 370:
+        issues.append("HISTORICAL_BACKFILL_MANIFEST_COMPLETION_MISMATCH")
+    if int(history.get("recoverable_record_instances", 0)) < 129:
+        issues.append("HISTORICAL_BACKFILL_RECOVERABLE_BASELINE_REGRESSED")
+    if int(history.get("completed_record_iterations", 0)) < 1290:
+        issues.append("HISTORICAL_BACKFILL_ITERATION_BASELINE_REGRESSED")
+    if history.get("native_account_totality") != "UNVERIFIED":
+        issues.append("HISTORICAL_BACKFILL_NATIVE_TOTALITY_FALSE_CLAIM")
+    return {
+        "schema": "FUSE_AUTONOMOUS_IMPROVEMENT_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "iterations": contract.get("iterations_per_cycle"),
+        "worker_sha256": contract.get("worker_sha256"),
+        "historical_chat_records": history.get("current_exact_recovered_chat_records"),
+        "historical_chat_iterations": history.get("current_completed_iterations"),
+        "native_account_totality": history.get("native_account_totality"),
+    }
+
+
+
+def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("output_mirror_bootstrap", {})
+    fidelity = source.get("directive_fidelity_bootstrap", {})
+    issues: List[str] = []
+    if fidelity.get("enabled") is not True:
+        issues.append("DIRECTIVE_FIDELITY_DISABLED_OR_MISSING")
+    if fidelity.get("contract_id") != "FUSE-DIRECTIVE-FIDELITY-V1":
+        issues.append("DIRECTIVE_FIDELITY_CONTRACT_ID_MISMATCH")
+    if contract.get("enabled") is not True:
+        issues.append("OUTPUT_MIRROR_BOOTSTRAP_DISABLED_OR_MISSING")
+    if contract.get("contract_id") != "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V3":
+        issues.append("OUTPUT_MIRROR_BOOTSTRAP_CONTRACT_ID_MISMATCH")
+    if contract.get("release_policy") != "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS":
+        issues.append("OUTPUT_MIRROR_RELEASE_POLICY_MISMATCH")
+    required = set(contract.get("required_dimensions", []))
+    expected = {
+        "intent_fidelity", "execution_finality", "proof_evidence", "design_code_health",
+        "testing", "security_privacy", "reliability_recovery", "performance_cost",
+        "currentness_reproducibility", "owner_value",
+    }
+    missing = sorted(expected - required)
+    issues.extend(f"MISSING_OUTPUT_MIRROR_DIMENSION:{name}" for name in missing)
+    if contract.get("developer1000", {}).get("sha256") != "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e":
+        issues.append("DEVELOPER1000_CORPUS_MISMATCH")
+    if contract.get("benchmark_court", {}).get("dataset_sha256") != "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510":
+        issues.append("OUTPUT_MIRROR_BENCHMARK_COURT_MISMATCH")
+    diary = contract.get("power_diary", {})
+    if diary.get("source_sha256") != "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495":
+        issues.append("POWER_DIARY_SOURCE_MISMATCH")
+    if diary.get("chapter_count") != 40:
+        issues.append("POWER_DIARY_CHAPTER_COUNT_MISMATCH")
+    if diary.get("required_family_count") != 17:
+        issues.append("POWER_DIARY_FAMILY_COUNT_MISMATCH")
+    measured_mirror_sha256 = None
+    if not OUTPUT_MIRROR_V3_PATH.exists():
+        issues.append("OUTPUT_MIRROR_MODULE_MISSING")
+    else:
+        measured_mirror_sha256 = hashlib.sha256(OUTPUT_MIRROR_V3_PATH.read_bytes()).hexdigest()
+        if diary.get("module_sha256") != measured_mirror_sha256:
+            issues.append("POWER_DIARY_MODULE_HASH_MISMATCH")
+    return {
+        "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V3",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "boot_kernel_min_version": contract.get("boot_kernel_min_version"),
+        "mirror_min_version": contract.get("mirror_min_version"),
+        "required_dimension_count": len(required),
+        "power_diary_sha256": contract.get("power_diary", {}).get("source_sha256"),
+        "power_diary_chapter_count": contract.get("power_diary", {}).get("chapter_count"),
+        "power_diary_family_count": contract.get("power_diary", {}).get("required_family_count"),
+        "directive_fidelity_contract_id": fidelity.get("contract_id"),
+        "directive_fidelity_enabled": fidelity.get("enabled"),
+    }
 
 
 def state() -> Dict[str, Any]:
@@ -161,6 +310,15 @@ def already_solved(req: SolvedRequest) -> Dict[str, Any]:
 @app.post("/bootstrap")
 def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     validate_system(req.system)
+    source_manifest = manifest()
+    mirror_guard = output_mirror_bootstrap_guard(source_manifest)
+    memory_bundle = bootstrap_memory_bundle()
+    autonomy_guard = autonomous_improvement_bootstrap_guard(source_manifest)
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"]:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard},
+        )
     s = state()
     solved = search_state(
         SolvedRequest(system=req.system, matter=req.matter, problem=req.objective or "", terms=req.terms)
@@ -187,6 +345,17 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "matter": req.matter,
         "chat_ref": req.chat_ref,
         "bootstrap_order": manifest().get("bootstrap_order", []),
+        "bootstrap_invariants": manifest().get("bootstrap_invariants", []),
+        "runtime_sovereignty": source_manifest.get("runtime_sovereignty", {}),
+        "bootstrap_memory_snapshot": memory_bundle["snapshot"],
+        "bootstrap_self_improvement": memory_bundle["self_improvement"],
+        "autonomy_contract": memory_bundle["autonomy"],
+        "autonomous_improvement_guard": autonomy_guard,
+        "historical_chat_backfill": source_manifest.get("historical_chat_backfill", {}),
+        "directive_fidelity_bootstrap": source_manifest.get("directive_fidelity_bootstrap", {}),
+        "output_mirror_bootstrap": source_manifest.get("output_mirror_bootstrap", {}),
+        "output_mirror_bootstrap_guard": mirror_guard,
+        "delivery_rule": source_manifest.get("delivery_rule"),
         "control_plane": resolved_control_plane(),
         "already_solved_candidates": solved,
         "recent_deltas": recent,
