@@ -83,6 +83,8 @@ def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> D
         issues.append("POWER_DIARY_CHAPTER_COUNT_MISMATCH")
     if diary.get("required_family_count") != 17:
         issues.append("POWER_DIARY_FAMILY_COUNT_MISMATCH")
+    if diary.get("module_sha256") != "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b":
+        issues.append("POWER_DIARY_MODULE_HASH_MISMATCH")
     return {
         "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V3",
         "ok": not issues,
@@ -91,6 +93,9 @@ def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> D
         "boot_kernel_min_version": contract.get("boot_kernel_min_version"),
         "mirror_min_version": contract.get("mirror_min_version"),
         "required_dimension_count": len(required),
+        "power_diary_sha256": contract.get("power_diary", {}).get("source_sha256"),
+        "power_diary_chapter_count": contract.get("power_diary", {}).get("chapter_count"),
+        "power_diary_family_count": contract.get("power_diary", {}).get("required_family_count"),
     }
 
 
