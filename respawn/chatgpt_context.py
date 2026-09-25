@@ -373,6 +373,8 @@ def resume_mission_impl(
         "coverage": coverage,
         "hyper_intelligence_performance": compact.get("hyper_intelligence_performance", {}),
         "hyper_intelligence_performance_guard": compact.get("hyper_intelligence_performance_guard", {}),
+        "terminal_debt_finality": compact.get("terminal_debt_finality", {}),
+        "terminal_debt_bootstrap_guard": compact.get("terminal_debt_bootstrap_guard", {}),
         "next_executable_action": next_action,
         "proof_boundaries": [
             "Historical proposal/design does not prove current runtime capability.",
