@@ -68,6 +68,7 @@
     "load_owner_intent_and_debt",
     "run_already_solved_gate",
     "reuse_or_supersede",
+    "load_directive_fidelity_contract",
     "load_power_diary_contract",
     "load_output_mirror_v3_contract",
     "validate_output_mirror_v3_contract",
@@ -90,7 +91,8 @@
     "OUTPUT_MIRROR_V2_REQUIRED_BEFORE_ROUTE_COMPILATION",
     "OUTPUT_MIRROR_V2_REQUIRED_BEFORE_TERMINAL_DELIVERY",
     "ZERO_FAIL_ACROSS_REQUIRED_MIRROR_DIMENSIONS",
-    "DEVELOPER1000_COURT_BOUND"
+    "DEVELOPER1000_COURT_BOUND",
+    "DIRECTIVE_FIDELITY_REQUIRED"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -178,5 +180,17 @@
       "required_family_count": 17,
       "module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b"
     }
+  },
+  "directive_fidelity_bootstrap": {
+    "contract_id": "FUSE-DIRECTIVE-FIDELITY-V1",
+    "enabled": true,
+    "config_path": "config/fuse-directive-fidelity-v1.json",
+    "required_checks": [
+      "PRESERVE_CANONICAL_OWNER_OBJECTIVE",
+      "PRESERVE_DIRECTIVE_VERB_FORCE",
+      "CONSTRAINTS_ARE_EXECUTION_STATE_NOT_NEW_INTENT",
+      "NO_DOWNGRADE_FROM_EXECUTION_TO_ADVICE_WHEN_EXECUTION_IS_AVAILABLE"
+    ],
+    "failure_behavior": "HOLD_AND_RECOMPILE_SAME_MISSION"
   }
 }
