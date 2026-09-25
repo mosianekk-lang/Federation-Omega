@@ -117,7 +117,8 @@ def autonomous_improvement_bootstrap_guard(payload: Optional[Dict[str, Any]] = N
         issues.append("AUTONOMOUS_IMPROVEMENT_CONTRACT_ID_MISMATCH")
     if contract.get("iterations_per_cycle") != 10 or contract.get("exact_iteration_count") is not True:
         issues.append("AUTONOMOUS_IMPROVEMENT_MANIFEST_ITERATION_MISMATCH")
-    if contract.get("worker_sha256") != "1b8d8b2ed2f9d846cfa0c985686284189a2ffb0d24c4509c0490355c5e7da7be":
+    measured_worker_sha256 = hashlib.sha256(AUTONOMOUS_WORKER_PATH.read_bytes()).hexdigest() if AUTONOMOUS_WORKER_PATH.exists() else None
+    if contract.get("worker_sha256") != measured_worker_sha256:
         issues.append("AUTONOMOUS_IMPROVEMENT_MANIFEST_WORKER_MISMATCH")
     if history.get("iterations_per_recovered_chat") != 10:
         issues.append("HISTORICAL_BACKFILL_MANIFEST_ITERATION_MISMATCH")
