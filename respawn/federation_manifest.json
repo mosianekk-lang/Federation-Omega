@@ -223,7 +223,7 @@
     "tie_behavior": "KEEP_CURRENT_CHAMPION",
     "rollback_required": true,
     "worker_path": "fuse_runtime/autonomous_improvement_loop_v1.mjs",
-    "worker_sha256": "1b8d8b2ed2f9d846cfa0c985686284189a2ffb0d24c4509c0490355c5e7da7be"
+    "worker_sha256": "3a8fade2b4c664f1c14c786e7597821b883ed816677b2d92432ea248d9ac4257"
   },
   "historical_chat_backfill": {
     "contract_id": "FUSE-HISTORICAL-CHAT-BACKFILL-V1",
