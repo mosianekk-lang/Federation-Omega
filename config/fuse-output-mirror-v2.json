@@ -1,7 +1,7 @@
 {
   "schema": "FUSE_OUTPUT_MIRROR_POLICY_V2",
   "version": "2.0.0",
-  "boot_kernel": "5.7.0",
+  "boot_kernel": "5.8.0",
   "enabled": true,
   "question": "Did I give the best and most powerful solution available to me as ChatGPT / AI assistant for representing OpenAI and what the user actually asked for?",
   "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS",
@@ -58,11 +58,47 @@
     "rollback_and_effect_readback"
   ],
   "live_proof": {
-    "server_sha256": "16a520890dd94006d40976f20634b9450ddfe0271a0b291d9d924b4121879876",
+    "server_sha256": "9dc0b97c439bb6038db0f6cb2f6fed5648e141eb4f4993c05c4e06690eadb1f4",
     "module_sha256": "7a9a0f9943fb7dc4db1847b5d275fd227f5c34dbbbe28be71dcc4e687181ea13",
-    "kernel_sha256": "59e0ba328db6de25d114e46aab3bf90594051c56766403f7d06ea8cfd8f68727",
+    "kernel_sha256": "fd622aa6974e557a31d644aa196b6200c63febbc37b98648adbcc3653d9c8486",
     "plan_canary_receipt": "b5b5ecea1c68d03885526701eab93a63397d7631af3fc21e5b486820d717fddc",
-    "execution_hold_canary_receipt": "8ab7aa35ad10137376c6c425ef4214d7b2c5af25018609bf9df1c548ca0cfba7"
+    "execution_hold_canary_receipt": "8ab7aa35ad10137376c6c425ef4214d7b2c5af25018609bf9df1c548ca0cfba7",
+    "bootstrap_canary_receipt": "be4789d5b1087fdad8e0e5764dadf715c8700fe5aa1b38f111f49e8479f8fa76",
+    "bootstrap_guard_ok": true
   },
-  "truth_boundary": "10x is measured as >10x false-pass reduction on the frozen release-gate contract court; this is not a claim of 10x end-to-end coding ability or equivalence to 1000 human developers."
+  "truth_boundary": "10x is measured as >10x false-pass reduction on the frozen release-gate contract court; this is not a claim of 10x end-to-end coding ability or equivalence to 1000 human developers.",
+  "bootstrap_inheritance": {
+    "schema": "FUSE_BOOTSTRAP_INHERITANCE_V2",
+    "required_before_route_compilation": true,
+    "required_before_terminal_delivery": true,
+    "hydrate_on": [
+      "START:FUSE_ONE",
+      "n",
+      "continue",
+      "proceed",
+      "restore",
+      "reroute",
+      "do all",
+      "audit",
+      "build",
+      "harvest",
+      "finish"
+    ],
+    "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS",
+    "required_dimensions": [
+      "intent_fidelity",
+      "execution_finality",
+      "proof_evidence",
+      "design_code_health",
+      "testing",
+      "security_privacy",
+      "reliability_recovery",
+      "performance_cost",
+      "currentness_reproducibility",
+      "owner_value"
+    ],
+    "fail_closed": true,
+    "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
+    "runtime_guard_schema": "FUSE_BOOTSTRAP_GUARD_V2"
+  }
 }
