@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_24X7_AUTONOMY_V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "parent": [
     "FUSE_SOVEREIGN_PLANE_R59",
     "SOL_6_2",
@@ -69,7 +69,21 @@
       "JUDGE",
       "REGISTER"
     ],
-    "no_catalog_only_stop": true
+    "no_catalog_only_stop": true,
+    "iterations": 10,
+    "inhouse_after_harvest": true,
+    "public_mechanism_sources": [
+      "LOOP_ENGINEERING",
+      "RELIABLE_CODING_AGENT_HARNESS",
+      "SWE_ATLAS",
+      "VALIDATION_SELF_AWARENESS",
+      "REPOREASON",
+      "LIVE_CONTAMINATION_RESISTANT_TASKS",
+      "ISSUE_REQUIREMENT_TRACE",
+      "SELF_EVOLVING_AGENTS",
+      "REPRODUCIBLE_AGENT_BENCHMARK",
+      "NONCOMPENSATING_AUTONOMY_FLOORS"
+    ]
   },
   "auto_build": {
     "enabled": true,
@@ -81,7 +95,22 @@
       "PROOF_PACKET",
       "FAMILY_REGISTRATION"
     ],
-    "no_duplicate_controller": true
+    "no_duplicate_controller": true,
+    "build_to_completion": true,
+    "finality_ladder": [
+      "DESIGN",
+      "SOURCE",
+      "BUILD",
+      "TEST",
+      "DEPLOY",
+      "RUNTIME",
+      "SEMANTIC",
+      "BEHAVIOUR",
+      "SECURITY",
+      "RECOVERY",
+      "OWNER_VALUE",
+      "COMPLETE"
+    ]
   },
   "owner_surface": {
     "healthy": "NO_NOTIFICATION",
@@ -89,5 +118,31 @@
     "genuine_owner_only_decision": "DELIVER_PREPARED_DECISION_PACKET",
     "recoverable_failure": "REPAIR_REROUTE_CONTINUE"
   },
-  "truth_boundary": "24x7 progress requires at least one live executor/scheduler and powered/available provider surfaces; source contract alone is not continuous execution proof."
+  "truth_boundary": "24x7 progress requires at least one live executor/scheduler and powered/available provider surfaces; source contract alone is not continuous execution proof.",
+  "auto_repeat": {
+    "enabled": true,
+    "iterations": 10,
+    "scope": "EACH_SELF_IMPROVEMENT_CYCLE",
+    "changed_mechanism_after_failure": true
+  },
+  "historical_chat_backfill": {
+    "enabled": true,
+    "iterations_per_recovered_chat": 10,
+    "current_exact_recoverable_chat_records": 37,
+    "current_completed_chat_iterations": 370,
+    "current_backfill_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+    "recoverable_corpus_sha256": "27356353cab01e2f09017b38d617a84c235f11ea8f92ac4067a087bb7f1c865e",
+    "future_capture_auto_enroll": true,
+    "sources": [
+      "CHATBRIDGE",
+      "TURN_CAPTURE",
+      "MASTER_AND_SPECIALIST_BIBLES",
+      "DRIVE_CHAT_ARCHIVES",
+      "GMAIL_CHATGPT_BACKUPS",
+      "OFFICIAL_OPENAI_EXPORT_IF_LATER_AVAILABLE"
+    ],
+    "native_totality": "UNVERIFIED",
+    "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
+    "no_false_totality_claim": true
+  }
 }
