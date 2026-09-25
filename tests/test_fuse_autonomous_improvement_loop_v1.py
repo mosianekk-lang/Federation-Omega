@@ -42,7 +42,7 @@ def test_respawn_and_bootstrap_bind_live_ten_pass_contract():
     bootstrap=json.loads((ROOT/"config"/"fuse-bootstrap-inheritance-v3.json").read_text(encoding="utf-8"))
     manifest=json.loads((ROOT/"respawn"/"federation_manifest.json").read_text(encoding="utf-8"))
     service=(ROOT/"respawn"/"bootstrap_service.py").read_text(encoding="utf-8")
-    assert bootstrap["boot_kernel"]=="5.10.0"
+    assert bootstrap["boot_kernel"]=="5.10.1"
     assert bootstrap["autonomous_improvement"]["exact_iterations"]==10
     assert bootstrap["autonomous_improvement"]["historical_chat_backfill"]["current_completed_iterations"]==370
     assert bootstrap["live_proof"]["bootstrap_guard_schema"]=="FUSE_BOOTSTRAP_GUARD_V4"
