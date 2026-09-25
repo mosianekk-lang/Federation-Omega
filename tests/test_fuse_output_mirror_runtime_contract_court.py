@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import runpy
+import sys
 import traceback
 import unittest
 from pathlib import Path
@@ -81,6 +82,8 @@ class FuseOutputMirrorRuntimeContractCourt(unittest.TestCase):
                 + "\n",
                 encoding="utf-8",
             )
+            for item in diagnostics:
+                print("FUSE_RUNTIME_CONTRACT_DIAGNOSTIC " + json.dumps(item, sort_keys=True), file=sys.stderr)
             self.fail(f"RUNTIME_CONTRACT_FAILURES:{len(diagnostics)}")
 
         self.assertGreaterEqual(total, 24)
