@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_BOOTSTRAP_SELF_IMPROVEMENT_V1",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "parent": "FUSE_BOOTSTRAP_MEMORY_SNAPSHOT_V1",
   "purpose": "Make every bootstrap restore the last accepted settings, fresh-read current reality, then search for provable capability improvements before route compilation.",
   "loop": [
@@ -51,5 +51,72 @@
     "NO_REBUILD_WHEN_REUSE_OR_REPAIR_WINS",
     "NO_PROMOTION_ON_SELF_SCORE_ONLY"
   ],
-  "truth_boundary": "A bootstrap may generate and prove candidates automatically; only evidence-backed non-regressing improvements become the next accepted generation."
+  "truth_boundary": "A bootstrap may generate and prove candidates automatically; only evidence-backed non-regressing improvements become the next accepted generation.",
+  "iteration_policy": {
+    "exact_iterations_per_cycle": 10,
+    "early_stop": false,
+    "stages": [
+      "FRESH_CURRENTNESS",
+      "HISTORICAL_RECALL",
+      "HARVEST",
+      "EXTRACT_MECHANISM",
+      "REMOVE_VENDOR_NOISE",
+      "OVERLAP_COLLAPSE",
+      "REUSE_REPAIR_EXTEND_COMPOSE",
+      "BUILD_TRUE_RESIDUAL",
+      "TEST",
+      "BENCHMARK",
+      "JUDGE",
+      "REGISTER",
+      "LEARN",
+      "REPEAT"
+    ],
+    "inhouse_default": true,
+    "build_to_completion": true,
+    "finality_ladder": [
+      "DESIGN",
+      "SOURCE",
+      "BUILD",
+      "TEST",
+      "DEPLOY",
+      "RUNTIME",
+      "SEMANTIC",
+      "BEHAVIOUR",
+      "SECURITY",
+      "RECOVERY",
+      "OWNER_VALUE",
+      "COMPLETE"
+    ],
+    "each_iteration_requires": [
+      "PROOF",
+      "ROLLBACK",
+      "NONREGRESSION",
+      "PROVENANCE",
+      "OWNER_INTENT_FIDELITY"
+    ]
+  },
+  "harvest10": [
+    "GENERATOR_VERIFIER_LOOP",
+    "HARNESS_LEVEL_RELIABILITY",
+    "ENGINEERING_LOOP_COVERAGE",
+    "VALIDATION_SELF_AWARENESS",
+    "INTEGRATION_WIDTH_DIAGNOSTIC",
+    "LIVE_CONTAMINATION_RESISTANT_TASKS",
+    "REQUIREMENT_PLAN_CODE_TRACE",
+    "TRAJECTORY_DRIVEN_EVOLUTION",
+    "REPRODUCIBLE_RUN_EVIDENCE",
+    "NONCOMPENSATING_AUTONOMY_FLOORS"
+  ],
+  "inhouse_policy": {
+    "route": "REUSE_REPAIR_EXTEND_COMPOSE_THEN_BUILD_TRUE_RESIDUAL",
+    "provider_neutral_core": true,
+    "register_into_existing_family": true,
+    "no_duplicate_controller": true,
+    "external_mechanism_must_be_clean_room": true
+  },
+  "live_proof": {
+    "worker_sha256": "1b8d8b2ed2f9d846cfa0c985686284189a2ffb0d24c4509c0490355c5e7da7be",
+    "current_estate_iterations": 10,
+    "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17"
+  }
 }
