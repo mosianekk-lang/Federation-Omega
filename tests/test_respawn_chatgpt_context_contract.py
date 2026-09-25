@@ -169,6 +169,25 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
         self.assertFalse(result["coverage"]["full_account_history_proven"])
         self.assertTrue(result["next_executable_action"])
 
+    def test_bootstrap_exposes_runtime_sovereignty_contract(self) -> None:
+        self._set_state({"deltas": [], "patterns": [], "bibliography": [], "conflicts": []})
+        with mock.patch.object(
+            bs, "provider_adapter", return_value={"available": False, "reason": "test"}
+        ):
+            result = bs.bootstrap(bs.SpawnRequest(system="Federation Omega"))
+        self.assertIn("INSTRUCTION_WITHOUT_ENFORCEMENT_IS_NOT_CONTROL", result["bootstrap_invariants"])
+        self.assertEqual(
+            result["runtime_sovereignty"]["contract_id"],
+            "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
+        )
+        self.assertEqual(
+            result["runtime_sovereignty"]["chatgpt_role"],
+            "Replaceable intelligence/execution provider and detachable client; not FUSE mission owner or sovereign terminal-delivery authority.",
+        )
+        self.assertIn("run_output_mirror", result["bootstrap_order"])
+        self.assertIn("terminal_delivery_gate", result["bootstrap_order"])
+        self.assertTrue(result["delivery_rule"])
+
     def test_respawn_paths_select_scoped_court_without_full_fallback(self) -> None:
         policy = ProofPolicy.from_path(POLICY)
         changed = [
