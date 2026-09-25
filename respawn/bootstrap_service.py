@@ -18,6 +18,8 @@ BOOTSTRAP_IMPROVEMENT_PATH = CONFIG_ROOT / "fuse-bootstrap-self-improvement-v1.j
 AUTONOMY_PATH = CONFIG_ROOT / "fuse-24x7-autonomy-v1.json"
 AUTONOMOUS_WORKER_PATH = ROOT.parent / "fuse_runtime" / "autonomous_improvement_loop_v1.mjs"
 OUTPUT_MIRROR_V3_PATH = ROOT.parent / "fuse_runtime" / "output_mirror_v3.mjs"
+HIPB_MODULE_PATH = ROOT.parent / "fuse_runtime" / "hyper_intelligence_performance_v1.mjs"
+HIPB_COURT_PATH = ROOT.parent / "benchmarks" / "hyper_intelligence_performance_court_v1.mjs"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
@@ -144,6 +146,49 @@ def autonomous_improvement_bootstrap_guard(payload: Optional[Dict[str, Any]] = N
         "native_account_totality": history.get("native_account_totality"),
     }
 
+
+
+def hyper_intelligence_performance_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("hyper_intelligence_performance", {})
+    order = source.get("bootstrap_order", [])
+    issues: List[str] = []
+    if contract.get("enabled") is not True:
+        issues.append("HIPB_DISABLED_OR_MISSING")
+    if contract.get("contract_id") != "FUSE-HIPB-001":
+        issues.append("HIPB_CONTRACT_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1":
+        issues.append("HIPB_SCHEMA_MISMATCH")
+    if "load_hyper_intelligence_performance_contract" not in order:
+        issues.append("HIPB_LOAD_STEP_MISSING")
+    if "compile_hyper_intelligence_plan" not in order:
+        issues.append("HIPB_COMPILE_STEP_MISSING")
+    if "execute" in order and "compile_hyper_intelligence_plan" in order:
+        if order.index("compile_hyper_intelligence_plan") > order.index("execute"):
+            issues.append("HIPB_COMPILE_AFTER_EXECUTE")
+    measured_module_sha256 = hashlib.sha256(HIPB_MODULE_PATH.read_bytes()).hexdigest() if HIPB_MODULE_PATH.exists() else None
+    measured_court_sha256 = hashlib.sha256(HIPB_COURT_PATH.read_bytes()).hexdigest() if HIPB_COURT_PATH.exists() else None
+    if measured_module_sha256 is None:
+        issues.append("HIPB_MODULE_MISSING")
+    elif contract.get("module_sha256") != measured_module_sha256:
+        issues.append("HIPB_MODULE_HASH_MISMATCH")
+    if measured_court_sha256 is None:
+        issues.append("HIPB_COURT_MISSING")
+    elif contract.get("court_sha256") != measured_court_sha256:
+        issues.append("HIPB_COURT_HASH_MISMATCH")
+    if "HYPER_PERFORMANCE_CLAIMS_REQUIRE_MATCHED_EMPIRICAL_PROOF" not in source.get("bootstrap_invariants", []):
+        issues.append("HIPB_MATCHED_PERFORMANCE_INVARIANT_MISSING")
+    return {
+        "schema": "FUSE_HIPB_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "module_sha256": contract.get("module_sha256"),
+        "court_sha256": contract.get("court_sha256"),
+        "runtime_promotion_proven": False,
+        "truth_boundary": contract.get("truth_boundary"),
+    }
 
 
 def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -314,10 +359,11 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     mirror_guard = output_mirror_bootstrap_guard(source_manifest)
     memory_bundle = bootstrap_memory_bundle()
     autonomy_guard = autonomous_improvement_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"]:
+    hipb_guard = hyper_intelligence_performance_bootstrap_guard(source_manifest)
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard},
         )
     s = state()
     solved = search_state(
@@ -351,6 +397,8 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "bootstrap_self_improvement": memory_bundle["self_improvement"],
         "autonomy_contract": memory_bundle["autonomy"],
         "autonomous_improvement_guard": autonomy_guard,
+        "hyper_intelligence_performance": source_manifest.get("hyper_intelligence_performance", {}),
+        "hyper_intelligence_performance_guard": hipb_guard,
         "historical_chat_backfill": source_manifest.get("historical_chat_backfill", {}),
         "directive_fidelity_bootstrap": source_manifest.get("directive_fidelity_bootstrap", {}),
         "output_mirror_bootstrap": source_manifest.get("output_mirror_bootstrap", {}),
