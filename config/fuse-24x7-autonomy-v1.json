@@ -1,0 +1,93 @@
+{
+  "schema": "FUSE_24X7_AUTONOMY_V1",
+  "version": "1.0.0",
+  "parent": [
+    "FUSE_SOVEREIGN_PLANE_R59",
+    "SOL_6_2",
+    "FOREST_V2",
+    "FUSE_UNIFIED_CAPABILITY_FABRIC_V1",
+    "OUTPUT_MIRROR_V3"
+  ],
+  "creates_new_controller": false,
+  "objective": "Keep governed nonterminal FUSE work advancing without waiting for owner presence.",
+  "operating_mode": "EVENT_DRIVEN_CONTINUOUS_WITH_HOURLY_FALLBACK_SWEEP",
+  "self_prompt_loop": [
+    "FRESH_CURRENTNESS",
+    "RECALL_DURABLE_MISSION_STATE",
+    "SCAN_FOREST",
+    "RANK_READY_WORK",
+    "SELECT_HIGHEST_VALUE_SAFE_ACTION",
+    "EXECUTE_OR_PREPARE",
+    "READBACK",
+    "VERIFY",
+    "OUTPUT_MIRROR",
+    "CHECKPOINT",
+    "CONTINUE_OR_QUIET_IDLE"
+  ],
+  "wake_signals": [
+    "NONTERMINAL_READY_WORK",
+    "DEPENDENCY_RESOLVED",
+    "PROOF_OR_CURRENTNESS_EXPIRY_RISK",
+    "PROVIDER_HEALTH_CHANGE",
+    "REPEATED_FAILURE",
+    "CAPABILITY_GAP",
+    "NEW_ARTIFACT_OR_SOURCE",
+    "OWNER_INTENT_UPDATE",
+    "SCHEDULED_SWEEP"
+  ],
+  "autonomy": {
+    "read_only": "AUTO",
+    "reversible_internal": "AUTO",
+    "bounded_private_canary": "AUTO_WHEN_ALREADY_AUTHORIZED",
+    "consequential_external": "PREPARE_AND_EXECUTE_ONLY_UNDER_EXISTING_ACTION_SPECIFIC_AUTHORITY",
+    "irreversible_or_high_impact": "PREPARE_ONLY_UNTIL_REQUIRED_AUTHORITY_EXISTS"
+  },
+  "parallelism": {
+    "read_only_max": 4,
+    "reversible_internal_max": 2,
+    "effectful_max": 1,
+    "local_blocker_global_stall": false
+  },
+  "auto_harvest": {
+    "enabled": true,
+    "triggers": [
+      "CAPABILITY_GAP",
+      "REPEATED_FAILURE",
+      "BENCHMARK_LOSS",
+      "PROVIDER_DRIFT",
+      "OWNER_FRICTION",
+      "NEW_QUALIFIED_PUBLIC_MECHANISM"
+    ],
+    "method": [
+      "DISCOVER",
+      "EXTRACT_MECHANISM",
+      "WHY_IT_WORKS",
+      "REMOVE_VENDOR_NOISE",
+      "OVERLAP_COLLAPSE",
+      "BUILD_TRUE_RESIDUAL",
+      "BENCHMARK",
+      "JUDGE",
+      "REGISTER"
+    ],
+    "no_catalog_only_stop": true
+  },
+  "auto_build": {
+    "enabled": true,
+    "rule": "BUILD_ONLY_TRUE_RESIDUALS_AFTER_REUSE_REPAIR_EXTEND_COMPOSE",
+    "outputs": [
+      "SOURCE_CANDIDATE",
+      "TESTS",
+      "ROLLBACK",
+      "PROOF_PACKET",
+      "FAMILY_REGISTRATION"
+    ],
+    "no_duplicate_controller": true
+  },
+  "owner_surface": {
+    "healthy": "NO_NOTIFICATION",
+    "material_result": "DELIVER",
+    "genuine_owner_only_decision": "DELIVER_PREPARED_DECISION_PACKET",
+    "recoverable_failure": "REPAIR_REROUTE_CONTINUE"
+  },
+  "truth_boundary": "24x7 progress requires at least one live executor/scheduler and powered/available provider surfaces; source contract alone is not continuous execution proof."
+}
