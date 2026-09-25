@@ -1,0 +1,48 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "scripts/run_gemini_role_holdout_benchmark.py",
+        "tests/test_gemini_role_holdout_benchmark_v1.py",
+        "governance/proofos_omega_policy_extension_sovara_gemini_role_holdout_v1.json"
+      ],
+      "reason": "SOVARA_GEMINI_ROLE_HOLDOUT_AND_PERFORMANCE_COURT"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "SOVARA_GEMINI_ROLE_HOLDOUT_V1",
+      "patterns": [
+        "scripts/run_gemini_role_holdout_benchmark.py",
+        "tests/test_gemini_role_holdout_benchmark_v1.py",
+        "governance/proofos_omega_policy_extension_sovara_gemini_role_holdout_v1.json"
+      ],
+      "depends_on": [
+        "SOVARA",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "sovara_gemini_role_holdout_v1",
+      "kind": "unittest_glob",
+      "target": "test_gemini_role_holdout_benchmark_v1.py",
+      "patterns": [
+        "scripts/run_gemini_role_holdout_benchmark.py",
+        "tests/test_gemini_role_holdout_benchmark_v1.py",
+        "governance/proofos_omega_policy_extension_sovara_gemini_role_holdout_v1.json"
+      ],
+      "subsystems": [
+        "SOVARA_GEMINI_ROLE_HOLDOUT_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
