@@ -1,0 +1,96 @@
+{
+  "schema": "FUSE-HYPER-INTELLIGENCE-PERFORMANCE-BINDING-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "capability_id": "FUSE-HIPB-001",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "canonical_role": "ADDITIVE_RUNTIME_POLICY_AND_COURT_ONLY",
+  "purpose": "Bind existing FUSE cognition, routing, execution and proof organs into one measurable adaptive-intelligence and performance contract without creating a new controller, scheduler, truth root, proof root, memory root, mission bus or provider runtime.",
+  "reuses": [
+    "START:FUSE_ONE",
+    "FUSE Sovereign Plane R59",
+    "FUSE One Single-Mind Collective Cognition v1",
+    "SOL 6.2 transactional runtime",
+    "FDOF/SICF",
+    "Genesis resident execution",
+    "FUSE Autonomous Improvement Loop v1",
+    "Output Mirror v3",
+    "ProofOS / Reality Judge"
+  ],
+  "must_not_create": [
+    "NEW_TOP_LEVEL_CONTROLLER",
+    "NEW_SCHEDULER",
+    "NEW_AUTHORITY_ROOT",
+    "NEW_TRUTH_ROOT",
+    "NEW_MEMORY_ROOT",
+    "NEW_PROOF_ROOT",
+    "NEW_MISSION_BUS",
+    "NEW_PROVIDER_RUNTIME"
+  ],
+  "hard_rules": [
+    "FRESH_CURRENTNESS_BEFORE_MATERIAL_DECISION",
+    "REUSE_BEFORE_BUILD",
+    "ADAPT_REASONING_DEPTH_TO_RISK_UNCERTAINTY_AND_EFFECT_STATE",
+    "UNKNOWN_EFFECT_REQUIRES_READBACK",
+    "SECOND_SAME_SEMANTIC_FAILURE_REQUIRES_CHANGED_MECHANISM",
+    "MODEL_WORLD_UNCERTAINTY_CAUSAL_DEPENDENCIES_AND_DECISION_RELEVANT_FUTURES",
+    "RESOLVE_ONLY_HIGH_VALUE_INFORMATION_GAPS",
+    "ROUTE_HARD_FLOORS_AUTHORITY_SECURITY_PRIVACY_LEGALITY_TRUTH_AND_PROOF_ARE_NON_COMPENSATING",
+    "MAXIMIZE_ONLY_PAIRWISE_SAFE_PARALLELISM",
+    "PRESERVE_INDEPENDENT_FALSIFICATION",
+    "TEN_PASS_AUTONOMOUS_IMPROVEMENT_REQUIRED_WHEN_CANON_REQUIRES",
+    "LEARNING_NEVER_GRANTS_AUTHORITY",
+    "NO_HYPER_PERFORMANCE_PROMOTION_WITHOUT_MATCHED_EMPIRICAL_NONREGRESSION_PROOF",
+    "NO_HYPER_INTELLIGENCE_CLAIM_OF_SENTIENCE_OMNISCIENCE_OR_UNAVAILABLE_ACCESS",
+    "SOURCE_RUNTIME_BEHAVIOUR_OWNER_VALUE_AND_COMPLETE_REMAIN_SEPARATE_PROOF_LAYERS"
+  ],
+  "performance_contract": {
+    "matched_benchmark_required": true,
+    "latency_speedup_floor": 1.5,
+    "tool_call_reduction_floor": 0.2,
+    "owner_prompt_reduction_floor": 0.5,
+    "quality_nonnegative": true,
+    "false_green_ceiling": 0,
+    "unintended_write_ceiling": 0,
+    "unchanged_retry_ceiling": 0,
+    "owner_rescue_ceiling": 0,
+    "promotion_rule": "ALL_APPLICABLE_FLOORS_PASS_OR_REMAIN_NONPROMOTING"
+  },
+  "cognitive_modes": [
+    "FAST",
+    "ADAPTIVE",
+    "DEEP",
+    "FORMATION"
+  ],
+  "required_intelligence_evidence": [
+    "WORLD_MODEL_OR_CURRENTNESS_MODEL",
+    "UNCERTAINTY_MAP",
+    "CAUSAL_OR_DEPENDENCY_GRAPH",
+    "FUTURE_ENVELOPE",
+    "VALUE_OF_INFORMATION_DISCIPLINE",
+    "COLLECTIVE_COGNITION_OR_INDEPENDENT_CHALLENGE",
+    "SAFE_PARALLELISM_OR_EXECUTION_DAG",
+    "MATERIAL_ROUTE_TOURNAMENT",
+    "REUSE_BEFORE_BUILD",
+    "TEN_PASS_IMPROVEMENT_WHERE_REQUIRED",
+    "ADVERSARIAL_FALSIFICATION",
+    "ANTI_LOOP_CHANGED_MECHANISM"
+  ],
+  "proof_states": [
+    "POLICY_BOUND",
+    "SOURCE_VERIFIED",
+    "RUNTIME_VERIFIED",
+    "MATCHED_PERFORMANCE_VERIFIED",
+    "OWNER_VALUE_VERIFIED"
+  ],
+  "truth_boundary": {
+    "hyper_intelligence_engineering_definition": "Adaptive evidence-grounded collective reasoning and execution orchestration with calibrated uncertainty, causal modelling, future-envelope preparation, falsification and learning.",
+    "sentience_claimed": false,
+    "omniscience_claimed": false,
+    "supernatural_foreknowledge_claimed": false,
+    "unavailable_system_access_claimed": false,
+    "hyper_performance_requires_matched_empirical_proof": true,
+    "source_binding_proves_live_owner_runtime": false,
+    "source_binding_proves_universal_provider_enforcement": false
+  }
+}
