@@ -46,7 +46,7 @@ def test_power_diary_source_identity_and_bootstrap_contract():
     assert mirror["version"] == "3.0.0"
     assert mirror["power_diary"]["source_sha256"] == expected
     assert mirror["power_diary"]["family_count"] == 17
-    assert bootstrap["boot_kernel"] == "5.9.0"
+    assert bootstrap["boot_kernel"] == "5.10.1"
     assert bootstrap["output_mirror_min_version"] == "3.0.0"
     assert bootstrap["power_diary"]["source_sha256"] == expected
     assert bootstrap["power_diary"]["chapter_count"] == 40
