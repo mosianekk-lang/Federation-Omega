@@ -117,6 +117,13 @@
   "live_proof": {
     "worker_sha256": "1b8d8b2ed2f9d846cfa0c985686284189a2ffb0d24c4509c0490355c5e7da7be",
     "current_estate_iterations": 10,
-    "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17"
+    "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17",
+    "server_sha256": "057ed8979051fe8783ca0b4f2def21a141bebd9d0f5c52faec9590543cc75545",
+    "boot_sha256": "3e28d2be5458ab37ee5d076ac02d1b4fd1c6999397440c9aafa80b22f5db2b31",
+    "mission_canary_iterations": 10,
+    "mission_canary_receipt_sha256": "88107c4a8ef7017b6976cfab93e8b2ed4512b86bd8fbc9223f7ac7fac36965bd",
+    "historical_exact_records": 37,
+    "historical_completed_iterations": 370,
+    "historical_summary_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66"
   }
 }
