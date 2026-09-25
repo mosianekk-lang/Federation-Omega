@@ -57,7 +57,12 @@ def resolved_control_plane() -> Dict[str, Any]:
 def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     source = payload if payload is not None else manifest()
     contract = source.get("output_mirror_bootstrap", {})
+    fidelity = source.get("directive_fidelity_bootstrap", {})
     issues: List[str] = []
+    if fidelity.get("enabled") is not True:
+        issues.append("DIRECTIVE_FIDELITY_DISABLED_OR_MISSING")
+    if fidelity.get("contract_id") != "FUSE-DIRECTIVE-FIDELITY-V1":
+        issues.append("DIRECTIVE_FIDELITY_CONTRACT_ID_MISMATCH")
     if contract.get("enabled") is not True:
         issues.append("OUTPUT_MIRROR_BOOTSTRAP_DISABLED_OR_MISSING")
     if contract.get("contract_id") != "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V3":
@@ -96,6 +101,8 @@ def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> D
         "power_diary_sha256": contract.get("power_diary", {}).get("source_sha256"),
         "power_diary_chapter_count": contract.get("power_diary", {}).get("chapter_count"),
         "power_diary_family_count": contract.get("power_diary", {}).get("required_family_count"),
+        "directive_fidelity_contract_id": fidelity.get("contract_id"),
+        "directive_fidelity_enabled": fidelity.get("enabled"),
     }
 
 
@@ -241,6 +248,7 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "bootstrap_order": manifest().get("bootstrap_order", []),
         "bootstrap_invariants": manifest().get("bootstrap_invariants", []),
         "runtime_sovereignty": source_manifest.get("runtime_sovereignty", {}),
+        "directive_fidelity_bootstrap": source_manifest.get("directive_fidelity_bootstrap", {}),
         "output_mirror_bootstrap": source_manifest.get("output_mirror_bootstrap", {}),
         "output_mirror_bootstrap_guard": mirror_guard,
         "delivery_rule": source_manifest.get("delivery_rule"),
