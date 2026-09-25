@@ -40,7 +40,7 @@ def genome():
 
 
 class TerminalDebtV1Tests(unittest.TestCase):
-    def test_terminal_debt_persists_and_requires_zero_open_debt():
+    def test_terminal_debt_persists_and_requires_zero_open_debt(self):
         with tempfile.TemporaryDirectory() as td:
             store = RunStore(Path(td) / "run.db")
             ledger = TerminalDebtLedger(store)
@@ -60,7 +60,7 @@ class TerminalDebtV1Tests(unittest.TestCase):
             assert store.terminal_debt_counts("M1")["CLOSED"] == 2
     
     
-    def test_ready_plan_respects_dependencies_collisions_and_owner_authority():
+    def test_ready_plan_respects_dependencies_collisions_and_owner_authority(self):
         with tempfile.TemporaryDirectory() as td:
             ledger = TerminalDebtLedger(RunStore(Path(td) / "run.db"))
             specs = (
@@ -80,7 +80,7 @@ class TerminalDebtV1Tests(unittest.TestCase):
             assert "C" in ids
     
     
-    def test_debt_burner_closes_only_evidence_complete_debt():
+    def test_debt_burner_closes_only_evidence_complete_debt(self):
         with tempfile.TemporaryDirectory() as td:
             ledger = TerminalDebtLedger(RunStore(Path(td) / "run.db"))
             spec = TerminalDebtSpec("A", "A", family="TEST", required_maturity=("TEST", "SEMANTIC"))
@@ -101,7 +101,7 @@ class TerminalDebtV1Tests(unittest.TestCase):
             assert ledger.terminal_zero("M3") is True
     
     
-    def test_autonomic_kernel_refuses_terminal_success_while_debt_open_then_auto_recompiles():
+    def test_autonomic_kernel_refuses_terminal_success_while_debt_open_then_auto_recompiles(self):
         with tempfile.TemporaryDirectory() as td:
             evidence = {"PRODUCT": False}
             store = RunStore(Path(td) / "run.db")
@@ -180,7 +180,7 @@ class TerminalDebtV1Tests(unittest.TestCase):
             assert checkpoint.state["terminal_debt_zero"] is True
     
     
-    def test_local_sovereign_ai_profile_is_dependency_closed_and_has_required_finality_predicates():
+    def test_local_sovereign_ai_profile_is_dependency_closed_and_has_required_finality_predicates(self):
         profile = json.loads(
             (ROOT / "governance" / "fuse_local_sovereign_ai_finality_v2.json").read_text(encoding="utf-8")
         )
