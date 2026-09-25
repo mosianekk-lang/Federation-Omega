@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "risk_rules": [
     {
       "risk": "R4_CORE",
@@ -38,9 +38,14 @@
         "federation/fuse_mission_runtime_interlock_v1.py",
         "bubbles/autonomic_federation_runtime.py",
         "tests/test_bubbles_mbmpc_pilf_host_binding_v1.py",
-        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py"
+        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py",
+        "federation/terminal_debt_v1.py",
+        "tests/test_terminal_debt_v1.py",
+        "governance/fuse_local_sovereign_ai_finality_v2.json",
+        "prompts/FUSE_LOCAL_SOVEREIGN_AI_AUTONOMOUS_FINALITY_V2_MASTER.md",
+        "docs/architecture/FUSE_LOCAL_SOVEREIGN_AI_TERMINAL_FINALITY_V2.md"
       ],
-      "reason": "FUSE_AUTONOMIC_COMPLETION_V5_RUNTIME_REENTRY_PROMPT_EVOLUTION_FEDERATION_LEARNING_COMMERCIAL_MATURITY_NO_FALSE_FINALITY"
+      "reason": "FUSE_AUTONOMIC_COMPLETION_V5_TERMINAL_DEBT_ZERO_DEBT_FINALITY"
     }
   ],
   "subsystem_rules": [
@@ -78,7 +83,12 @@
         "federation/fuse_mission_runtime_interlock_v1.py",
         "bubbles/autonomic_federation_runtime.py",
         "tests/test_bubbles_mbmpc_pilf_host_binding_v1.py",
-        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py"
+        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py",
+        "federation/terminal_debt_v1.py",
+        "tests/test_terminal_debt_v1.py",
+        "governance/fuse_local_sovereign_ai_finality_v2.json",
+        "prompts/FUSE_LOCAL_SOVEREIGN_AI_AUTONOMOUS_FINALITY_V2_MASTER.md",
+        "docs/architecture/FUSE_LOCAL_SOVEREIGN_AI_TERMINAL_FINALITY_V2.md"
       ],
       "depends_on": [
         "CFBE",
@@ -187,6 +197,29 @@
       "failure_class": "GENERAL_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 240
+    },
+    {
+      "id": "fuse_terminal_debt_v1",
+      "kind": "unittest_glob",
+      "target": "test_terminal_debt_v1.py",
+      "patterns": [
+        "federation/terminal_debt_v1.py",
+        "federation/run_store_v1.py",
+        "federation/autonomic_completion_v5.py",
+        "federation/__init__.py",
+        "governance/fuse_autonomic_completion_v5.json",
+        "governance/fuse_local_sovereign_ai_finality_v2.json",
+        "tests/test_terminal_debt_v1.py",
+        "prompts/FUSE_LOCAL_SOVEREIGN_AI_AUTONOMOUS_FINALITY_V2_MASTER.md",
+        "docs/architecture/FUSE_LOCAL_SOVEREIGN_AI_TERMINAL_FINALITY_V2.md"
+      ],
+      "subsystems": [
+        "FUSE_AUTONOMIC_COMPLETION_V5",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
     }
   ]
 }

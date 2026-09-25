@@ -173,6 +173,8 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
             "FUSE-HIPB-001",
         )
         self.assertTrue(result["hyper_intelligence_performance_guard"]["ok"])
+        self.assertTrue(result["terminal_debt_bootstrap_guard"]["ok"])
+        self.assertEqual(result["terminal_debt_finality"]["contract_id"], "FUSE-TERMINAL-DEBT-FINALITY-V1")
 
     def test_bootstrap_exposes_runtime_sovereignty_contract(self) -> None:
         self._set_state({"deltas": [], "patterns": [], "bibliography": [], "conflicts": []})
@@ -198,6 +200,11 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
         self.assertEqual(result["hyper_intelligence_performance"]["contract_id"], "FUSE-HIPB-001")
         self.assertTrue(result["hyper_intelligence_performance_guard"]["ok"])
         self.assertFalse(result["hyper_intelligence_performance_guard"]["runtime_promotion_proven"])
+        self.assertTrue(result["terminal_debt_bootstrap_guard"]["ok"])
+        self.assertEqual(result["terminal_debt_bootstrap_guard"]["terminal_floor"], 0)
+        self.assertGreaterEqual(result["terminal_debt_bootstrap_guard"]["predicate_count"], 30)
+        self.assertIn("load_terminal_debt_finality_contract", result["bootstrap_order"])
+        self.assertIn("reconcile_terminal_debt", result["bootstrap_order"])
 
     def test_output_mirror_v3_bootstrap_contract_is_required(self) -> None:
         payload = bs.manifest()
@@ -270,3 +277,12 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_terminal_debt_bootstrap_guard_fails_closed_on_zero_floor_loss(self) -> None:
+        payload = json.loads(json.dumps(bs.manifest()))
+        payload["terminal_debt_finality"]["mandatory_open_debt_terminal_floor"] = 1
+        guard = bs.terminal_debt_bootstrap_guard(payload)
+        self.assertFalse(guard["ok"])
+        self.assertIn("TERMINAL_DEBT_ZERO_FLOOR_MISSING", guard["issues"])
+

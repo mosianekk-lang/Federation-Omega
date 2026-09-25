@@ -78,6 +78,8 @@
     "run_autonomous_improvement_10_iterations",
     "load_hyper_intelligence_performance_contract",
     "compile_hyper_intelligence_plan",
+    "load_terminal_debt_finality_contract",
+    "reconcile_terminal_debt",
     "hyper_pre_compile_gate",
     "enroll_new_historical_chat_captures",
     "hyper_pre_effect_gate",
@@ -115,7 +117,11 @@
     "ASSISTANT_CAUSED_REVERSIBLE_INTENT_DRIFT_AUTO_ROLLBACK",
     "COMMON_MODE_EVIDENCE_DOES_NOT_INFLATE_CONFIDENCE",
     "CAUSAL_BLAST_RADIUS_SELECTIVE_REQUALIFICATION",
-    "SOVEREIGN_ADAPTIVE_COGNITION_THREE_HOOK_BINDING"
+    "SOVEREIGN_ADAPTIVE_COGNITION_THREE_HOOK_BINDING",
+    "MANDATORY_TERMINAL_DEBT_ZERO_BEFORE_TERMINAL_SUCCESS",
+    "TERMINAL_DEBT_DURABLE_ACROSS_CHAT_AND_CLIENT_LOSS",
+    "PACKET_COMPLETION_DOES_NOT_CLEAR_TERMINAL_DEBT_WITHOUT_EVIDENCE",
+    "AAREK_MBMPC_PORTFOLIO_DEBT_FEEDS_EXISTING_DURABLE_FINALITY_RUNTIME"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -149,7 +155,12 @@
       "causal_blast_radius_requalification",
       "forecast_calibration",
       "premortem_counterfactual",
-      "sovereign_cognitive_pre_compile_pre_effect_post_effect_hooks"
+      "sovereign_cognitive_pre_compile_pre_effect_post_effect_hooks",
+      "durable_terminal_debt",
+      "zero_mandatory_debt_finality",
+      "dependency_ready_debt_burning",
+      "maturity_vector_per_terminal_predicate",
+      "terminal_debt_cross_chat_recovery"
     ],
     "target_delivery_path": [
       "OWNER_INTENT",
@@ -339,5 +350,27 @@
       "authority_expansion": false,
       "provider_effect_authorized": false
     }
+  },
+  "terminal_debt_finality": {
+    "contract_id": "FUSE-TERMINAL-DEBT-FINALITY-V1",
+    "schema": "FUSE-TERMINAL-DEBT-V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "runtime_role": "DURABLE_MATURITY_AWARE_FINALITY_OVER_EXISTING_AAREK_MBMPC_PORTFOLIO_AUTONOMIC_COMPLETION",
+    "module_path": "federation/terminal_debt_v1.py",
+    "store": "RunStore.terminal_debt",
+    "product_profile_path": "governance/fuse_local_sovereign_ai_finality_v2.json",
+    "product_profile_id": "FUSE-LOCAL-SOVEREIGN-AI-FINALITY-001",
+    "mandatory_open_debt_terminal_floor": 0,
+    "declarative_debt_sources": [
+      "FUSE-AAREK-V1.1",
+      "FUSE-MBMPC-PILF-CLOSURE-BRIDGE-V1",
+      "FUSE-MASTER-BIBLE-PORTFOLIO-COMPILER-V1",
+      "COMMERCIAL_MATURITY_V1"
+    ],
+    "debt_burner": "AutonomousDebtBurner",
+    "authority_expansion": false,
+    "provider_effect_authorized": false,
+    "truth_boundary": "BOOTSTRAP_CONTRACT_AND_DURABLE_DEBT_RUNTIME_BOUND != EVERY_DEBT_HANDLER_AVAILABLE != WINDOWS_PRODUCT_VERIFIED != COMMERCIAL_READY_VERIFIED"
   }
 }

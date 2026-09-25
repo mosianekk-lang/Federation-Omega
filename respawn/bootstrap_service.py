@@ -20,6 +20,8 @@ AUTONOMOUS_WORKER_PATH = ROOT.parent / "fuse_runtime" / "autonomous_improvement_
 OUTPUT_MIRROR_V3_PATH = ROOT.parent / "fuse_runtime" / "output_mirror_v3.mjs"
 HIPB_MODULE_PATH = ROOT.parent / "fuse_runtime" / "hyper_intelligence_performance_v1.mjs"
 HIPB_COURT_PATH = ROOT.parent / "benchmarks" / "hyper_intelligence_performance_court_v1.mjs"
+TERMINAL_DEBT_MODULE_PATH = ROOT.parent / "federation" / "terminal_debt_v1.py"
+LOCAL_SOVEREIGN_AI_PROFILE_PATH = ROOT.parent / "governance" / "fuse_local_sovereign_ai_finality_v2.json"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
@@ -204,6 +206,73 @@ def hyper_intelligence_performance_bootstrap_guard(payload: Optional[Dict[str, A
     }
 
 
+def terminal_debt_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("terminal_debt_finality", {})
+    order = source.get("bootstrap_order", [])
+    issues: List[str] = []
+    if contract.get("enabled") is not True:
+        issues.append("TERMINAL_DEBT_DISABLED_OR_MISSING")
+    if contract.get("contract_id") != "FUSE-TERMINAL-DEBT-FINALITY-V1":
+        issues.append("TERMINAL_DEBT_CONTRACT_ID_MISMATCH")
+    if contract.get("schema") != "FUSE-TERMINAL-DEBT-V1":
+        issues.append("TERMINAL_DEBT_SCHEMA_MISMATCH")
+    if contract.get("version") != "1.0.0":
+        issues.append("TERMINAL_DEBT_VERSION_MISMATCH")
+    if contract.get("mandatory_open_debt_terminal_floor") != 0:
+        issues.append("TERMINAL_DEBT_ZERO_FLOOR_MISSING")
+    for step in ("load_terminal_debt_finality_contract", "reconcile_terminal_debt"):
+        if step not in order:
+            issues.append(f"TERMINAL_DEBT_BOOT_STEP_MISSING:{step}")
+    if "execute" in order and "reconcile_terminal_debt" in order and order.index("reconcile_terminal_debt") > order.index("execute"):
+        issues.append("TERMINAL_DEBT_RECONCILE_AFTER_EXECUTE")
+    if not TERMINAL_DEBT_MODULE_PATH.exists():
+        issues.append("TERMINAL_DEBT_MODULE_MISSING")
+    if not LOCAL_SOVEREIGN_AI_PROFILE_PATH.exists():
+        issues.append("LOCAL_SOVEREIGN_AI_PROFILE_MISSING")
+        profile = {}
+    else:
+        profile = load_json(LOCAL_SOVEREIGN_AI_PROFILE_PATH, {})
+        if profile.get("schema") != "FUSE_LOCAL_SOVEREIGN_AI_FINALITY_V2":
+            issues.append("LOCAL_SOVEREIGN_AI_PROFILE_SCHEMA_MISMATCH")
+        if profile.get("version") != "2.0.0":
+            issues.append("LOCAL_SOVEREIGN_AI_PROFILE_VERSION_MISMATCH")
+        if profile.get("profile_id") != "FUSE-LOCAL-SOVEREIGN-AI-FINALITY-001":
+            issues.append("LOCAL_SOVEREIGN_AI_PROFILE_ID_MISMATCH")
+        predicates = profile.get("terminal_predicates", [])
+        ids = {str(row.get("id")) for row in predicates if isinstance(row, dict)}
+        required = {
+            "FUSE_EXE_WINDOWS_PRODUCT",
+            "LOCAL_CHAT",
+            "OPENAI_DISABLED_VERIFIED",
+            "OFFLINE_CORE_VERIFIED",
+            "GOOGLE_DRIVE_RELEASE",
+            "CROSS_PC_INSTALL",
+            "UPDATE_ROLLBACK_LKG",
+            "BACKUP_RESTORE",
+            "SECURITY_PRIVACY_COURTS",
+            "NATURAL_OWNER_WORKLOAD",
+            "COMMERCIAL_READY_VERIFIED",
+        }
+        missing = sorted(required - ids)
+        issues.extend(f"LOCAL_SOVEREIGN_AI_PREDICATE_MISSING:{item}" for item in missing)
+        if profile.get("completion_rule", {}).get("mandatory_open_terminal_debt") != 0:
+            issues.append("LOCAL_SOVEREIGN_AI_ZERO_DEBT_RULE_MISSING")
+    if "MANDATORY_TERMINAL_DEBT_ZERO_BEFORE_TERMINAL_SUCCESS" not in source.get("bootstrap_invariants", []):
+        issues.append("TERMINAL_DEBT_BOOTSTRAP_INVARIANT_MISSING")
+    return {
+        "schema": "FUSE_TERMINAL_DEBT_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "profile_id": contract.get("product_profile_id"),
+        "predicate_count": len(profile.get("terminal_predicates", [])) if isinstance(profile, dict) else 0,
+        "terminal_floor": contract.get("mandatory_open_debt_terminal_floor"),
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
 def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     source = payload if payload is not None else manifest()
     contract = source.get("output_mirror_bootstrap", {})
@@ -373,10 +442,11 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     memory_bundle = bootstrap_memory_bundle()
     autonomy_guard = autonomous_improvement_bootstrap_guard(source_manifest)
     hipb_guard = hyper_intelligence_performance_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"]:
+    debt_guard = terminal_debt_bootstrap_guard(source_manifest)
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not debt_guard["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "terminal_debt_bootstrap_guard": debt_guard},
         )
     s = state()
     solved = search_state(
@@ -412,6 +482,8 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "autonomous_improvement_guard": autonomy_guard,
         "hyper_intelligence_performance": source_manifest.get("hyper_intelligence_performance", {}),
         "hyper_intelligence_performance_guard": hipb_guard,
+        "terminal_debt_finality": source_manifest.get("terminal_debt_finality", {}),
+        "terminal_debt_bootstrap_guard": debt_guard,
         "historical_chat_backfill": source_manifest.get("historical_chat_backfill", {}),
         "directive_fidelity_bootstrap": source_manifest.get("directive_fidelity_bootstrap", {}),
         "output_mirror_bootstrap": source_manifest.get("output_mirror_bootstrap", {}),
