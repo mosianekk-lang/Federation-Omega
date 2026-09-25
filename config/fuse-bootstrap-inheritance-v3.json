@@ -24,5 +24,62 @@
   },
   "fail_closed": true,
   "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
-  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_ENFORCEMENT_VERIFIED; UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT_NOT_CLAIMED"
+  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_AND_MIRROR_ENFORCEMENT_VERIFIED; UNIVERSAL_OPENAI_OR_PROVIDER_ENFORCEMENT_NOT_CLAIMED",
+  "hydrate_on": [
+    "START:FUSE_ONE",
+    "n",
+    "continue",
+    "proceed",
+    "restore",
+    "reroute",
+    "do all",
+    "audit",
+    "build",
+    "harvest",
+    "finish",
+    "better",
+    "more"
+  ],
+  "required_order": [
+    "FRESH_CANON",
+    "HISTORICAL_RECALL",
+    "ESTATE_CENSUS",
+    "CURRENTNESS_RECONCILE",
+    "AUTHORITY_EFFECT_PREFLIGHT",
+    "POWER_DIARY_CONTRACT",
+    "OUTPUT_MIRROR_V3",
+    "ROUTE_COMPILE",
+    "EXECUTE",
+    "READBACK",
+    "VERIFY",
+    "JUDGE",
+    "OUTPUT_MIRROR_V3_RELEASE",
+    "TERMINAL_DELIVERY"
+  ],
+  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS_AND_APPLICABLE_POWER_DIARY_CONTRACTS",
+  "engineering_dimensions": [
+    "intent_fidelity",
+    "execution_finality",
+    "proof_evidence",
+    "design_code_health",
+    "testing",
+    "security_privacy",
+    "reliability_recovery",
+    "performance_cost",
+    "currentness_reproducibility",
+    "owner_value"
+  ],
+  "preserve_mission_identity": true,
+  "preserve_completed_effects": true,
+  "preserve_checkpoints": true,
+  "preserve_fences": true,
+  "unknown_effect_requires_readback": true,
+  "owner_burden_machine_route_first": true,
+  "currentness_precedence": "PROVIDER_SEMANTIC_READBACK>SIGNED_SOURCE_RELEASE>KDV_REDUCER>SYNC_WORKPLANE_EVENTS>HEARTBEAT>DASHBOARD>CHAT_MEMORY",
+  "live_proof": {
+    "server_sha256": "5046ebc62be5874127d9b64e60d7286384940bf7c1227008a45f11cc2679c2ee",
+    "boot_sha256": "678cf5e8c0fb114593a13e2720e0fcd4e9ec2eea588be72975cbc4a515814846",
+    "mirror_module_sha256": "6cca8528dcf4d39109ea74f877a3575e6c8f7415685643e5a2c18e40d618563b",
+    "bootstrap_guard_ok": true
+  }
 }
