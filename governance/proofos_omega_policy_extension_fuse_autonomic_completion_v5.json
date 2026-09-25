@@ -217,7 +217,7 @@
         "FUSE_AUTONOMIC_COMPLETION_V5",
         "FEDERATION_CORE"
       ],
-      "failure_class": "TERMINAL_FINALITY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
     }
