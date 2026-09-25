@@ -184,9 +184,33 @@ class RespawnChatGPTContextContractTests(unittest.TestCase):
             result["runtime_sovereignty"]["chatgpt_role"],
             "Replaceable intelligence/execution provider and detachable client; not FUSE mission owner or sovereign terminal-delivery authority.",
         )
+        self.assertIn("load_output_mirror_v2_contract", result["bootstrap_order"])
         self.assertIn("run_output_mirror", result["bootstrap_order"])
         self.assertIn("terminal_delivery_gate", result["bootstrap_order"])
+        self.assertTrue(result["output_mirror_bootstrap_guard"]["ok"])
+        self.assertEqual(result["output_mirror_bootstrap"]["mirror_min_version"], "2.0.0")
         self.assertTrue(result["delivery_rule"])
+
+    def test_output_mirror_v2_bootstrap_contract_is_required(self) -> None:
+        payload = bs.manifest()
+        guard = bs.output_mirror_bootstrap_guard(payload)
+        self.assertTrue(guard["ok"])
+        self.assertEqual(guard["contract_id"], "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V2")
+        self.assertEqual(guard["boot_kernel_min_version"], "5.8.0")
+        self.assertEqual(guard["mirror_min_version"], "2.0.0")
+        self.assertEqual(guard["required_dimension_count"], 10)
+        self.assertIn("load_output_mirror_v2_contract", payload["bootstrap_order"])
+        self.assertLess(
+            payload["bootstrap_order"].index("load_output_mirror_v2_contract"),
+            payload["bootstrap_order"].index("execute"),
+        )
+
+    def test_output_mirror_v2_bootstrap_guard_fails_closed_on_dimension_loss(self) -> None:
+        payload = json.loads(json.dumps(bs.manifest()))
+        payload["output_mirror_bootstrap"]["required_dimensions"].remove("testing")
+        guard = bs.output_mirror_bootstrap_guard(payload)
+        self.assertFalse(guard["ok"])
+        self.assertIn("MISSING_OUTPUT_MIRROR_DIMENSION:testing", guard["issues"])
 
     def test_respawn_paths_select_scoped_court_without_full_fallback(self) -> None:
         policy = ProofPolicy.from_path(POLICY)
