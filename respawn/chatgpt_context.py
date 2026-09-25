@@ -371,12 +371,15 @@ def resume_mission_impl(
         "open_conflicts": conflicts[:8],
         "provider_context": provider,
         "coverage": coverage,
+        "hyper_intelligence_performance": compact.get("hyper_intelligence_performance", {}),
+        "hyper_intelligence_performance_guard": compact.get("hyper_intelligence_performance_guard", {}),
         "next_executable_action": next_action,
         "proof_boundaries": [
             "Historical proposal/design does not prove current runtime capability.",
             "Repository/source admission does not prove provider deployment or external effect.",
             "Bibliography/search coverage does not prove full native ChatGPT account history.",
             "A native current provider projection outranks repeated historical summaries for present-state claims.",
+            "Hyper-performance promotion requires matched empirical nonregression proof.",
         ],
         "generated_at": raw.get("generated_at"),
     }
