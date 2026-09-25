@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "owner_alias": "federation-owner",
   "control_plane": {
     "drive_folder_id": "env:FEDERATION_DRIVE_FOLDER_ID",
@@ -30,12 +30,32 @@
     "CASEFORGE-Omega"
   ],
   "domain_authority": {
-    "systems_runtime": ["Bubbles", "Federation Omega", "Kim Dataverse"],
-    "legal": ["Lex Advocate"],
-    "evidence_truth_state": ["TruthGrid", "EvidenceOps", "JFRIE"],
-    "directive_logic": ["Superior Logic Doctrine", "KIOAS"],
-    "repair_continuity": ["Omega-AUTOFIX", "ChatBridge"],
-    "scientific_evolution": ["CASEFORGE-Omega", "KAIO Omega", "Omega-SCIENTIA"]
+    "systems_runtime": [
+      "Bubbles",
+      "Federation Omega",
+      "Kim Dataverse"
+    ],
+    "legal": [
+      "Lex Advocate"
+    ],
+    "evidence_truth_state": [
+      "TruthGrid",
+      "EvidenceOps",
+      "JFRIE"
+    ],
+    "directive_logic": [
+      "Superior Logic Doctrine",
+      "KIOAS"
+    ],
+    "repair_continuity": [
+      "Omega-AUTOFIX",
+      "ChatBridge"
+    ],
+    "scientific_evolution": [
+      "CASEFORGE-Omega",
+      "KAIO Omega",
+      "Omega-SCIENTIA"
+    ]
   },
   "bootstrap_order": [
     "identify_spawn",
@@ -44,12 +64,59 @@
     "load_recent_sync_events",
     "load_shared_learnings",
     "load_conflicts",
+    "load_runtime_sovereignty_contract",
+    "load_owner_intent_and_debt",
     "run_already_solved_gate",
     "reuse_or_supersede",
     "execute",
+    "verify_and_judge",
+    "run_output_mirror",
+    "terminal_delivery_gate",
     "publish_delta",
     "publish_bibliography"
   ],
   "proof_rule": "No provider-side action may be marked completed without provider/tool evidence.",
-  "privacy_rule": "Provider object identifiers and credentials are runtime configuration, not public-source constants."
+  "privacy_rule": "Provider object identifiers and credentials are runtime configuration, not public-source constants.",
+  "bootstrap_invariants": [
+    "INSTRUCTION_WITHOUT_ENFORCEMENT_IS_NOT_CONTROL",
+    "FUSE_OWNS_OWNER_INTENT_ENFORCEMENT",
+    "SOL62_OWNS_TRANSACTIONAL_RUNTIME_STATE",
+    "PROVIDERS_AND_CHAT_CLIENTS_ARE_REPLACEABLE_PROCESSORS",
+    "VERIFY_JUDGE_OUTPUT_MIRROR_PRECEDE_TERMINAL_DELIVERY",
+    "NO_PROVIDER_OR_CHAT_LAYER_MAY_SILENTLY_REDEFINE_OWNER_OUTCOME"
+  ],
+  "runtime_sovereignty": {
+    "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
+    "rationale": "SOL 6.2 exists so critical FUSE directives become runtime-enforced properties rather than advisory conversational instructions.",
+    "principle": "instruction_without_enforcement_is_not_control",
+    "owner_intent_role": "Defines FUSE mission intent, desired outcome and owner-authorized consequential effects inside lawful provider/platform boundaries.",
+    "fuse_role": "Owns durable mission state, orchestration policy, continuity, verification, Output Mirror and terminal-delivery gating.",
+    "sol62_role": "Provider-neutral transactional execution-state spine and runtime enforcement surface for governed FUSE work when task-fit.",
+    "chatgpt_role": "Replaceable intelligence/execution provider and detachable client; not FUSE mission owner or sovereign terminal-delivery authority.",
+    "provider_role": "Replaceable capability/execution carrier subject to provider rules, permissions, safety, privacy, law and action-specific authority.",
+    "required_runtime_properties": [
+      "owner_intent_fidelity",
+      "prompt_zero_safe_continuation",
+      "reuse_before_build",
+      "solve_before_report",
+      "source_to_runtime_to_outcome_closure",
+      "proof_before_claim",
+      "output_mirror_enforcement",
+      "checkpoint_recovery",
+      "provider_neutral_routing",
+      "terminal_delivery_assurance"
+    ],
+    "target_delivery_path": [
+      "OWNER_INTENT",
+      "FUSE_OWNED_RUNTIME",
+      "MODEL_TOOL_PROVIDER_FEDERATION",
+      "READBACK_VERIFY_JUDGE",
+      "OUTPUT_MIRROR",
+      "FUSE_OWNED_TERMINAL_DELIVERY",
+      "OWNER"
+    ],
+    "prohibited_substitution": "A provider/model/chat client may constrain execution within its own lawful boundary but may not silently mutate the canonical owner objective or convert an intermediate checkpoint into terminal success.",
+    "truth_boundary": "BOOTSTRAP_CONTRACT_BOUND != EVERY_RECEIVER_RUNTIME_ENFORCED != EVERY_PROVIDER_BOUND != COMPLETE_VERIFIED"
+  },
+  "delivery_rule": "Governed owner-facing output is terminal only after the FUSE verification/Judge/Output-Mirror chain passes, or a genuine hard boundary is explicitly proven; otherwise continue the same mission from the smallest unfinished stage."
 }
