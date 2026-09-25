@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "risk_rules": [
     {
       "risk": "R4_CORE",
@@ -19,7 +19,7 @@
         "respawn/chatgpt_context.py",
         "tests/test_respawn_chatgpt_context_contract.py"
       ],
-      "reason": "FUSE_HYPER_INTELLIGENCE_AND_MATCHED_PERFORMANCE_BINDING"
+      "reason": "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_V2_SOVEREIGN_ADAPTIVE_COGNITION"
     }
   ],
   "subsystem_rules": [
@@ -48,7 +48,7 @@
   "historical_associations": [],
   "tests": [
     {
-      "id": "hyper_intelligence_performance_v1",
+      "id": "hyper_intelligence_performance_v2",
       "kind": "unittest_glob",
       "target": "test_hyper_intelligence_performance_binding_v1.py",
       "patterns": [
