@@ -107,5 +107,62 @@
       "intended_emotional_effect"
     ]
   },
-  "truth_boundary": "PROFILE_BOUND != UNIVERSAL_CHATGPT_HOST_ENFORCEMENT; FUSE-owned runtime receipt is required for mechanical enforcement claims."
+  "truth_boundary": "PROFILE_BOUND != UNIVERSAL_CHATGPT_HOST_ENFORCEMENT; FUSE-owned runtime receipt is required for mechanical enforcement claims.",
+  "owner_source": {
+    "title": "CHATGPT POWER DIARY",
+    "version": "1.0",
+    "sha256": "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495",
+    "chapter_count": 40,
+    "chapter_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+    ],
+    "provenance": "USER_PROVIDED_SOURCE"
+  },
+  "owner_source_coverage": "40_OF_40",
+  "extension_chapter_count": 20,
+  "mirror_family_count": 17,
+  "integration_target": {
+    "output_mirror_min_version": "3.0.0",
+    "boot_kernel_min_version": "5.9.0",
+    "fail_closed": true
+  }
 }
