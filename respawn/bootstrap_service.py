@@ -125,6 +125,10 @@ def autonomous_improvement_bootstrap_guard(payload: Optional[Dict[str, Any]] = N
         issues.append("HISTORICAL_BACKFILL_MANIFEST_RECORD_MISMATCH")
     if history.get("current_completed_iterations") != 370:
         issues.append("HISTORICAL_BACKFILL_MANIFEST_COMPLETION_MISMATCH")
+    if int(history.get("recoverable_record_instances", 0)) < 129:
+        issues.append("HISTORICAL_BACKFILL_RECOVERABLE_BASELINE_REGRESSED")
+    if int(history.get("completed_record_iterations", 0)) < 1290:
+        issues.append("HISTORICAL_BACKFILL_ITERATION_BASELINE_REGRESSED")
     if history.get("native_account_totality") != "UNVERIFIED":
         issues.append("HISTORICAL_BACKFILL_NATIVE_TOTALITY_FALSE_CLAIM")
     return {
