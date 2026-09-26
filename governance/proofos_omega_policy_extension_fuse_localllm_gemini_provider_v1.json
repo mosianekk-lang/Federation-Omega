@@ -1,0 +1,54 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R3_HIGH",
+      "patterns": [
+        "products/fuse_localllm_desktop/v0.3.0/**",
+        "governance/fuse_localllm_gemini_provider_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_localllm_gemini_provider_v1.json",
+        "tests/test_fuse_localllm_gemini_provider_v1.py"
+      ],
+      "reason": "FUSE_LOCALLLM_GEMINI_PROVIDER_FABRIC_AND_PRIVACY_ROUTING"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_LOCALLLM_GEMINI_PROVIDER",
+      "patterns": [
+        "products/fuse_localllm_desktop/v0.3.0/**",
+        "governance/fuse_localllm_gemini_provider_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_localllm_gemini_provider_v1.json",
+        "tests/test_fuse_localllm_gemini_provider_v1.py"
+      ],
+      "depends_on": [
+        "FUSE_LOCALLLM_DESKTOP",
+        "SOVARA",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_localllm_gemini_provider_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_localllm_gemini_provider_v1.py",
+      "patterns": [
+        "products/fuse_localllm_desktop/v0.3.0/**",
+        "governance/fuse_localllm_gemini_provider_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_localllm_gemini_provider_v1.json",
+        "tests/test_fuse_localllm_gemini_provider_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_LOCALLLM_GEMINI_PROVIDER",
+        "FUSE_LOCALLLM_DESKTOP",
+        "SOVARA"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
