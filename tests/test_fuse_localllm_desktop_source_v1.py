@@ -4,6 +4,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 SRC=ROOT/"products"/"fuse_localllm_desktop"/"v0.2.2"/"upstream"
 CONTRACT=ROOT/"governance"/"fuse_localllm_desktop_v1.json"
 CUSTODY=ROOT/"products"/"fuse_localllm_desktop"/"v0.2.2"/"DRIVE_CUSTODY.json"
+WORKFLOW=ROOT/".github"/"workflows"/"fuse-localllm-desktop-windows-build-v1.yml"
 class FuseLocalLLMDesktopSourceTests(unittest.TestCase):
     def test_drive_source_manifest_exact_bytes(self):
         b=(SRC/"SOURCE_MANIFEST.json").read_bytes()
@@ -33,6 +34,13 @@ class FuseLocalLLMDesktopSourceTests(unittest.TestCase):
         self.assertEqual(policy["allowed_events"][workflow],["pull_request","workflow_dispatch"])
         self.assertNotIn(workflow,policy["oidc_workflow_allowlist"])
         self.assertNotIn(workflow,policy["provider_mutation_workflow_allowlist"])
+
+    def test_windows_workflow_packaging_regression_guard(self):
+        wf=WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("if($line -notmatch '^[0-9a-f]{64}  .+$'){ throw \"MALFORMED_SHA256SUMS_LINE:$line\" }",wf)
+        self.assertEqual(wf.count("uses: actions/upload-artifact@"),1)
+        self.assertEqual(wf.count("Compress-Archive -Path"),1)
+        self.assertEqual(wf.count("schema='FUSE-LOCALLLM-DESKTOP-WINDOWS-BUILD-PROOF-V1'"),1)
 
     def test_product_source_court(self):
         ui=(SRC/"ui"/"index.html").read_text(encoding="utf-8"); app=(SRC/"ui"/"app.js").read_text(encoding="utf-8")
