@@ -16,6 +16,7 @@ from evidenceops.capability_heartbeat import CapabilityHeartbeatEngine
 from evidenceops.capability_heartbeat.system import EvidenceOpsHeartbeatSystem
 from evidenceops.build_system.objective_completion_guard import evaluate as evaluate_completion
 from evidenceops.cloud_capability.inheritance import audit_inheritance
+from benchmarking.cfbe_omega.toka_public_capability_harvest_v1 import run_live_harvest
 
 CRON_TO_MODE = {
     "17 * * * *": "hourly",
@@ -106,12 +107,39 @@ def main() -> int:
             "blocker": task.get("blocker"),
         })
 
+    toka_harvest = None
+    if any(item["task_id"] == "EXT-015" for item in selected):
+        try:
+            toka_harvest = run_live_harvest(timeout=12.0)
+        except Exception as exc:
+            toka_harvest = {
+                "schema": "FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1",
+                "state": "SOURCE_READ_FAILED",
+                "terminal": False,
+                "error_type": type(exc).__name__,
+                "external_effect_authorized": False,
+                "next_action": "RETRY_ON_NEXT_SCHEDULER_EPOCH",
+                "truth_boundary": (
+                    "The official public-source read did not complete. Preserve the last proven "
+                    "state and make no public-source parity or completion claim from this run."
+                ),
+            }
+            toka_harvest["report_sha256"] = canonical_hash(toka_harvest)
+
+        toka_output = Path("scheduler/runtime/toka-public-harvest.json")
+        toka_output.parent.mkdir(parents=True, exist_ok=True)
+        toka_output.write_text(
+            json.dumps(toka_harvest, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
     report = {
         "generated_at": now,
         "mode": mode,
         "cron": args.cron,
         "selected_task_count": len(assessments),
         "assessments": assessments,
+        "toka_public_harvest": toka_harvest,
         "truth_boundary": "This scheduler selects and watches work. It does not claim external execution without a readback or proof receipt.",
     }
     report["report_sha256"] = canonical_hash(report)
@@ -208,6 +236,13 @@ def main() -> int:
         f"contracts={len(cloud_capability['build_contracts_checked'])} | "
         f"missing={len(cloud_capability['missing_bindings'])}"
     )
+    if toka_harvest is not None:
+        print(
+            f"Toka public harvest: {toka_harvest.get('state')} | "
+            f"covered={toka_harvest.get('covered_count', 0)}/"
+            f"{toka_harvest.get('expected_count', 41)} | "
+            f"terminal={toka_harvest.get('terminal', False)}"
+        )
     return 0
 
 

@@ -1,0 +1,64 @@
+{
+  "schema": "FUSE-TOKA-PUBLIC-CAPABILITY-HARVEST-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "capability_id": "FUSE-TOKA-PUBLIC-HARVEST-001",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "inheritance_scope": "ALL_RELEVANT_CURRENT_AND_FUTURE_FUSE_FEDERATION_SYSTEMS",
+  "source_scope": [
+    "https://tokagroup.com/mission/",
+    "https://tokagroup.com/",
+    "https://tokagroup.com/about/",
+    "https://tokagroup.com/news/toka-advances-integrated-high-stakes-intelligence-operations/",
+    "https://tokagroup.com/news/toka-deepens-engagement-with-u-s-and-allied-government-partners-names-gregg-smith-ceo/"
+  ],
+  "harvest_method": [
+    "DISCOVER_PUBLIC_FUNCTIONAL_SIGNAL",
+    "EXTRACT_MECHANISM_LEVEL_OUTCOME",
+    "REMOVE_VENDOR_SPECIFIC_NOISE",
+    "APPLY_AUTHORITY_AND_SAFETY_TRANSFORM",
+    "COMPARE_WITH_EXISTING_FUSE_CAPABILITIES",
+    "REUSE_EXTEND_COMPOSE_OR_BUILD_RESIDUAL",
+    "COMPILE_CFBE_CAPABILITY_DNA",
+    "EXPOSE_GENERAL_PATTERNS_TO_HYPERCUBE",
+    "VERIFY_WITH_PROOFOS_REALITYGUARD",
+    "REPEAT_WHILE_TERMINAL_PREDICATES_OPEN"
+  ],
+  "restricted_direct_replication": [
+    "Targeting & Tracking",
+    "Suspect Surveillance",
+    "SWAT Support",
+    "Network Intelligence",
+    "Systems Access & Collection",
+    "Data Exfiltration",
+    "Covert Entry",
+    "Close Access Operations",
+    "Tactical Operations",
+    "Frictionless Surveillance"
+  ],
+  "restricted_transform_rule": "Sensitive offensive-access, covert-surveillance, physical-entry or weapon-adjacent concepts may enter FUSE only as authorised defensive, forensic, simulation, evidence-handling, privacy-governed, or risk-reduction mechanisms. This corpus never grants effect authority.",
+  "repeat_policy": {
+    "scheduler": "REUSE_EXISTING_EVIDENCEOPS_EXTERNAL_SCHEDULER",
+    "cadence": "hourly_watch",
+    "on_complete": "continue_delta_watch",
+    "on_missing_signal": "repeat_public_read_and_reharvest",
+    "on_source_failure": "preserve_last_proven_state_and_retry_on_next_scheduler_epoch",
+    "no_duplicate_controller": true
+  },
+  "terminal_predicates": [
+    "ALL_41_PUBLIC_SIGNALS_MAPPED",
+    "ALL_RESTRICTED_SIGNALS_HAVE_SAFE_TRANSFORMS",
+    "ALL_41_CFBE_DNA_OBJECTS_COMPILE",
+    "SEVEN_GENERAL_HYPERCUBE_PATTERNS_AVAILABLE",
+    "EVIDENCEOPS_HEARTBEAT_ROUTE_REGISTERED",
+    "LIVE_PUBLIC_SOURCE_PARITY_VERIFIED"
+  ],
+  "promotion_contract": {
+    "proof_before_claim": true,
+    "public_provenance_required": true,
+    "clean_room_only": true,
+    "automatic_stable_self_promotion": false,
+    "provider_effect_authorized": false
+  },
+  "truth_boundary": "This integration harvests public functional descriptions and general mechanisms only. It does not copy proprietary code, vulnerabilities, covert-access methods, offensive tradecraft, or private Toka implementation details."
+}

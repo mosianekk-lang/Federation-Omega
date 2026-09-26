@@ -170,6 +170,31 @@
           "external_effect": true
         }
       ]
+    },
+    {
+      "source_id": "toka-public-capability-harvest",
+      "system": "FUSE Toka Public Capability Harvest",
+      "evidence_paths": [
+        "benchmarking/cfbe_omega/toka_public_capability_harvest_v1.py",
+        "governance/toka_public_capability_harvest_v1.json",
+        "docs/architecture/FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1.md"
+      ],
+      "capabilities": [
+        {
+          "capability_id": "toka-public-clean-room-harvest",
+          "name": "Public operational-intelligence capability discovery, safe transformation and clean-room composition",
+          "tags": ["discover", "compare", "intelligence", "forensics", "integration", "interoperability", "provenance", "security", "reuse", "verify"],
+          "route": "cfbe-hypercube-toka-public-harvest",
+          "state": "VERIFY_ONLY",
+          "proof_level": "TESTED",
+          "quality": 0.92,
+          "safety": 0.99,
+          "reuse": 0.96,
+          "cost": 0,
+          "authority_class": "A0",
+          "external_effect": false
+        }
+      ]
     }
   ]
 }
