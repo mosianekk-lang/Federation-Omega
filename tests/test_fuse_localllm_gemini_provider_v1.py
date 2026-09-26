@@ -37,6 +37,15 @@ class FuseLocalLLMGeminiProviderTests(unittest.TestCase):
         self.assertIn("install_core_current_user.ps1",install)
         self.assertIn("uninstall_core_current_user.ps1",uninstall)
         self.assertNotIn("HKLM",install+uninstall)
+    def test_windows_package_recursively_attests_overlay(self):
+        workflow=(ROOT/".github"/"workflows"/"fuse-localllm-desktop-windows-build-v1.yml").read_text(encoding="utf-8")
+        self.assertIn("Get-ChildItem $releaseRoot -Recurse -File", workflow)
+        self.assertIn("provider-fabric/FUSE-LocalLLM-ProviderFabric.ps1", workflow)
+        self.assertIn("provider-fabric/gemini_roles.json", workflow)
+        self.assertIn("provider_fabric_sha256", workflow)
+        self.assertIn("gemini_roles_sha256", workflow)
+        self.assertIn("checksum_manifest_sha256", workflow)
+
     def test_v022_custody_baseline_not_replaced(self):
         self.assertTrue((ROOT/"products"/"fuse_localllm_desktop"/"v0.2.2"/"upstream"/"SOURCE_MANIFEST.json").is_file())
         self.assertTrue((OVER/"README.md").is_file())
