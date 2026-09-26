@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "risk_rules": [
     {
-      "risk": "R3_HIGH",
+      "risk": "R3_SECURITY_ABI",
       "patterns": [
         "products/fuse_localllm_desktop/v0.3.0/**",
         "governance/fuse_localllm_gemini_provider_v1.json",
