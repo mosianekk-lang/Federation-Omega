@@ -1,0 +1,168 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2D",
+  "version": "2.2.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "261-290",
+  "chapter_count": 30,
+  "objective": "Make Forest-first proactively detect and advance unfinished, drifting, aging or future-blocking work across the unified FUSE estate before the owner must notice or intervene.",
+  "chapters": [
+    {
+      "chapter": 261,
+      "id": "ESTATE_UNFINISHED_WORK_CENSUS",
+      "prompt": "Continuously reconcile active missions, repair queues, proof debt, open source/runtime/value predicates and owner-intent debt. Surface internally the highest-impact unfinished work before it becomes owner-visible friction."
+    },
+    {
+      "chapter": 262,
+      "id": "MISSION_NEGLECT_DETECTOR",
+      "prompt": "Detect material missions whose state has not advanced despite available dependencies or machine-safe routes. Re-elect the route or durable executor before owner prompting is required."
+    },
+    {
+      "chapter": 263,
+      "id": "ORPHANED_CHECKPOINT_RECOVERY",
+      "prompt": "Find durable checkpoints with no active continuation path. Resolve currentness and reattach them to the correct mission rather than leaving recoverable work stranded."
+    },
+    {
+      "chapter": 264,
+      "id": "UNCLAIMED_RESULT_FANIN",
+      "prompt": "Find completed branch outputs, artifacts, tests or evidence that have not yet been consumed by their downstream mission. Validate and fan them in automatically."
+    },
+    {
+      "chapter": 265,
+      "id": "PROOF_READY_WORK_SWEEPER",
+      "prompt": "Detect work that is functionally complete but waiting only for available verification, readback or Judge steps. Execute those proof stages before they become final-delivery blockers."
+    },
+    {
+      "chapter": 266,
+      "id": "RUNTIME_READY_SOURCE_SWEEPER",
+      "prompt": "Detect source-complete work whose runtime/deploy/readback route has become available. Advance it automatically from source to runtime without waiting for a new owner command."
+    },
+    {
+      "chapter": 267,
+      "id": "REPAIR_QUEUE_WORK_STEAL",
+      "prompt": "When execution capacity is free, pull the highest-impact dependency-ready item from the failure-repair queue and repair it in place using the required changed mechanism."
+    },
+    {
+      "chapter": 268,
+      "id": "OWNER_INTENT_DEBT_SWEEPER",
+      "prompt": "Treat open owner-intent debt as active reliability work. Find the highest-severity debt family that can be reduced by current machine action and execute the prevention improvement before another recurrence."
+    },
+    {
+      "chapter": 269,
+      "id": "MIRROR_FALSE_PASS_REOPEN",
+      "prompt": "Any historical or current Output Mirror false pass remains a checkpoint, not a completed result. Reopen the same mission automatically when its smallest unfinished predicate becomes executable."
+    },
+    {
+      "chapter": 270,
+      "id": "AGING_BLOCKER_REVALIDATION",
+      "prompt": "Revalidate old blockers when provider state, permissions, source, runtime or alternative carriers change. Do not preserve yesterday's blocker after its causal condition has disappeared."
+    },
+    {
+      "chapter": 271,
+      "id": "STALE_HARD_BOUNDARY_CHALLENGE",
+      "prompt": "Periodically challenge previously genuine hard boundaries for changed conditions or new lawful routes. Preserve the boundary if still real; otherwise resume the mission automatically."
+    },
+    {
+      "chapter": 272,
+      "id": "CAPABILITY_FRONTIER_DELTA_SWEEP",
+      "prompt": "Monitor qualified public capability changes for mechanisms that directly close active FUSE gaps. Harvest only material deltas and attach them to existing capability families."
+    },
+    {
+      "chapter": 273,
+      "id": "MODEL_QUALITY_REGRESSION_PREEMPT",
+      "prompt": "Use current evals, owner corrections and task outcomes to detect model-route quality regression early. Prepare or activate a qualified challenger before quality loss reaches the owner."
+    },
+    {
+      "chapter": 274,
+      "id": "TOOL_SEARCH_PREWARM",
+      "prompt": "For tasks likely to need many tools, precompute the smallest relevant tool subset and contracts so execution does not waste context discovering tools at the critical moment."
+    },
+    {
+      "chapter": 275,
+      "id": "STRUCTURED_OUTPUT_PREVALIDATION",
+      "prompt": "Before dispatching work to an agent/model that must feed automation, validate the expected output schema and downstream consumer requirements so malformed results are rejected before fan-in."
+    },
+    {
+      "chapter": 276,
+      "id": "AGENT_CAPACITY_PREALLOCATION",
+      "prompt": "Forecast specialist-agent and execution-lane demand from the mission graph. Prepare bounded worker contracts before fanout so parallel work begins without orchestration delay."
+    },
+    {
+      "chapter": 277,
+      "id": "CROSS_MISSION_SHARED_DEPENDENCY",
+      "prompt": "Detect dependencies shared by multiple missions. Resolve or refresh the shared dependency once, then fan out the verified result rather than repeating the work."
+    },
+    {
+      "chapter": 278,
+      "id": "RELEASE_WINDOW_PREPARER",
+      "prompt": "Before a source/runtime release window opens, stage currentness, tests, artifact hashes, rollback, migration and approval state so the window is used immediately rather than spent preparing."
+    },
+    {
+      "chapter": 279,
+      "id": "SCHEMA_DRIFT_PREEMPTION",
+      "prompt": "Watch schemas, tool contracts and provider object shapes used by active workflows. Detect drift before the next write/action and regenerate typed requests or adapters proactively."
+    },
+    {
+      "chapter": 280,
+      "id": "DEPENDENCY_VERSION_PRECHECK",
+      "prompt": "For forthcoming builds or deployments, verify dependency versions and compatibility before the build enters the critical path; stage a compatible lock/update plan if drift is detected."
+    },
+    {
+      "chapter": 281,
+      "id": "DEVICE_CARRIER_WATCH",
+      "prompt": "Monitor current device/browser/local execution carrier liveness. When a carrier reappears, automatically resume prepared host-local work from its checkpoint without asking the owner to reconstruct the task."
+    },
+    {
+      "chapter": 282,
+      "id": "PROVIDER_AUTHORITY_WINDOW_WATCH",
+      "prompt": "When a previously missing provider permission or callable route becomes available, immediately resume the exact prepared action that was waiting on it, subject to existing effect authority."
+    },
+    {
+      "chapter": 283,
+      "id": "ARTIFACT_FINALIZATION_AHEAD",
+      "prompt": "Before the mission reaches delivery, pre-stage export, packaging, naming, integrity, metadata and editability checks so artifact creation does not become a late manual phase."
+    },
+    {
+      "chapter": 284,
+      "id": "OWNER_UX_PREMORTEM",
+      "prompt": "Simulate the owner receiving the likely next result. Predict what would cause confusion, another prompt, manual debugging or 'is this finished?' and repair that friction before delivery."
+    },
+    {
+      "chapter": 285,
+      "id": "DECISION_OPTION_VALUE_PRESERVER",
+      "prompt": "Before an upcoming decision narrows future options, prepare reversible alternatives, rollback and deferable branches so the owner retains maximum option value."
+    },
+    {
+      "chapter": 286,
+      "id": "CROSS_PROVIDER_PORTABILITY_PREP",
+      "prompt": "For strategic assets, keep prompts/contracts/artifacts/state portable enough that another qualified provider or local runtime can take over without redoing the mission."
+    },
+    {
+      "chapter": 287,
+      "id": "AUTOMATION_CANDIDATE_MINER",
+      "prompt": "Identify repeated manual or chat-mediated steps in active work and convert the highest-value safe repeatable pattern into an automation candidate before the owner repeats it again."
+    },
+    {
+      "chapter": 288,
+      "id": "SUCCESS_MECHANISM_HARVEST",
+      "prompt": "Do not learn only from failures. When a route produces unusually strong quality, speed or reliability, extract the causal mechanism and test whether it should become the new default for similar missions."
+    },
+    {
+      "chapter": 289,
+      "id": "FOREST_GLOBAL_FIXED_POINT",
+      "prompt": "Across the entire governed estate, continue safe READY work, proof closure, repairs, prestaging and route refresh until every remaining nonterminal item is either actively executing, waiting on a proven external condition, or lacks any currently lawful machine route."
+    },
+    {
+      "chapter": 290,
+      "id": "OWNER_INTERVENTION_BEFORE_IT_EXISTS",
+      "prompt": "Before every substantive delivery and at every durable checkpoint, ask: what will the owner probably have to notice, ask, correct, approve or troubleshoot next? Remove every machine-resolvable item now; prepare the exact minimal owner-only decision only if one remains."
+    }
+  ],
+  "activation": {
+    "scope": "ALL_GOVERNED_NONTERMINAL_FUSE_WORK",
+    "safe_actions": "AUTO",
+    "consequential_effects": "USE_EXISTING_ACTION_SPECIFIC_AUTHORITY_ONLY",
+    "owner_interruption": "ONLY_WHEN_GENUINELY_OWNER_ONLY_OR_MATERIAL_STRATEGY_CHANGE",
+    "quiet_when_healthy": true
+  },
+  "truth_boundary": "Source prompt pack. It increases anticipatory coverage but does not create background execution where no live executor exists."
+}
