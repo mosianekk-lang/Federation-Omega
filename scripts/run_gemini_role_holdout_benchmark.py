@@ -3,7 +3,9 @@ from __future__ import annotations
 import concurrent.futures
 import hashlib
 import json
+import math
 import os
+import statistics
 import subprocess
 import time
 from pathlib import Path
@@ -15,6 +17,9 @@ ROOT_OUT.mkdir(parents=True, exist_ok=True)
 ROLES = tuple(base.CONTRACT["roles"])
 MAX_WORKERS = min(int(base.CONTRACT["max_parallel_requests"]), len(ROLES))
 PERFORMANCE_THRESHOLD = 2.0
+PERFORMANCE_PAIR_COUNT = 4
+PERFORMANCE_PAIR_PASS_FRACTION = 0.75
+PERFORMANCE_PAIR_ORDERS = ("AB", "BA", "AB", "BA")
 
 HOLDOUT_CASES = {
     "ALPHA_OMEGA_REASONER": {
@@ -435,45 +440,217 @@ def run_holdout(token: str) -> dict[str, object]:
     return summary
 
 
-def _run_base_cohort(token: str, mode: str) -> tuple[float, list[dict[str, object]]]:
-    cohort_out = ROOT_OUT / f"_perf_{mode.lower()}"
+def _rotated_roles(pair_index: int) -> tuple[str, ...]:
+    offset = pair_index % len(ROLES)
+    return ROLES[offset:] + ROLES[:offset]
+
+
+def _max_interval_overlap(intervals: list[dict[str, float]]) -> int:
+    events: list[tuple[float, int]] = []
+    for item in intervals:
+        events.append((float(item["started_offset_ms"]), 1))
+        events.append((float(item["ended_offset_ms"]), -1))
+    current = 0
+    maximum = 0
+    for _, delta in sorted(events, key=lambda event: (event[0], event[1])):
+        current += delta
+        maximum = max(maximum, current)
+    return maximum
+
+
+def _required_pair_pass_count() -> int:
+    return math.ceil(PERFORMANCE_PAIR_COUNT * PERFORMANCE_PAIR_PASS_FRACTION)
+
+
+def _paired_performance_decision(
+    paired_ratios: list[float],
+    *,
+    all_semantic: bool,
+    unique_ids: bool,
+    min_parallel_overlap: int,
+) -> dict[str, object]:
+    if len(paired_ratios) != PERFORMANCE_PAIR_COUNT:
+        return {
+            "verified": False,
+            "median_speedup_ratio": 0.0,
+            "pair_pass_count": 0,
+            "required_pair_pass_count": _required_pair_pass_count(),
+            "median_absolute_deviation": 0.0,
+        }
+    median_ratio = float(statistics.median(paired_ratios))
+    pass_count = sum(ratio >= PERFORMANCE_THRESHOLD for ratio in paired_ratios)
+    mad = float(statistics.median(abs(ratio - median_ratio) for ratio in paired_ratios))
+    verified = (
+        all_semantic
+        and unique_ids
+        and min_parallel_overlap >= min(2, MAX_WORKERS)
+        and median_ratio >= PERFORMANCE_THRESHOLD
+        and pass_count >= _required_pair_pass_count()
+    )
+    return {
+        "verified": verified,
+        "median_speedup_ratio": median_ratio,
+        "pair_pass_count": pass_count,
+        "required_pair_pass_count": _required_pair_pass_count(),
+        "median_absolute_deviation": mad,
+    }
+
+
+def _run_base_cohort(
+    token: str,
+    mode: str,
+    *,
+    cohort_label: str,
+    role_order: tuple[str, ...],
+) -> dict[str, object]:
+    cohort_out = ROOT_OUT / f"_perf_{cohort_label.lower()}"
     cohort_out.mkdir(parents=True, exist_ok=True)
     previous_out = base.OUT
     base.OUT = cohort_out
+    cohort_started = time.perf_counter()
+
+    def invoke_timed(role: str) -> tuple[dict[str, object], float, float]:
+        started_offset_ms = (time.perf_counter() - cohort_started) * 1000
+        item = base.invoke(role, token)
+        ended_offset_ms = (time.perf_counter() - cohort_started) * 1000
+        return item, started_offset_ms, ended_offset_ms
+
     try:
-        started = time.perf_counter()
         if mode == "SERIAL":
-            receipts = [base.invoke(role, token) for role in ROLES]
+            executed = [invoke_timed(role) for role in role_order]
         elif mode == "PARALLEL":
             with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-                receipts = list(pool.map(lambda role: base.invoke(role, token), ROLES))
+                executed = list(pool.map(invoke_timed, role_order))
         else:
             raise ValueError(f"unsupported mode:{mode}")
-        wall_ms = (time.perf_counter() - started) * 1000
+        wall_ms = (time.perf_counter() - cohort_started) * 1000
     finally:
         base.OUT = previous_out
-    for item in receipts:
+
+    receipts: list[dict[str, object]] = []
+    intervals: list[dict[str, float]] = []
+    for index, (item, started_offset_ms, ended_offset_ms) in enumerate(executed):
         copy = dict(item)
         copy["performance_cohort"] = mode
+        copy["performance_cohort_label"] = cohort_label
+        copy["role_order_index"] = index
+        copy["started_offset_ms"] = round(started_offset_ms, 3)
+        copy["ended_offset_ms"] = round(ended_offset_ms, 3)
         copy["performance_receipt_sha256"] = sha(stable(copy))
-        (ROOT_OUT / f"PERF_{mode}_{item['role']}.json").write_text(
+        receipts.append(copy)
+        intervals.append(
+            {
+                "role": str(item["role"]),
+                "started_offset_ms": round(started_offset_ms, 3),
+                "ended_offset_ms": round(ended_offset_ms, 3),
+            }
+        )
+        (ROOT_OUT / f"PERF_{cohort_label}_{item['role']}.json").write_text(
             json.dumps(copy, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-    return wall_ms, receipts
+
+    return {
+        "mode": mode,
+        "cohort_label": cohort_label,
+        "role_order": list(role_order),
+        "wall_clock_ms": wall_ms,
+        "receipts": receipts,
+        "intervals": intervals,
+        "max_interval_overlap": _max_interval_overlap(intervals),
+    }
 
 
 def run_performance_court(token: str) -> dict[str, object]:
-    serial_ms, serial = _run_base_cohort(token, "SERIAL")
-    parallel_ms, parallel = _run_base_cohort(token, "PARALLEL")
-    serial_ok = all(bool(item["semantic_verified"]) for item in serial)
-    parallel_ok = all(bool(item["semantic_verified"]) for item in parallel)
-    serial_ids = {item["provider_request_id"] for item in serial if item["provider_request_id"]}
-    parallel_ids = {item["provider_request_id"] for item in parallel if item["provider_request_id"]}
-    all_unique = len(serial_ids) == len(ROLES) and len(parallel_ids) == len(ROLES) and serial_ids.isdisjoint(parallel_ids)
-    ratio = serial_ms / parallel_ms if parallel_ms > 0 else 0.0
-    verified = serial_ok and parallel_ok and all_unique and ratio >= PERFORMANCE_THRESHOLD
+    if len(PERFORMANCE_PAIR_ORDERS) != PERFORMANCE_PAIR_COUNT:
+        raise ValueError("counterbalanced pair-order contract mismatch")
+    pairs: list[dict[str, object]] = []
+    all_receipts: list[dict[str, object]] = []
+
+    for pair_index, order in enumerate(PERFORMANCE_PAIR_ORDERS):
+        role_order = _rotated_roles(pair_index)
+        execution_modes = ("SERIAL", "PARALLEL") if order == "AB" else ("PARALLEL", "SERIAL")
+        cohorts: dict[str, dict[str, object]] = {}
+        for mode in execution_modes:
+            label = f"P{pair_index + 1}_{order}_{mode}"
+            cohort = _run_base_cohort(
+                token,
+                mode,
+                cohort_label=label,
+                role_order=role_order,
+            )
+            cohorts[mode] = cohort
+            all_receipts.extend(cohort["receipts"])
+
+        serial_ms = float(cohorts["SERIAL"]["wall_clock_ms"])
+        parallel_ms = float(cohorts["PARALLEL"]["wall_clock_ms"])
+        ratio = serial_ms / parallel_ms if parallel_ms > 0 else 0.0
+        pair = {
+            "pair_index": pair_index + 1,
+            "order": order,
+            "role_order": list(role_order),
+            "serial_wall_clock_ms": round(serial_ms, 3),
+            "parallel_wall_clock_ms": round(parallel_ms, 3),
+            "speedup_ratio": round(ratio, 6),
+            "serial_semantic_verified": all(
+                bool(item["semantic_verified"]) for item in cohorts["SERIAL"]["receipts"]
+            ),
+            "parallel_semantic_verified": all(
+                bool(item["semantic_verified"]) for item in cohorts["PARALLEL"]["receipts"]
+            ),
+            "parallel_overlap_max": int(cohorts["PARALLEL"]["max_interval_overlap"]),
+        }
+        pairs.append(pair)
+
+    paired_ratios = [float(pair["speedup_ratio"]) for pair in pairs]
+    all_semantic = all(
+        bool(item["semantic_verified"])
+        for item in all_receipts
+    )
+    provider_ids = [
+        item.get("provider_request_id")
+        for item in all_receipts
+        if item.get("provider_request_id")
+    ]
+    all_unique = len(provider_ids) == len(all_receipts) and len(set(provider_ids)) == len(provider_ids)
+    min_parallel_overlap = min(int(pair["parallel_overlap_max"]) for pair in pairs)
+    decision = _paired_performance_decision(
+        paired_ratios,
+        all_semantic=all_semantic,
+        unique_ids=all_unique,
+        min_parallel_overlap=min_parallel_overlap,
+    )
+
+    serial_walls = [float(pair["serial_wall_clock_ms"]) for pair in pairs]
+    parallel_walls = [float(pair["parallel_wall_clock_ms"]) for pair in pairs]
+    role_tail_evidence: dict[str, dict[str, object]] = {}
+    for role in ROLES:
+        serial_latencies = [
+            float(item["latency_ms"])
+            for item in all_receipts
+            if item["role"] == role and item["performance_cohort"] == "SERIAL"
+        ]
+        parallel_latencies = [
+            float(item["latency_ms"])
+            for item in all_receipts
+            if item["role"] == role and item["performance_cohort"] == "PARALLEL"
+        ]
+        all_latencies = serial_latencies + parallel_latencies
+        role_tail_evidence[role] = {
+            "serial_median_ms": round(float(statistics.median(serial_latencies)), 3),
+            "parallel_median_ms": round(float(statistics.median(parallel_latencies)), 3),
+            "max_latency_ms": round(max(all_latencies), 3),
+            "median_latency_ms": round(float(statistics.median(all_latencies)), 3),
+            "tail_to_median_ratio": round(
+                max(all_latencies) / float(statistics.median(all_latencies)),
+                6,
+            )
+            if statistics.median(all_latencies) > 0
+            else 0.0,
+        }
+
     summary = {
-        "schema": "FUSE_GEMINI_ROLE_PERFORMANCE_COURT_V1",
+        "schema": "FUSE_GEMINI_ROLE_PERFORMANCE_COURT_V2",
+        "court_design": "COUNTERBALANCED_REPEATED_AB_BA",
         "source_sha": os.environ.get("GITHUB_SHA"),
         "provider": "GOOGLE_VERTEX_AI",
         "transport": "VERTEX_WIF_ADC",
@@ -481,14 +658,35 @@ def run_performance_court(token: str) -> dict[str, object]:
         "same_role_set": True,
         "same_generation_contract": True,
         "single_access_token_for_both_cohorts": True,
-        "serial_wall_clock_ms": round(serial_ms, 3),
-        "parallel_wall_clock_ms": round(parallel_ms, 3),
-        "serial_verified_count": sum(bool(item["semantic_verified"]) for item in serial),
-        "parallel_verified_count": sum(bool(item["semantic_verified"]) for item in parallel),
+        "pair_count": PERFORMANCE_PAIR_COUNT,
+        "pair_orders": list(PERFORMANCE_PAIR_ORDERS),
+        "required_pair_pass_fraction": PERFORMANCE_PAIR_PASS_FRACTION,
+        "required_pair_pass_count": decision["required_pair_pass_count"],
+        "pair_pass_count": decision["pair_pass_count"],
+        "paired_speedup_ratios": paired_ratios,
+        "paired_speedup_median": round(float(decision["median_speedup_ratio"]), 6),
+        "paired_speedup_mad": round(float(decision["median_absolute_deviation"]), 6),
+        "serial_wall_clock_ms": round(float(statistics.median(serial_walls)), 3),
+        "parallel_wall_clock_ms": round(float(statistics.median(parallel_walls)), 3),
+        "serial_verified_count": sum(
+            bool(item["semantic_verified"])
+            for item in all_receipts
+            if item["performance_cohort"] == "SERIAL"
+        ),
+        "parallel_verified_count": sum(
+            bool(item["semantic_verified"])
+            for item in all_receipts
+            if item["performance_cohort"] == "PARALLEL"
+        ),
         "unique_request_ids_across_cohorts": all_unique,
-        "measured_speedup_ratio": round(ratio, 6),
+        "minimum_parallel_overlap": min_parallel_overlap,
+        "measured_speedup_ratio": round(float(decision["median_speedup_ratio"]), 6),
         "required_speedup_ratio": PERFORMANCE_THRESHOLD,
-        "state": "PERFORMANCE_2X_VERIFIED" if verified else "PERFORMANCE_2X_NOT_VERIFIED",
+        "pair_evidence": pairs,
+        "role_tail_evidence": role_tail_evidence,
+        "state": "PERFORMANCE_2X_VERIFIED"
+        if decision["verified"]
+        else "PERFORMANCE_2X_NOT_VERIFIED",
         "case_data_processed": False,
         "provider_mutation_performed": False,
         "iam_mutation_performed": False,

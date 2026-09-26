@@ -133,15 +133,47 @@ class GeminiHoldoutPerformanceTests(unittest.TestCase):
         self.assertEqual(s.count('"gcloud", "auth", "print-access-token"'), 1)
         self.assertIn("single_access_token_for_both_cohorts", s)
 
-    def test_matched_serial_parallel_court(self):
+    def test_counterbalanced_repeated_performance_court(self):
         s = COURT.read_text(encoding="utf-8")
-        self.assertIn('_run_base_cohort(token, "SERIAL")', s)
-        self.assertIn('_run_base_cohort(token, "PARALLEL")', s)
+        self.assertIn('PERFORMANCE_PAIR_ORDERS = ("AB", "BA", "AB", "BA")', s)
+        self.assertIn("COUNTERBALANCED_REPEATED_AB_BA", s)
+        self.assertIn("statistics.median", s)
         self.assertIn("ThreadPoolExecutor", s)
         self.assertIn("PERFORMANCE_THRESHOLD = 2.0", s)
         self.assertIn("PERFORMANCE_2X_VERIFIED", s)
         self.assertIn("same_generation_contract", s)
         self.assertIn("unique_request_ids_across_cohorts", s)
+        self.assertIn("role_tail_evidence", s)
+        self.assertIn("minimum_parallel_overlap", s)
+
+    def test_counterbalanced_decision_tolerates_only_one_tail_without_lowering_floor(self):
+        self.assertEqual(("AB", "BA", "AB", "BA"), holdout.PERFORMANCE_PAIR_ORDERS)
+        self.assertEqual(3, holdout._required_pair_pass_count())
+        decision = holdout._paired_performance_decision(
+            [2.30, 0.70, 2.10, 2.20],
+            all_semantic=True,
+            unique_ids=True,
+            min_parallel_overlap=2,
+        )
+        self.assertTrue(decision["verified"])
+        self.assertEqual(3, decision["pair_pass_count"])
+        self.assertEqual(2.15, decision["median_speedup_ratio"])
+        failed = holdout._paired_performance_decision(
+            [2.30, 2.10, 0.90, 0.80],
+            all_semantic=True,
+            unique_ids=True,
+            min_parallel_overlap=2,
+        )
+        self.assertFalse(failed["verified"])
+        self.assertEqual(2, failed["pair_pass_count"])
+
+    def test_role_rotation_is_deterministic_and_preserves_role_set(self):
+        rotations = [holdout._rotated_roles(index) for index in range(holdout.PERFORMANCE_PAIR_COUNT)]
+        self.assertEqual(set(ROLES), set(rotations[0]))
+        for rotation in rotations:
+            self.assertEqual(set(ROLES), set(rotation))
+            self.assertEqual(len(ROLES), len(rotation))
+        self.assertEqual(len({rotation[0] for rotation in rotations}), holdout.PERFORMANCE_PAIR_COUNT)
 
     def test_zero_private_data_and_no_effect_receipts(self):
         s = COURT.read_text(encoding="utf-8")
