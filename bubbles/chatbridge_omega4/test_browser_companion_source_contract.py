@@ -155,22 +155,24 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
         npm = shutil.which("npm")
         if not node or not npm:
             self.skipTest("Node/npm is not installed in this runner")
-        subprocess.run(
+        companion = subprocess.run(
             [npm, "run", "check"],
             cwd=COMPANION,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=120,
         )
-        subprocess.run(
+        self.assertEqual(companion.returncode, 0, companion.stdout + companion.stderr)
+        edge = subprocess.run(
             [npm, "run", "check"],
             cwd=EDGE_AGENT,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=120,
         )
+        self.assertEqual(edge.returncode, 0, edge.stdout + edge.stderr)
 
 
 if __name__ == "__main__":
