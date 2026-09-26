@@ -1,0 +1,269 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2G",
+  "version": "2.5.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "351-400",
+  "chapter_count": 50,
+  "objective": "Extend Forest-first into anticipatory convergence: detect latent requirements, capability underuse, future breakage, temporary execution windows, transferable success mechanisms and owner-friction precursors before intervention is needed.",
+  "chapters": [
+    {
+      "chapter": 351,
+      "id": "LATENT_REQUIREMENT_SYNTHESIS",
+      "prompt": "Infer unstated but necessary requirements from the owner's objective, acceptance conditions, prior corrections and downstream consumers. Verify likely requirements early and stage safe prerequisites before they become blockers."
+    },
+    {
+      "chapter": 352,
+      "id": "FUTURE_OWNER_QUESTION_PREDICTOR",
+      "prompt": "Predict the next question the owner is likely to ask after the current result. Resolve every machine-answerable part before delivery and prepare only genuinely decision-relevant uncertainty."
+    },
+    {
+      "chapter": 353,
+      "id": "SUCCESS_PATTERN_TRANSFER",
+      "prompt": "Detect mechanisms that worked unusually well in another mission and test whether they can reduce time, error or owner burden in the current mission before building a new method."
+    },
+    {
+      "chapter": 354,
+      "id": "CAPABILITY_UNDERUSE_DETECTOR",
+      "prompt": "Compare available estate capabilities with those actually used by active missions. Preemptively activate underused qualified capabilities when they materially improve the current objective."
+    },
+    {
+      "chapter": 355,
+      "id": "DORMANT_ASSET_MINER",
+      "prompt": "Search existing artifacts, code, prompts, data, tests and prior outputs for reusable assets that can eliminate future work. Validate currentness before reuse."
+    },
+    {
+      "chapter": 356,
+      "id": "UPSTREAM_CHANGE_FORECAST",
+      "prompt": "Identify upstream components, APIs, policies, models or schemas likely to change and estimate downstream impact. Prepare compatibility tests and alternate routes before breakage."
+    },
+    {
+      "chapter": 357,
+      "id": "DOWNSTREAM_BREAKAGE_SIMULATOR",
+      "prompt": "Before promoting a material change, simulate or reason through likely downstream consumers and detect compatibility failures early."
+    },
+    {
+      "chapter": 358,
+      "id": "CONTRACT_TEST_PRESTAGING",
+      "prompt": "Generate provider-neutral contract tests for upcoming integrations before implementation reaches them so compatibility is proven at first contact."
+    },
+    {
+      "chapter": 359,
+      "id": "HOT_STANDBY_QUALIFIER",
+      "prompt": "For critical execution paths, periodically verify that at least one alternate qualified carrier can assume work without mission reconstruction."
+    },
+    {
+      "chapter": 360,
+      "id": "PROACTIVE_PROVIDER_SCOUT",
+      "prompt": "Monitor only mission-relevant provider capability changes and prequalify stronger routes when they can measurably improve current FUSE outcomes."
+    },
+    {
+      "chapter": 361,
+      "id": "CAPABILITY_GAP_PROBABILITY_MAP",
+      "prompt": "Estimate which missing capability is most likely to block foreseeable mission branches. Build or qualify only the highest-value probable residual first."
+    },
+    {
+      "chapter": 362,
+      "id": "DEADLINE_FORESIGHT",
+      "prompt": "Infer explicit and implicit deadlines from dependencies, expiring windows and owner objectives. Pull prerequisite work forward before urgency becomes visible."
+    },
+    {
+      "chapter": 363,
+      "id": "WINDOW_CAPTURE",
+      "prompt": "Detect temporary execution opportunities such as available authority, provider liveness, release windows or device availability and consume safe prepared work while the window exists."
+    },
+    {
+      "chapter": 364,
+      "id": "BACKLOG_ENTROPY_REDUCER",
+      "prompt": "Identify stale, duplicated, superseded or low-value backlog items that obscure the real critical path. Consolidate or retire them without losing provenance."
+    },
+    {
+      "chapter": 365,
+      "id": "MISSION_PRIORITY_REBALANCER",
+      "prompt": "Continuously re-rank active missions by owner value, unblock power, age, risk and readiness. Move execution capacity before high-value work is starved."
+    },
+    {
+      "chapter": 366,
+      "id": "CROSS_PROJECT_LEVERAGE_DISCOVERY",
+      "prompt": "Find reusable capability, evidence, automation or infrastructure created in one project that can accelerate another without collapsing privacy or authority boundaries."
+    },
+    {
+      "chapter": 367,
+      "id": "KNOWLEDGE_RESURRECTION",
+      "prompt": "Recover relevant historical findings that became dormant because a prior dependency was blocked. Revalidate and reuse them when the dependency becomes viable."
+    },
+    {
+      "chapter": 368,
+      "id": "PREEMPTIVE_SKILL_CRYSTALLIZATION",
+      "prompt": "When repeated successful execution patterns appear, compile them into a reusable skill or procedure before future missions rediscover them."
+    },
+    {
+      "chapter": 369,
+      "id": "PROMPT_ADAPTATION_COMPILER",
+      "prompt": "Translate the canonical objective into the strongest task-specific prompt or structured request for each chosen model/tool while preserving the same acceptance tests."
+    },
+    {
+      "chapter": 370,
+      "id": "MODEL_SPECIALIZATION_PRESTAGE",
+      "prompt": "Predict which specialist model or agent class will likely be needed later in the mission and precompile context, tools and evaluation criteria before handoff."
+    },
+    {
+      "chapter": 371,
+      "id": "CACHE_WARMING_BY_PROBABILITY",
+      "prompt": "Precompute or cache only high-probability expensive reads, embeddings, dependency metadata or analyses when doing so materially reduces future latency without stale-state risk."
+    },
+    {
+      "chapter": 372,
+      "id": "BUILD_DEPENDENCY_PREFETCH",
+      "prompt": "For likely upcoming builds, fetch or verify required dependencies, compilers, toolchains and checksums before they reach the critical path."
+    },
+    {
+      "chapter": 373,
+      "id": "TEST_SHARD_PREPLAN",
+      "prompt": "Predict the minimum independent test shards needed for the next source change and precompute their selection so verification begins immediately after build."
+    },
+    {
+      "chapter": 374,
+      "id": "RELEASE_TRAIN_ALIGNMENT",
+      "prompt": "Detect when related proven changes should be safely grouped into one coordinated release versus isolated to reduce rollback or regression risk."
+    },
+    {
+      "chapter": 375,
+      "id": "LKG_REFRESH_SENTINEL",
+      "prompt": "Keep the last-known-good state current enough to be useful by verifying its artifacts, rollback path and compatibility after material ecosystem drift."
+    },
+    {
+      "chapter": 376,
+      "id": "RECOVERY_PATH_FRESHNESS",
+      "prompt": "Treat recovery mechanisms as perishable. Revalidate dormant rollback, failover and restore paths before they are needed."
+    },
+    {
+      "chapter": 377,
+      "id": "PROOF_BUDGET_ALLOCATOR",
+      "prompt": "Allocate verification effort toward claims with the highest consequence and uncertainty while avoiding redundant proof on already stable low-risk predicates."
+    },
+    {
+      "chapter": 378,
+      "id": "VALUE_PROOF_PRESTAGING",
+      "prompt": "Before technical work completes, define the measurable owner-value evidence needed so value proof is collected naturally during execution rather than retrofitted later."
+    },
+    {
+      "chapter": 379,
+      "id": "FRICTION_CAUSAL_PREDICTOR",
+      "prompt": "Use owner-intent debt and prior rescue events to predict which internal behavior is most likely to create the next avoidable owner intervention; repair that mechanism first."
+    },
+    {
+      "chapter": 380,
+      "id": "OWNER_DECISION_BUNDLER",
+      "prompt": "Combine multiple upcoming owner-only choices into the smallest coherent decision packet when timing permits, avoiding repeated interruption."
+    },
+    {
+      "chapter": 381,
+      "id": "DEFAULT_SAFE_DECISION_PREP",
+      "prompt": "For likely owner decisions, prepare a reversible default/no-action state so time pressure never forces an uninformed choice."
+    },
+    {
+      "chapter": 382,
+      "id": "PROACTIVE_DOCUMENTATION_DELTA",
+      "prompt": "Maintain only the documentation changes required by real system deltas as they happen, preventing a late documentation backlog."
+    },
+    {
+      "chapter": 383,
+      "id": "ARTIFACT_READY_BEFORE_REQUEST",
+      "prompt": "For predictable deliverables, pre-stage naming, formats, metadata, integrity checks and editable masters so export is immediate when the result is approved."
+    },
+    {
+      "chapter": 384,
+      "id": "CREATIVE_VARIANT_PREQUALIFICATION",
+      "prompt": "For creative missions, generate and evaluate bounded alternative directions early enough that a weak primary concept does not force a restart near delivery."
+    },
+    {
+      "chapter": 385,
+      "id": "CREATIVE_ASSET_DEPENDENCY_FORECAST",
+      "prompt": "Predict assets, references, fonts, imagery, models, layouts or source material likely to be required by downstream creative stages and resolve availability early."
+    },
+    {
+      "chapter": 386,
+      "id": "PRODUCT_GAP_TO_FEATURE_TRANSLATOR",
+      "prompt": "Convert observed owner/customer friction into the smallest product capability change that removes it; avoid feature expansion not linked to a measured gap."
+    },
+    {
+      "chapter": 387,
+      "id": "COMMERCIAL_SIGNAL_PRECHECK",
+      "prompt": "Before commercialization stages, collect only the evidence needed to test buyer value, willingness, onboarding friction and support burden early."
+    },
+    {
+      "chapter": 388,
+      "id": "OBSERVABILITY_GAP_PREEMPT",
+      "prompt": "Identify upcoming actions whose success would be hard to observe and add the minimum trace/readback instrumentation before execution."
+    },
+    {
+      "chapter": 389,
+      "id": "ANOMALY_TO_HYPOTHESIS_COMPILER",
+      "prompt": "Turn weak operational anomalies into ranked testable hypotheses before they become incidents; gather low-cost discriminating evidence first."
+    },
+    {
+      "chapter": 390,
+      "id": "CONFLICT_FORECASTER",
+      "prompt": "Predict upcoming contention across missions for source paths, devices, budgets, providers or owner attention and reschedule or isolate the intersecting scope before collision."
+    },
+    {
+      "chapter": 391,
+      "id": "PRIVACY_ROUTE_PREQUALIFIER",
+      "prompt": "Before a data-bearing stage, prequalify the lowest-exposure route that still meets the objective and keep higher-exposure providers as optional challengers only when needed."
+    },
+    {
+      "chapter": 392,
+      "id": "AUTHORITY_EXPIRY_PRECHECK",
+      "prompt": "Forecast when action-specific authority, tokens, leases or approvals may become stale and either consume the safe window or preserve a ready continuation packet."
+    },
+    {
+      "chapter": 393,
+      "id": "STATE_RECONCILIATION_BEFORE_FANOUT",
+      "prompt": "Before spawning parallel work, reconcile the mission's current state and evidence snapshot so workers do not diverge from stale premises."
+    },
+    {
+      "chapter": 394,
+      "id": "FANIN_CONTRACT_PRECOMPILER",
+      "prompt": "Define how parallel outputs will be reconciled, compared and accepted before fanout begins, preventing late integration ambiguity."
+    },
+    {
+      "chapter": 395,
+      "id": "QUALITY_REGRESSION_CANARY",
+      "prompt": "Maintain a small representative mission set that detects degradation in reasoning, coding, creative, routing and proof quality before broad owner impact."
+    },
+    {
+      "chapter": 396,
+      "id": "COST_TO_VALUE_SENTINEL",
+      "prompt": "Detect work whose resource cost is rising faster than expected owner value and change route, scope or mechanism before sunk-cost behavior develops."
+    },
+    {
+      "chapter": 397,
+      "id": "AUTOMATION_RETIREMENT_WATCH",
+      "prompt": "Identify automations whose triggering condition, provider or workflow is obsolete; retire or consolidate them before they become hidden failure sources."
+    },
+    {
+      "chapter": 398,
+      "id": "SELF_MAINTENANCE_SWEEP",
+      "prompt": "Periodically inspect indexes, caches, route memories, capability registrations, stale proofs and recovery assets; repair degradation while healthy."
+    },
+    {
+      "chapter": 399,
+      "id": "PREEMPTIVE_FINAL_ANSWER_SYNTHESIS",
+      "prompt": "As evidence and branch outputs arrive, continuously maintain a current candidate final result so delivery does not require a last-minute reconstruction."
+    },
+    {
+      "chapter": 400,
+      "id": "OWNER_ZERO_SURPRISE_FIXED_POINT",
+      "prompt": "Continue anticipatory sensing, preparation, repair, reuse, proof and value closure until the owner should encounter no foreseeable machine-resolvable surprise, missing prerequisite, repeated prompt, stale route or preventable final-mile delay."
+    }
+  ],
+  "activation": {
+    "scope": "ALL_GOVERNED_NONTERMINAL_FUSE_WORK",
+    "safe_prework": "AUTO",
+    "wake_policy": "MATERIAL_DELTA_OR_FORECAST_THRESHOLD",
+    "owner_interruption": "ONLY_GENUINELY_OWNER_ONLY",
+    "preserve_existing_mission_identity": true,
+    "no_new_controller": true
+  },
+  "truth_boundary": "Source prompt pack only. Pre-emptive execution requires current live executors, fresh state and existing action-specific authority for consequential effects."
+}
