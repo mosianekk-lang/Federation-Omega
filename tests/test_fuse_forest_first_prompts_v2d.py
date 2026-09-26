@@ -34,3 +34,4 @@ def test_estate_wide_preemptive_completion_scope():
     assert required <= ids
     assert d["activation"]["scope"] == "ALL_GOVERNED_NONTERMINAL_FUSE_WORK"
     assert d["activation"]["safe_actions"] == "AUTO"
+    assert d["activation"]["preserve_existing_mission_identity"] is True

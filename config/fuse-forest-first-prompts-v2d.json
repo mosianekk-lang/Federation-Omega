@@ -162,7 +162,8 @@
     "safe_actions": "AUTO",
     "consequential_effects": "USE_EXISTING_ACTION_SPECIFIC_AUTHORITY_ONLY",
     "owner_interruption": "ONLY_WHEN_GENUINELY_OWNER_ONLY_OR_MATERIAL_STRATEGY_CHANGE",
-    "quiet_when_healthy": true
+    "quiet_when_healthy": true,
+    "preserve_existing_mission_identity": true
   },
   "truth_boundary": "Source prompt pack. It increases anticipatory coverage but does not create background execution where no live executor exists."
 }
