@@ -1,0 +1,22 @@
+FUSE CREATIVE CAPITAL — ULTIMATE COMPLETION MASTER AI-ARCHITECT + BUILDER DIRECTIVE v4
+
+Canonical provider-written directive: Google Doc 1YTUVZ6GT4rGmIyFUA-ccrWILEeU8eqqeqQBVW237DX4
+Canonical Creative Capital Bible: 14h-Frr-i2q4rjOj9f0SaGLheQxYh-0xYN5qIva6ruYQ
+Mission: MISSION-FCC-ULTIMATE-COMPLETION-20260910-001
+Directive SHA-256: 7ceee48977b1460bf3c59a205b3deb4b1777a4063ffccef0b20ee86cb0364af6
+
+PURPOSE
+Bind the tested Creative Capital completion package to existing FUSE/Federation source without creating a duplicate controller. The full authoritative directive remains in the canonical Drive document above. This repository carrier deliberately contains only stable pointers and proof boundaries; provider/runtime maturity must be earned independently.
+
+PROOF BOUNDARY
+LOCAL_COMPLETION_PACKAGE_52_TESTS_PASS
+CONTROL_SERVICE_INPROCESS_SEMANTIC_CANARY_PASS
+GCP_DEPLOY_UNPROVEN
+GAS_RUNTIME_UNPROVEN
+DIRECT_AI_STUDIO_INFERENCE_UNPROVEN
+WINDOWS_HOST_RUNTIME_UNPROVEN
+IMAGE_VIDEO_PROVIDER_RUNTIME_UNPROVEN
+COMPLETE_VERIFIED_FALSE
+
+NEXT
+Reuse existing FUSE-GAS/GCP/AISTUDIO/Windows/SOVARA/FDOF organs. Close FCC-C01..FCC-C15 through action-specific provider/native semantic readback, recovery and commercial-baseline proof. Never infer provider maturity from this source pointer.
