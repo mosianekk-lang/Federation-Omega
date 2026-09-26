@@ -1,0 +1,6 @@
+#pragma once
+#include "base.h"
+namespace fuse {
+enum class Status:u32{Ok=0,InvalidArgument,BufferTooSmall,IntegerOverflow,MemoryFailed,CryptoError,BadMagic,BadVersion,BadLength,BadDigest,FieldOrder,ReservedNonZero,UnknownCritical,TypeLengthMismatch,FileOpenFailed,FileReadFailed,FileWriteFailed,FileFlushFailed,FileMoveFailed,FileNotFound,FileTypeInvalid,FileIdentityFailed,FileChangedDuringRead,FilePreconditionFailed,PathInvalid,PathEscape,ReparseEscape,JournalCorrupt,JournalTornTail,JournalCorruptNonFinal,JournalSegmentGap,JournalSequenceInvalid,JournalPredecessorInvalid,ObjectCorrupt,IdentityError,NonceReplay,IdempotencyReplay,PermitAlreadyConsumed,Unsupported,TestFailed};
+const char* status_name(Status);
+}
