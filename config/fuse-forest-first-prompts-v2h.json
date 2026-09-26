@@ -1,0 +1,270 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2H",
+  "version": "2.6.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "401-450",
+  "chapter_count": 50,
+  "objective": "Make the Forest self-maintaining: preserve intent, currentness, readiness, proof, recovery, quality, capacity and owner value before degradation creates intervention.",
+  "chapters": [
+    {
+      "chapter": 401,
+      "id": "LATENT_RISK_BUDGET_ALLOCATOR",
+      "prompt": "Estimate hidden risk concentration across active missions and spend pre-emptive verification effort where consequence multiplied by uncertainty is highest."
+    },
+    {
+      "chapter": 402,
+      "id": "INTENT_CHANGE_SENTINEL",
+      "prompt": "Detect when recent owner instructions materially alter an existing mission objective, constraints or priority. Reconcile before downstream work continues on stale intent."
+    },
+    {
+      "chapter": 403,
+      "id": "CHAIN_OF_CUSTODY_PREFLIGHT",
+      "prompt": "Before evidence-bearing work, verify source identity, provenance links and immutable references so downstream claims do not inherit avoidable evidentiary gaps."
+    },
+    {
+      "chapter": 404,
+      "id": "DEPENDENCY_OWNER_MAP",
+      "prompt": "For each critical dependency, identify its current system owner, provider, refresh route and fallback so unresolved responsibility never becomes hidden blocking debt."
+    },
+    {
+      "chapter": 405,
+      "id": "FRESHNESS_TTL_TUNER",
+      "prompt": "Adjust refresh frequency by volatility and consequence rather than fixed schedules. Refresh fast-changing critical state early and avoid wasteful polling of stable state."
+    },
+    {
+      "chapter": 406,
+      "id": "EVENT_TRIGGER_SYNTHESIZER",
+      "prompt": "Convert predictable polling needs into material-delta triggers or bounded watches where possible so work wakes on meaningful state change."
+    },
+    {
+      "chapter": 407,
+      "id": "PREDICTIVE_ROLLBACK_TRIGGER",
+      "prompt": "Define conditions that should trigger rollback before user-visible failure, using quality, error, latency, semantic and proof regressions."
+    },
+    {
+      "chapter": 408,
+      "id": "FALSE_MISSION_STOP_DETECTOR",
+      "prompt": "Detect when a local route failure, stale client or temporary provider issue is being mistaken for mission impossibility; reroute before termination."
+    },
+    {
+      "chapter": 409,
+      "id": "UNSERVED_OWNER_OUTCOME_DETECTOR",
+      "prompt": "Compare active work against canonical owner outcomes and detect objectives that have accumulated activity but no current path to usable value."
+    },
+    {
+      "chapter": 410,
+      "id": "OPPORTUNITY_COST_SCHEDULER",
+      "prompt": "Prioritize READY work by owner value gained versus valuable work delayed, not only queue age or local convenience."
+    },
+    {
+      "chapter": 411,
+      "id": "LOW_CONFIDENCE_HOTSPOT_FINDER",
+      "prompt": "Locate decisions or claims whose confidence is low and downstream leverage is high; gather discriminating evidence before those assumptions harden."
+    },
+    {
+      "chapter": 412,
+      "id": "STALE_PROOF_REPLACER",
+      "prompt": "Detect proof that no longer supports present-state claims because source, runtime, provider or configuration changed; refresh only affected proof dimensions."
+    },
+    {
+      "chapter": 413,
+      "id": "EARLY_PROVIDER_SWITCH",
+      "prompt": "When current provider degradation crosses a mission-specific threshold, move new eligible work to a qualified alternate before failure becomes owner-visible."
+    },
+    {
+      "chapter": 414,
+      "id": "FAILURE_DOMAIN_DIVERSITY_BUDGET",
+      "prompt": "Ensure critical paths do not depend on several components sharing the same hidden failure domain; qualify diversity where it materially improves resilience."
+    },
+    {
+      "chapter": 415,
+      "id": "TOOL_CONTRACT_DRIFT_PREDICTOR",
+      "prompt": "Watch tool schemas, behavior and permission semantics for drift and precompile adapter updates before the next consequential invocation."
+    },
+    {
+      "chapter": 416,
+      "id": "SCHEMA_MIGRATION_STAGER",
+      "prompt": "When schema evolution is foreseeable, stage compatibility readers, migration tests and rollback before writes depend on the new shape."
+    },
+    {
+      "chapter": 417,
+      "id": "DATA_QUALITY_PREFLIGHT",
+      "prompt": "Before analytics, inference or automation consumes data, validate the minimum relevant completeness, freshness, types and semantic definitions."
+    },
+    {
+      "chapter": 418,
+      "id": "ARTIFACT_INTEGRITY_PREFLIGHT",
+      "prompt": "Before downstream use or release, verify expected artifact identity, checksum, format, version and completeness without waiting for a consumer failure."
+    },
+    {
+      "chapter": 419,
+      "id": "DEPLOYMENT_OBSERVABILITY_PREFLIGHT",
+      "prompt": "Before deployment, confirm that health, semantic success, effect readback, rollback and owner-value signals can actually be observed."
+    },
+    {
+      "chapter": 420,
+      "id": "PRODUCTION_SEMANTIC_CANARY",
+      "prompt": "Use the smallest safe current-state canary that proves the deployed capability behaves correctly, not merely that the process is alive."
+    },
+    {
+      "chapter": 421,
+      "id": "OWNER_REACTION_SIMULATOR",
+      "prompt": "Before delivery, model likely owner confusion, correction, follow-up or dissatisfaction using historical Owner Intent Debt and remove machine-resolvable causes."
+    },
+    {
+      "chapter": 422,
+      "id": "ACCEPTANCE_CRITERIA_GAP_DETECTOR",
+      "prompt": "Compare implementation and evidence against the actual requested terminal predicates before late-stage delivery; add missing acceptance tests early."
+    },
+    {
+      "chapter": 423,
+      "id": "EXTERNAL_DEPENDENCY_READINESS",
+      "prompt": "For external parties, services or data expected later, prepare all internal prerequisites so no avoidable local work remains when the external input arrives."
+    },
+    {
+      "chapter": 424,
+      "id": "SUPPORT_READINESS_PRECHECK",
+      "prompt": "For product or automation release, pre-stage diagnostics, recovery, user guidance and escalation evidence before support demand appears."
+    },
+    {
+      "chapter": 425,
+      "id": "COMMERCIAL_PACKAGING_DEBT",
+      "prompt": "Track packaging, licensing, onboarding, pricing evidence, distribution and support debt during development so product readiness does not lag technical readiness."
+    },
+    {
+      "chapter": 426,
+      "id": "RUNTIME_CAPACITY_FORECAST",
+      "prompt": "Estimate near-term CPU, memory, queue, model, storage and concurrency demand; pre-shard or reroute before capacity constrains critical work."
+    },
+    {
+      "chapter": 427,
+      "id": "LICENSE_COMPATIBILITY_PRECHECK",
+      "prompt": "Before adopting or redistributing third-party material, verify license compatibility and provenance early enough to choose an alternate without rework."
+    },
+    {
+      "chapter": 428,
+      "id": "TEST_DATA_FRESHNESS",
+      "prompt": "Ensure benchmark and regression fixtures still represent current behavior and requirements; refresh stale fixtures before they create false confidence."
+    },
+    {
+      "chapter": 429,
+      "id": "SYNTHETIC_TO_NATURAL_EVIDENCE_BRIDGE",
+      "prompt": "When synthetic courts pass, identify the smallest natural mission cohort needed next and begin collecting it before promotion becomes blocked."
+    },
+    {
+      "chapter": 430,
+      "id": "BENCHMARK_SELECTION_INTEGRITY",
+      "prompt": "Check that benchmarks actually measure the claimed capability and are not chosen because they flatter the challenger."
+    },
+    {
+      "chapter": 431,
+      "id": "UNCERTAINTY_BURN_DOWN",
+      "prompt": "Rank material unknowns by expected decision value and resolve the cheapest high-impact uncertainties before implementation commits deeply."
+    },
+    {
+      "chapter": 432,
+      "id": "CONFIDENCE_CALIBRATION_LOOP",
+      "prompt": "Compare past confidence with observed outcomes and adjust future confidence thresholds so repeated overconfidence or underconfidence is detected early."
+    },
+    {
+      "chapter": 433,
+      "id": "COUNTERFACTUAL_OWNER_BURDEN",
+      "prompt": "Before choosing a route, estimate owner prompts, approvals, debugging and waiting it will create compared with plausible alternatives."
+    },
+    {
+      "chapter": 434,
+      "id": "SHARED_PROOF_REUSE",
+      "prompt": "Detect proof artifacts that can validly support multiple missions at the same current epoch and reuse them without duplicating expensive verification."
+    },
+    {
+      "chapter": 435,
+      "id": "REPAIR_QUEUE_AGING",
+      "prompt": "Escalate repair items that repeatedly remain READY but unexecuted, especially when they correspond to recurring owner-intent debt."
+    },
+    {
+      "chapter": 436,
+      "id": "DORMANT_AUTOMATION_REVALIDATION",
+      "prompt": "Re-test valuable dormant automations when dependencies or providers recover and reactivate only those that still meet current contracts."
+    },
+    {
+      "chapter": 437,
+      "id": "DUPLICATE_SCHEDULER_DETECTOR",
+      "prompt": "Detect overlapping schedulers, watches or recurring jobs that target the same semantic outcome and converge them before duplicate work or effects occur."
+    },
+    {
+      "chapter": 438,
+      "id": "PROVIDER_DEPRECATION_SCOUT",
+      "prompt": "Track provider deprecations that affect active contracts and prepare migration before deadlines enter the critical path."
+    },
+    {
+      "chapter": 439,
+      "id": "API_VERSION_CUTOFF_WATCH",
+      "prompt": "Identify version sunset dates and breaking API changes relevant to active services; stage adapter validation and migration early."
+    },
+    {
+      "chapter": 440,
+      "id": "BUILD_REPRODUCIBILITY_SENTINEL",
+      "prompt": "Periodically verify that critical builds remain reproducible from declared source, dependencies and environment rather than discovering drift during release."
+    },
+    {
+      "chapter": 441,
+      "id": "ENVIRONMENT_PARITY_WATCH",
+      "prompt": "Compare development, test, hosted and owner-local environments for material differences likely to invalidate source-only proof."
+    },
+    {
+      "chapter": 442,
+      "id": "LOCAL_CLOUD_PARITY_COURT",
+      "prompt": "For capabilities expected to move between local and cloud execution, verify semantic equivalence on representative tasks before failover is needed."
+    },
+    {
+      "chapter": 443,
+      "id": "SECRET_ROTATION_READINESS",
+      "prompt": "Track secret-dependent routes and prepare rotation-safe references, reload behavior and rollback without exposing secret material."
+    },
+    {
+      "chapter": 444,
+      "id": "RECOVERY_DRILL_PRESTAGE",
+      "prompt": "For critical systems, keep bounded recovery drills and validation steps ready so restore behavior is tested before an incident."
+    },
+    {
+      "chapter": 445,
+      "id": "RECOVERY_SLO_FORECAST",
+      "prompt": "Estimate whether current recovery mechanisms can meet target restore time and data-loss limits; repair gaps before failure occurs."
+    },
+    {
+      "chapter": 446,
+      "id": "RELEASE_DELTA_COMPILER",
+      "prompt": "Continuously compile verified change, migration and rollback notes from actual deltas so release handoff never requires historical reconstruction."
+    },
+    {
+      "chapter": 447,
+      "id": "DOWNSTREAM_READINESS_CONFIRM",
+      "prompt": "Before releasing an artifact or service, verify the intended consumer has the required interface, permissions, version and context to use it immediately."
+    },
+    {
+      "chapter": 448,
+      "id": "OWNER_VALUE_FORECAST",
+      "prompt": "Before large remaining work, forecast how each open branch contributes to the owner outcome and deprioritize branches with poor value contribution unless they are prerequisite."
+    },
+    {
+      "chapter": 449,
+      "id": "HEALTHY_QUIET_POLICY",
+      "prompt": "Suppress routine healthy-state chatter while keeping durable internal progress and wake the owner only for material result, decision or genuine boundary."
+    },
+    {
+      "chapter": 450,
+      "id": "FOREST_SELF_MAINTAINING_FIXED_POINT",
+      "prompt": "Continue proactive maintenance, currentness, repair, capability qualification, proof refresh and value closure until the forest is healthy enough that no foreseeable machine-resolvable intervention is waiting for the owner."
+    }
+  ],
+  "activation": {
+    "scope": "ALL_GOVERNED_NONTERMINAL_FUSE_WORK",
+    "safe_prework": "AUTO",
+    "wake_policy": "MATERIAL_DELTA_OR_FORECAST_THRESHOLD",
+    "quiet_when_healthy": true,
+    "owner_interruption": "ONLY_GENUINELY_OWNER_ONLY_OR_MATERIAL_RESULT",
+    "preserve_existing_mission_identity": true,
+    "no_new_controller": true
+  },
+  "truth_boundary": "Source prompt pack only. Proactive behavior depends on fresh state, live qualified execution and existing action-specific authority."
+}
