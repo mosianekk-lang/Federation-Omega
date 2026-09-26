@@ -34,5 +34,33 @@
     "GOOGLE_DRIVE_RELEASE_VERIFIED",
     "CROSS_PC_INSTALL_VERIFIED"
   ],
-  "truth_boundary": "SOURCE_CUSTODY_AND_HOSTED_BUILD_CONTRACT != OWNER_PC_INSTALL != MODEL_INFERENCE != COMMERCIAL_READY"
+  "truth_boundary": "V022_DRIVE_CUSTODY != V030_HYBRID_OVERLAY_SOURCE != WINDOWS_PACKAGE_PASS != OWNER_PC_INSTALL != GEMINI_TASK_EXECUTION != COMMERCIAL_READY",
+  "hybrid_intelligence_overlay": {
+    "version": "0.3.0",
+    "root": "products/fuse_localllm_desktop/v0.3.0",
+    "primary_orchestrator": "SOVARA",
+    "primary_external_provider": "GOOGLE_VERTEX_AI",
+    "primary_external_model": "gemini-2.5-flash",
+    "local_fallback": "FUSE_LOCAL_LLM",
+    "privacy_local_only": [
+      "CONFIDENTIAL",
+      "LEGAL_EVIDENCE",
+      "SECRET"
+    ],
+    "capabilities": [
+      "AUTO_ROUTE",
+      "PROVIDER_RACE",
+      "GEMINI_COUNCIL",
+      "EIGHT_ROLE_PORTFOLIO",
+      "STRUCTURED_RECEIPTS",
+      "LOCAL_FALLBACK"
+    ],
+    "hyper_performance_verified": false
+  },
+  "expected_package_overlay_files": [
+    "provider-fabric/FUSE-LocalLLM-ProviderFabric.ps1",
+    "provider-fabric/gemini_roles.json",
+    "install_current_user.ps1",
+    "uninstall_current_user.ps1"
+  ]
 }

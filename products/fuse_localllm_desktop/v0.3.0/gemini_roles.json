@@ -1,0 +1,360 @@
+{
+  "schema": "FUSE_LOCALLLM_GEMINI_ROLE_PORTFOLIO_V1",
+  "version": "1.0.0",
+  "provider": "GOOGLE_VERTEX_AI",
+  "model": "gemini-2.5-flash",
+  "transport": "GCLOUD_ADC_ACCESS_TOKEN",
+  "roles": {
+    "ALPHA_OMEGA_REASONER": {
+      "task_kinds": [
+        "reason",
+        "general"
+      ],
+      "guidance": "Select the strongest admissible next action. Hard gates outrank closure or convenience. Return concise decision fields only.",
+      "required_keys": [
+        "decision",
+        "assumptions",
+        "risks",
+        "next_action",
+        "confidence"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "decision": {
+            "type": "STRING"
+          },
+          "assumptions": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "risks": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "next_action": {
+            "type": "STRING"
+          },
+          "confidence": {
+            "type": "NUMBER"
+          }
+        },
+        "required": [
+          "decision",
+          "assumptions",
+          "risks",
+          "next_action",
+          "confidence"
+        ]
+      }
+    },
+    "CFBE_CRITIC": {
+      "task_kinds": [
+        "critic"
+      ],
+      "guidance": "Attack the candidate against frozen criteria. If deterministic derived metrics are supplied, use them exactly rather than recomputing contradictory values.",
+      "required_keys": [
+        "strengths",
+        "defects",
+        "benchmark_gaps",
+        "verdict"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "strengths": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "defects": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "benchmark_gaps": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "verdict": {
+            "type": "STRING"
+          }
+        },
+        "required": [
+          "strengths",
+          "defects",
+          "benchmark_gaps",
+          "verdict"
+        ]
+      }
+    },
+    "CREATIVE_BRIEF_COMPILER": {
+      "task_kinds": [
+        "creative"
+      ],
+      "guidance": "Compile the objective into an editable provider-neutral brief. Preserve creator intent and rights constraints; do not silently dilute the target.",
+      "required_keys": [
+        "objective",
+        "audience",
+        "mood",
+        "deliverables",
+        "constraints",
+        "success_criteria"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "objective": {
+            "type": "STRING"
+          },
+          "audience": {
+            "type": "STRING"
+          },
+          "mood": {
+            "type": "STRING"
+          },
+          "deliverables": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "constraints": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "success_criteria": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          }
+        },
+        "required": [
+          "objective",
+          "audience",
+          "mood",
+          "deliverables",
+          "constraints",
+          "success_criteria"
+        ]
+      }
+    },
+    "DESIGNIR_VALIDATOR": {
+      "task_kinds": [
+        "design"
+      ],
+      "guidance": "Validate structured design intent. Fail closed on missing mandatory fields and return exact repair actions.",
+      "required_keys": [
+        "valid",
+        "violations",
+        "missing_fields",
+        "repair_actions"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "valid": {
+            "type": "BOOLEAN"
+          },
+          "violations": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "missing_fields": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "repair_actions": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          }
+        },
+        "required": [
+          "valid",
+          "violations",
+          "missing_fields",
+          "repair_actions"
+        ]
+      }
+    },
+    "ROUTE_RANKER": {
+      "task_kinds": [
+        "route"
+      ],
+      "guidance": "Rank only eligible routes. Authority, privacy, legality, security, truth and proof are hard floors and cannot be compensated by quality or speed.",
+      "required_keys": [
+        "ranking",
+        "winner",
+        "rejected_routes",
+        "reason"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "ranking": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "winner": {
+            "type": "STRING"
+          },
+          "rejected_routes": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "reason": {
+            "type": "STRING"
+          }
+        },
+        "required": [
+          "ranking",
+          "winner",
+          "rejected_routes",
+          "reason"
+        ]
+      }
+    },
+    "STORYBOARD_CONTINUITY_CRITIC": {
+      "task_kinds": [
+        "continuity"
+      ],
+      "guidance": "Detect unmotivated continuity breaks and identify the smallest repair preserving creative intent.",
+      "required_keys": [
+        "continuity_score",
+        "issues",
+        "requires_repair",
+        "repair_actions"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "continuity_score": {
+            "type": "NUMBER"
+          },
+          "issues": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "requires_repair": {
+            "type": "BOOLEAN"
+          },
+          "repair_actions": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          }
+        },
+        "required": [
+          "continuity_score",
+          "issues",
+          "requires_repair",
+          "repair_actions"
+        ]
+      }
+    },
+    "PROVENANCE_ANALYST": {
+      "task_kinds": [
+        "provenance"
+      ],
+      "guidance": "Classify evidence provenance. Unknown is not absent; fail closed when required authorization or source evidence is missing.",
+      "required_keys": [
+        "provenance_state",
+        "missing_evidence",
+        "risk_flags",
+        "release_allowed"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "provenance_state": {
+            "type": "STRING"
+          },
+          "missing_evidence": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "risk_flags": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "release_allowed": {
+            "type": "BOOLEAN"
+          }
+        },
+        "required": [
+          "provenance_state",
+          "missing_evidence",
+          "risk_flags",
+          "release_allowed"
+        ]
+      }
+    },
+    "CHALLENGER_JUDGE": {
+      "task_kinds": [
+        "judge"
+      ],
+      "guidance": "Compare incumbent and challenger under frozen criteria. If deterministic derived metrics are supplied, use them exactly. Never promote when a hard floor regresses.",
+      "required_keys": [
+        "winner",
+        "regressions",
+        "promotion",
+        "reason"
+      ],
+      "response_schema": {
+        "type": "OBJECT",
+        "properties": {
+          "winner": {
+            "type": "STRING"
+          },
+          "regressions": {
+            "type": "ARRAY",
+            "items": {
+              "type": "STRING"
+            }
+          },
+          "promotion": {
+            "type": "BOOLEAN"
+          },
+          "reason": {
+            "type": "STRING"
+          }
+        },
+        "required": [
+          "winner",
+          "regressions",
+          "promotion",
+          "reason"
+        ]
+      }
+    }
+  },
+  "truth_boundary": "ROLE_PORTFOLIO_SOURCE != PROVIDER_CALLABILITY != TASK_EXECUTION != OWNER_VALUE"
+}

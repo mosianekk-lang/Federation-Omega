@@ -7,6 +7,9 @@ on:
       - "governance/fuse_localllm_desktop_v1.json"
       - "governance/proofos_omega_policy_extension_fuse_localllm_desktop_v1.json"
       - "tests/test_fuse_localllm_desktop_source_v1.py"
+      - "tests/test_fuse_localllm_gemini_provider_v1.py"
+      - "governance/fuse_localllm_gemini_provider_v1.json"
+      - "governance/proofos_omega_policy_extension_fuse_localllm_gemini_provider_v1.json"
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,6 +48,14 @@ jobs:
         run: |
           python "$env:PRODUCT_ROOT\tests\test_product.py"
           if ($LASTEXITCODE -ne 0) { throw 'LOCALLLM_PRODUCT_SOURCE_COURT_FAILED' }
+      - name: Validate hybrid Gemini provider overlay
+        run: |
+          python -m unittest discover -s tests -p 'test_fuse_localllm_gemini_provider_v1.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'LOCALLLM_GEMINI_PROVIDER_SOURCE_COURT_FAILED' }
+          $overlay='products\fuse_localllm_desktop\v0.3.0'
+          [ScriptBlock]::Create((Get-Content "$overlay\FUSE-LocalLLM-ProviderFabric.ps1" -Raw)) | Out-Null
+          [ScriptBlock]::Create((Get-Content "$overlay\install_hybrid_current_user.ps1" -Raw)) | Out-Null
+          [ScriptBlock]::Create((Get-Content "$overlay\uninstall_hybrid_current_user.ps1" -Raw)) | Out-Null
       - name: Build native Windows product from short deterministic staging path
         run: |
           Remove-Item -LiteralPath $env:BUILD_PRODUCT_ROOT -Recurse -Force -ErrorAction SilentlyContinue
@@ -77,34 +88,54 @@ jobs:
           Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM.exe" $releaseRoot
           Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\FUSE-LocalLLM-Desktop.exe" $releaseRoot
           Copy-Item "$env:BUILD_PRODUCT_ROOT\dist\BUILD_RECEIPT.json" $releaseRoot
-          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\install_current_user.ps1" $releaseRoot
-          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\uninstall_current_user.ps1" $releaseRoot
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\install_current_user.ps1" (Join-Path $releaseRoot 'install_core_current_user.ps1')
+          Copy-Item "$env:BUILD_PRODUCT_ROOT\scripts\uninstall_current_user.ps1" (Join-Path $releaseRoot 'uninstall_core_current_user.ps1')
+          Copy-Item "products\fuse_localllm_desktop\v0.3.0\install_hybrid_current_user.ps1" (Join-Path $releaseRoot 'install_current_user.ps1')
+          Copy-Item "products\fuse_localllm_desktop\v0.3.0\uninstall_hybrid_current_user.ps1" (Join-Path $releaseRoot 'uninstall_current_user.ps1')
+          New-Item -ItemType Directory -Path (Join-Path $releaseRoot 'provider-fabric') -Force | Out-Null
+          Copy-Item "products\fuse_localllm_desktop\v0.3.0\FUSE-LocalLLM-ProviderFabric.ps1" (Join-Path $releaseRoot 'provider-fabric\FUSE-LocalLLM-ProviderFabric.ps1')
+          Copy-Item "products\fuse_localllm_desktop\v0.3.0\gemini_roles.json" (Join-Path $releaseRoot 'provider-fabric\gemini_roles.json')
           Copy-Item "$env:BUILD_PRODUCT_ROOT\README.md" $releaseRoot
+          Copy-Item "products\fuse_localllm_desktop\v0.3.0\README.md" (Join-Path $releaseRoot 'README-HYBRID.md')
           Copy-Item "products\fuse_localllm_desktop\v0.2.2\DRIVE_CUSTODY.json" $releaseRoot
           Copy-Item "$env:PRODUCT_ROOT\artifacts\HOSTED_WINDOWS_RUNTIME_PROOF.json" $releaseRoot
-          $checksumLines = Get-ChildItem $releaseRoot -File | Sort-Object Name | ForEach-Object {
-            $h=(Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$h  $($_.Name)"
-          }
+          $checksumLines = Get-ChildItem $releaseRoot -Recurse -File |
+            Where-Object { $_.Name -ne 'SHA256SUMS.txt' } |
+            ForEach-Object {
+              $rel=[IO.Path]::GetRelativePath($releaseRoot,$_.FullName).Replace('\','/')
+              [pscustomobject]@{ rel=$rel; hash=(Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+            } |
+            Sort-Object rel |
+            ForEach-Object { "$($_.hash)  $($_.rel)" }
           $checksumLines | Set-Content "$releaseRoot\SHA256SUMS.txt" -Encoding ascii
           $sumLines=Get-Content "$releaseRoot\SHA256SUMS.txt"
           foreach($line in $sumLines){
             if($line -notmatch '^[0-9a-f]{64}  .+$'){ throw "MALFORMED_SHA256SUMS_LINE:$line" }
             $parts=$line -split '  ',2
-            $target=Join-Path $releaseRoot $parts[1]
+            $target=Join-Path $releaseRoot ($parts[1].Replace('/',[IO.Path]::DirectorySeparatorChar))
             if(-not (Test-Path -LiteralPath $target)){ throw "SHA256SUMS_TARGET_MISSING:$($parts[1])" }
             $actual=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
             if($actual -ne $parts[0]){ throw "SHA256SUMS_MISMATCH:$($parts[1])" }
           }
-          $zip="$env:PRODUCT_ROOT\artifacts\FUSE-LocalLLM-Desktop-v0.2.2-win-x64.zip"; Remove-Item $zip -Force -ErrorAction SilentlyContinue
+          foreach($requiredRel in @(
+            'provider-fabric/FUSE-LocalLLM-ProviderFabric.ps1',
+            'provider-fabric/gemini_roles.json',
+            'install_current_user.ps1',
+            'uninstall_current_user.ps1'
+          )){
+            if(-not ($sumLines -match ('^[0-9a-f]{64}  '+[regex]::Escape($requiredRel)+'$'))){
+              throw "SHA256SUMS_REQUIRED_HYBRID_ENTRY_MISSING:$requiredRel"
+            }
+          }
+          $zip="$env:PRODUCT_ROOT\artifacts\FUSE-LocalLLM-Desktop-v0.3.0-hybrid-win-x64.zip"; Remove-Item $zip -Force -ErrorAction SilentlyContinue
           Compress-Archive -Path "$releaseRoot\*" -DestinationPath $zip -CompressionLevel Optimal
-          [ordered]@{schema='FUSE-LOCALLLM-DESKTOP-WINDOWS-BUILD-PROOF-V1';product_version='0.2.2';source_sha=$env:FEDERATION_SOURCE_SHA;source_manifest_sha256='723a7cf4c3e8f87425884a0e8b8a077740e73b99d4d5875073f689d0ace45ffb';llama_cpp_commit='60081bb2b5b3294165a4d67c5cbeebe74c868014';runtime_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM.exe" -Algorithm SHA256).Hash.ToLower();desktop_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM-Desktop.exe" -Algorithm SHA256).Hash.ToLower();package_sha256=(Get-FileHash $zip -Algorithm SHA256).Hash.ToLower();hosted_runtime_health_verified=$true;owner_windows_runtime_verified=$false;model_inference_verified=$false;installer_exe_verified=$false} | ConvertTo-Json -Depth 6 | Set-Content "$env:PRODUCT_ROOT\artifacts\WINDOWS_BUILD_PROOF.json" -Encoding UTF8
+          [ordered]@{schema='FUSE-LOCALLLM-DESKTOP-WINDOWS-BUILD-PROOF-V1';product_version='0.3.0-hybrid';core_runtime_version='0.2.2';hybrid_overlay_version='0.3.0';gemini_provider_fabric_packaged=$true;source_sha=$env:FEDERATION_SOURCE_SHA;source_manifest_sha256='723a7cf4c3e8f87425884a0e8b8a077740e73b99d4d5875073f689d0ace45ffb';llama_cpp_commit='60081bb2b5b3294165a4d67c5cbeebe74c868014';runtime_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM.exe" -Algorithm SHA256).Hash.ToLower();desktop_sha256=(Get-FileHash "$releaseRoot\FUSE-LocalLLM-Desktop.exe" -Algorithm SHA256).Hash.ToLower();provider_fabric_sha256=(Get-FileHash "$releaseRoot\provider-fabric\FUSE-LocalLLM-ProviderFabric.ps1" -Algorithm SHA256).Hash.ToLower();gemini_roles_sha256=(Get-FileHash "$releaseRoot\provider-fabric\gemini_roles.json" -Algorithm SHA256).Hash.ToLower();checksum_manifest_sha256=(Get-FileHash "$releaseRoot\SHA256SUMS.txt" -Algorithm SHA256).Hash.ToLower();package_sha256=(Get-FileHash $zip -Algorithm SHA256).Hash.ToLower();hosted_runtime_health_verified=$true;owner_windows_runtime_verified=$false;model_inference_verified=$false;installer_exe_verified=$false} | ConvertTo-Json -Depth 6 | Set-Content "$env:PRODUCT_ROOT\artifacts\WINDOWS_BUILD_PROOF.json" -Encoding UTF8
       - name: Upload Windows product candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: fuse-localllm-desktop-v0.2.2-win-x64-${{ github.run_id }}-${{ github.run_attempt }}
+          name: fuse-localllm-desktop-v0.3.0-hybrid-win-x64-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/FUSE-LocalLLM-Desktop-v0.2.2-win-x64.zip
+            products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/FUSE-LocalLLM-Desktop-v0.3.0-hybrid-win-x64.zip
             products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/WINDOWS_BUILD_PROOF.json
             products/fuse_localllm_desktop/v0.2.2/upstream/artifacts/HOSTED_WINDOWS_RUNTIME_PROOF.json
           if-no-files-found: error

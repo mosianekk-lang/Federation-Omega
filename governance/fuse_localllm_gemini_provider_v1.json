@@ -1,0 +1,72 @@
+{
+  "schema": "FUSE_LOCALLLM_GEMINI_PROVIDER_FABRIC_V1",
+  "version": "1.0.0",
+  "product_overlay_version": "0.3.0",
+  "parent_product": "FUSE-LOCALLLM-DESKTOP-V022",
+  "immutable_core_source": "products/fuse_localllm_desktop/v0.2.2/upstream",
+  "overlay_root": "products/fuse_localllm_desktop/v0.3.0",
+  "primary_orchestrator": "SOVARA",
+  "providers": [
+    {
+      "id": "FUSE_LOCAL_LLM",
+      "role": "LOCAL_PRIVATE_FALLBACK_AND_SOVEREIGN_CORE",
+      "transport": "LOOPBACK_OPENAI_COMPAT",
+      "classifications": [
+        "PUBLIC",
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "LEGAL_EVIDENCE",
+        "SECRET"
+      ]
+    },
+    {
+      "id": "GOOGLE_VERTEX_AI",
+      "role": "PRIMARY_EXTERNAL_INTELLIGENCE",
+      "model": "gemini-2.5-flash",
+      "transport": "GCLOUD_ADC_ACCESS_TOKEN",
+      "classifications": [
+        "PUBLIC",
+        "INTERNAL"
+      ]
+    }
+  ],
+  "capabilities": [
+    "LOCAL_GENERATE",
+    "GEMINI_GENERATE",
+    "AUTO_ROUTE",
+    "PROVIDER_RACE",
+    "GEMINI_COUNCIL",
+    "ALPHA_OMEGA_REASONER",
+    "CFBE_CRITIC",
+    "CREATIVE_BRIEF_COMPILER",
+    "DESIGNIR_VALIDATOR",
+    "ROUTE_RANKER",
+    "STORYBOARD_CONTINUITY_CRITIC",
+    "PROVENANCE_ANALYST",
+    "CHALLENGER_JUDGE",
+    "STRUCTURED_JSON_OUTPUT",
+    "PROVIDER_REQUEST_RECEIPTS",
+    "USAGE_METADATA",
+    "LOCAL_FALLBACK",
+    "PRIVACY_CLASS_FENCING"
+  ],
+  "proof": {
+    "gemini_semantic_verified": true,
+    "main_role_portfolio": "8_OF_8_VERIFIED",
+    "adversarial_holdout": "8_OF_8_VERIFIED",
+    "matched_2x_performance_verified": false,
+    "measured_speedup_ratio": 0.976554,
+    "provider_run": "36198546709",
+    "source_sha": "04de984b9cf9b10aea03c65e7c9e486c9739a45e"
+  },
+  "hard_floors": [
+    "AUTHORITY",
+    "SECURITY",
+    "PRIVACY",
+    "LEGALITY",
+    "TRUTH",
+    "PROOF"
+  ],
+  "authority_boundary": "PROVIDER_IS_CARRIER_NOT_AUTHORITY",
+  "completion_boundary": "SOURCE_BOUND != PACKAGE_VERIFIED != OWNER_PC_INSTALLED != PROVIDER_RUNTIME_CURRENT != OWNER_VALUE != COMPLETE"
+}
