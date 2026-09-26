@@ -1,0 +1,48 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "products/fuse_localllm_modelpacks/**",
+        "governance/proofos_omega_policy_extension_fuse_localllm_model_pack_v1.json",
+        "tests/test_fuse_localllm_model_pack_v1.py"
+      ],
+      "reason": "FUSE_LOCALLLM_MODEL_PACK_SOURCE_IDENTITY_INTEGRITY_AND_PROVISIONING"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_LOCALLLM_MODEL_PACK",
+      "patterns": [
+        "products/fuse_localllm_modelpacks/**",
+        "governance/proofos_omega_policy_extension_fuse_localllm_model_pack_v1.json",
+        "tests/test_fuse_localllm_model_pack_v1.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_localllm_model_pack_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_localllm_model_pack_v1.py",
+      "patterns": [
+        "products/fuse_localllm_modelpacks/**",
+        "governance/proofos_omega_policy_extension_fuse_localllm_model_pack_v1.json",
+        "tests/test_fuse_localllm_model_pack_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_LOCALLLM_MODEL_PACK",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    }
+  ]
+}

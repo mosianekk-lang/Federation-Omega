@@ -1,0 +1,37 @@
+{
+  "schema": "FUSE_MODEL_PACK_V1",
+  "version": "1.0.0",
+  "pack_id": "FUSE-MODELPACK-QWEN3-4B-Q4-K-M-V1",
+  "model_id": "Qwen/Qwen3-4B-GGUF",
+  "model_revision": "a9a60d009fa7ff9606305047c2bf77ac25dbec49",
+  "filename": "Qwen3-4B-Q4_K_M.gguf",
+  "quantization": "Q4_K_M",
+  "format": "GGUF",
+  "architecture": "qwen3",
+  "parameter_class": "4B",
+  "task_classes": [
+    "GENERAL_REASONING",
+    "FAST_CHAT",
+    "CODING",
+    "AGENT_PLANNING"
+  ],
+  "license": "Apache-2.0",
+  "commercial_distribution_allowed": true,
+  "source_url": "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/a9a60d009fa7ff9606305047c2bf77ac25dbec49/Qwen3-4B-Q4_K_M.gguf?download=true",
+  "source_repository": "https://huggingface.co/Qwen/Qwen3-4B-GGUF",
+  "expected_size_bytes": 2497280256,
+  "sha256": "7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5",
+  "runtime_compatibility": {
+    "fuse_localllm_desktop_min": "0.2.2",
+    "llama_cpp": true,
+    "verified_runtime_binding": false
+  },
+  "install": {
+    "default_relative_path": "Models/Qwen3-4B-Q4_K_M.gguf",
+    "atomic_replace": true,
+    "existing_hash_match_reuses": true,
+    "hash_mismatch_fails_closed": true
+  },
+  "proof_state": "SOURCE_IDENTITY_LICENSE_SIZE_HASH_CURRENT_WEB_VERIFIED",
+  "truth_boundary": "SOURCE_MODEL_IDENTITY_AND_PROVISIONER_BOUND != MODEL_BYTES_IN_OWNER_CUSTODY != OWNER_WINDOWS_MODEL_LOAD != INFERENCE_VALUE_VERIFIED"
+}
