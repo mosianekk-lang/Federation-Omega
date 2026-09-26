@@ -15,6 +15,14 @@ class PolicyTests(unittest.TestCase):
         p=ProofPolicy.from_path(POLICY_PATH); self.assertEqual('FEDERATION-PROOFOS-OMEGA-V1',p.schema); self.assertEqual(0,p.sentinel_percent); self.assertIn(p.fallback_test_id,p.tests)
     def test_sovara_scoped_not_phoenix_export(self):
         _,i,m=compile_for(['ops/sovara_provider_execution_fabric.py']); s=selected(m); self.assertIn('SOVARA',i.impacted_subsystems); self.assertTrue({'sovara_provider_execution','sovara_provider_recovery'}<=s); self.assertNotIn('phoenix_exports',s); self.assertNotIn('full_federation_fallback',s)
+    def test_phoenix_runtime_source_floor_prevents_current_export_false_green(self):
+        source=(ROOT/"phoenix"/"build_exports.py").read_text(encoding="utf-8")
+        self.assertIn("CORE_RUNTIME_SOURCE_EXTENSION_FLOOR",source)
+        for extension in (".mjs",".cmd",".cpp",".hpp",".h"):
+            self.assertIn(repr(extension),source)
+        self.assertIn('CORE_SPECIAL_SOURCE_FILENAMES = frozenset({"Dockerfile"})',source)
+        self.assertIn('approved_extensions = set(core["include_extensions"]) | CORE_RUNTIME_SOURCE_EXTENSION_FLOOR',source)
+
     def test_runtime_bootstrap_selects_export(self):
         _,i,m=compile_for(['runtime_bootstrap/sitecustomize.py']); self.assertIn('RELEASE_EXPORT',i.direct_subsystems); self.assertIn('phoenix_exports',selected(m))
     def test_unknown_prod_falls_back_full(self):

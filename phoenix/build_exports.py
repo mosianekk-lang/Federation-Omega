@@ -18,6 +18,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+CORE_RUNTIME_SOURCE_EXTENSION_FLOOR = frozenset({".mjs", ".cmd", ".cpp", ".hpp", ".h"})
+CORE_SPECIAL_SOURCE_FILENAMES = frozenset({"Dockerfile"})
+
+
 @dataclass(frozen=True)
 class FileRecord:
     path: str
@@ -92,7 +96,10 @@ def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
         return False, "EXCLUDED_SENSITIVE_OR_GENERATED_SUFFIX"
     if path.name in core["include_root_files"] and path.parent == root:
         return True, "APPROVED_ROOT_FILE"
-    if path.suffix.lower() not in set(core["include_extensions"]):
+    if path.name in CORE_SPECIAL_SOURCE_FILENAMES:
+        return True, "APPROVED_CONTAINER_BUILD_FILE"
+    approved_extensions = set(core["include_extensions"]) | CORE_RUNTIME_SOURCE_EXTENSION_FLOOR
+    if path.suffix.lower() not in approved_extensions:
         return False, "UNAPPROVED_EXTENSION"
     if path.stat().st_size > 10 * 1024 * 1024:
         return False, "FILE_EXCEEDS_CORE_EXPORT_LIMIT"

@@ -36,6 +36,8 @@ class FuseLocalLLMDesktopSourceTests(unittest.TestCase):
         self.assertNotIn(workflow,policy["provider_mutation_workflow_allowlist"])
 
     def test_windows_workflow_packaging_regression_guard(self):
+        if not WORKFLOW.is_file():
+            self.skipTest("workflow-free Phoenix Core export excludes repository workflow controls")
         wf=WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("if($line -notmatch '^[0-9a-f]{64}  .+$'){ throw \"MALFORMED_SHA256SUMS_LINE:$line\" }",wf)
         self.assertEqual(wf.count("uses: actions/upload-artifact@"),1)
