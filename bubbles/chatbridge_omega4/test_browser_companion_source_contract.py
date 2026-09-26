@@ -101,7 +101,12 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
         self.assertIn('await checkpoint("SUCCESSOR_REQUEST", {suppressAuto: true})', successor_body)
         self.assertIn('openSuccessorForCapture(captured, "CAPACITY_HANDOFF_MANUAL_RETRY")', successor_body)
         self.assertIn('checkpoint("TERMINAL_WARNING_SUPPRESSED")', content)
-        self.assertIn('checkpoint("PERIODIC_WRITE_AHEAD")', content)\n        self.assertIn('banner.style.setProperty("display", "none", "important")', content)\n        self.assertEqual(json.loads((COMPANION / "manifest.json").read_text(encoding="utf-8"))["content_scripts"][0]["run_at"], "document_start")
+        self.assertIn('checkpoint("PERIODIC_WRITE_AHEAD")', content)
+        self.assertIn('banner.style.setProperty("display", "none", "important")', content)
+        self.assertEqual(
+            json.loads((COMPANION / "manifest.json").read_text(encoding="utf-8"))["content_scripts"][0]["run_at"],
+            "document_start",
+        )
         self.assertIn('checkpoint("VISIBILITY_HIDDEN")', content)
 
     def test_edge_agent_has_only_courier_authority_and_fixed_identity(self) -> None:
