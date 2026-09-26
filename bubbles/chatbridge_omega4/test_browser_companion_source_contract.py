@@ -28,7 +28,7 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
     def test_manifest_matches_v031_and_stays_browser_bounded(self) -> None:
         manifest = json.loads((COMPANION / "manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["manifest_version"], 3)
-        self.assertEqual(manifest["version"], "0.3.1")
+        self.assertEqual(manifest["version"], "0.4.0")
         self.assertEqual(
             manifest["permissions"],
             ["storage", "unlimitedStorage", "downloads"],
@@ -96,12 +96,17 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
         )
 
         start = content.index("async function startSuccessor")
-        end = content.index("function decorateLimitBanner")
+        end = content.index("function suppressLimitBanner")
         successor_body = content[start:end]
         self.assertIn('await checkpoint("SUCCESSOR_REQUEST", {suppressAuto: true})', successor_body)
         self.assertIn('openSuccessorForCapture(captured, "CAPACITY_HANDOFF_MANUAL_RETRY")', successor_body)
-        self.assertIn('checkpoint("TERMINAL_WARNING_DETECTED")', content)
+        self.assertIn('checkpoint("TERMINAL_WARNING_SUPPRESSED")', content)
         self.assertIn('checkpoint("PERIODIC_WRITE_AHEAD")', content)
+        self.assertIn('banner.style.setProperty("display", "none", "important")', content)
+        self.assertEqual(
+            json.loads((COMPANION / "manifest.json").read_text(encoding="utf-8"))["content_scripts"][0]["run_at"],
+            "document_start",
+        )
         self.assertIn('checkpoint("VISIBILITY_HIDDEN")', content)
 
     def test_edge_agent_has_only_courier_authority_and_fixed_identity(self) -> None:
@@ -150,22 +155,24 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
         npm = shutil.which("npm")
         if not node or not npm:
             self.skipTest("Node/npm is not installed in this runner")
-        subprocess.run(
+        companion = subprocess.run(
             [npm, "run", "check"],
             cwd=COMPANION,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=120,
         )
-        subprocess.run(
+        self.assertEqual(companion.returncode, 0, companion.stdout + companion.stderr)
+        edge = subprocess.run(
             [npm, "run", "check"],
             cwd=EDGE_AGENT,
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
             timeout=120,
         )
+        self.assertEqual(edge.returncode, 0, edge.stdout + edge.stderr)
 
 
 if __name__ == "__main__":

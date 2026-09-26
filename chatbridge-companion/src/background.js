@@ -7,9 +7,9 @@ const edgeEgress = globalThis.ChatBridgeEdgeEgress;
 const DEFAULTS = Object.freeze({
   autoSend: true,
   maxReplayChars: 28000,
-  tokenThreshold: 65000,
-  messageThreshold: 80,
-  captureIntervalMs: 30000
+  tokenThreshold: 24000,
+  messageThreshold: 32,
+  captureIntervalMs: 10000
 });
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -210,6 +210,7 @@ async function buildManifest(ledger) {
     pathGroups: ["browser-rendered-dom"],
     chainHeadSha256: ledger.lastEventHash || "",
     terminalObserved: Boolean(ledger.terminalObserved),
+    estimatedTranscriptTokens: core.estimateTokens(latest.map((event) => event.content || "").join("\n")),
     truthBoundary: "Rendered browser messages are captured and hash-chained. Hidden provider events and uncaptured legacy content are not inferred."
   };
 }
