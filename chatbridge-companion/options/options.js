@@ -1,5 +1,5 @@
 "use strict";
-const defaults = {autoSend: true, maxReplayChars: 28000, tokenThreshold: 65000, messageThreshold: 80, captureIntervalMs: 30000};
+const defaults = {autoSend: true, maxReplayChars: 28000, tokenThreshold: 24000, messageThreshold: 32, captureIntervalMs: 10000};
 async function load() {
   const stored = await chrome.storage.local.get("chatbridgeSettings");
   const settings = Object.assign({}, defaults, stored.chatbridgeSettings || {});
