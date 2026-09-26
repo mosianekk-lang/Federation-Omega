@@ -110,3 +110,12 @@ test("capacity-safe restore keeps full history external and sends only a bounded
   assert.doesNotMatch(prompts[0].text, /turn-1-/);
   assert.match(prompts[0].text, /ARCHIVE MANIFEST/);
 });
+
+
+test("weighted-pressure reserve preempts before owner-visible terminal limit", () => {
+  const metrics = {estimatedRenderedTokens: 26000, renderedMessageCount: 20, requiredArtifactCount: 0};
+  assert.equal(core.estimateWeightedPressure(metrics, {}), 45920);
+  assert.equal(core.shouldPreempt(metrics, {}), false);
+  assert.equal(core.shouldPreempt({...metrics, estimatedRenderedTokens: 26100}, {}), true);
+  assert.equal(core.shouldAutoHandoff({metrics: {...metrics, estimatedRenderedTokens: 26100}, terminalNotice: ""}, {}), true);
+});

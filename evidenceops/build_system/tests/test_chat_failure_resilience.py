@@ -271,6 +271,45 @@ class ChatFailureResilienceTests(unittest.TestCase):
             self.assertEqual(ACKNOWLEDGED, acknowledged["state"])
             self.assertTrue(journal.verify_event_chain())
 
+    def test_orphaned_terminal_delivery_can_be_acknowledged_without_new_transaction(self):
+        with tempfile.TemporaryDirectory() as temp:
+            journal = DeliveryJournal(Path(temp) / "delivery.sqlite3")
+            first = journal.deliver(
+                "tx-owner-delivery",
+                "result-1",
+                "sha256:result",
+                acknowledgement=None,
+            )
+            self.assertEqual(ORPHANED_UNACKNOWLEDGED, first["state"])
+            self.assertEqual(
+                ["tx-owner-delivery"],
+                [item["transaction_id"] for item in journal.pending_unacknowledged()],
+            )
+
+            acknowledged = journal.acknowledge(
+                "tx-owner-delivery",
+                "owner-visible-response",
+            )
+            self.assertEqual(ACKNOWLEDGED, acknowledged["state"])
+            self.assertEqual("result-1", acknowledged["artifact_id"])
+            self.assertEqual("sha256:result", acknowledged["artifact_sha256"])
+            self.assertEqual([], journal.pending_unacknowledged())
+            self.assertTrue(journal.verify_event_chain())
+
+            repeated = journal.acknowledge(
+                "tx-owner-delivery",
+                "owner-visible-response",
+            )
+            self.assertEqual(ACKNOWLEDGED, repeated["state"])
+            self.assertTrue(journal.verify_event_chain())
+
+    def test_terminal_delivery_rejects_transaction_content_rebinding(self):
+        with tempfile.TemporaryDirectory() as temp:
+            journal = DeliveryJournal(Path(temp) / "delivery.sqlite3")
+            journal.deliver("tx-fixed", "result-a", "sha256:a", acknowledgement=None)
+            with self.assertRaises(IntegrityError):
+                journal.deliver("tx-fixed", "result-b", "sha256:b", acknowledgement=None)
+
     def test_provider_effect_is_blocked_by_default(self):
         with self.assertRaisesRegex(PolicyDenied, "provider actions are disabled"):
             RuntimePolicy().admit("PROVIDER_WRITE")

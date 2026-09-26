@@ -1,0 +1,27 @@
+/* ChatBridge Companion v0.3.x runtime status surface.
+   Static style asset required by manifest.json. */
+[data-chatbridge-status] {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: Canvas;
+  color: CanvasText;
+  font: 13px/1.4 system-ui, sans-serif;
+}
+[data-chatbridge-status][hidden] { display: none !important; }
+.chatbridge-start-button {
+  margin-inline-end: 8px;
+  padding: 6px 10px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: Canvas;
+  color: CanvasText;
+  font: inherit;
+  cursor: pointer;
+}
+.chatbridge-start-button:disabled { cursor: wait; opacity: 0.65; }

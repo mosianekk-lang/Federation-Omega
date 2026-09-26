@@ -332,10 +332,27 @@
     return [{packetIndex: 1, packetCount: 1, text}];
   }
 
+  function estimateWeightedPressure(metrics, settings) {
+    const current = metrics || {};
+    const cfg = settings || {};
+    const renderedTokens = Math.max(0, Number(current.estimatedRenderedTokens) || 0);
+    const messageCount = Math.max(0, Number(current.renderedMessageCount) || 0);
+    const artifactCount = Math.max(0, Number(current.requiredArtifactCount) || 0);
+    const baseContextReserveTokens = Math.max(0, Number(cfg.baseContextReserveTokens) || 18000);
+    const perMessageOverheadTokens = Math.max(0, Number(cfg.perMessageOverheadTokens) || 96);
+    const perArtifactOverheadTokens = Math.max(0, Number(cfg.perArtifactOverheadTokens) || 1400);
+    return renderedTokens + baseContextReserveTokens + (messageCount * perMessageOverheadTokens) + (artifactCount * perArtifactOverheadTokens);
+  }
+
   function shouldPreempt(metrics, settings) {
-    const tokenThreshold = Number(settings && settings.tokenThreshold) || 65000;
-    const messageThreshold = Number(settings && settings.messageThreshold) || 80;
-    return Number(metrics.estimatedRenderedTokens) >= tokenThreshold || Number(metrics.renderedMessageCount) >= messageThreshold;
+    const cfg = settings || {};
+    const tokenThreshold = Number(cfg.tokenThreshold) || 28000;
+    const weightedTokenThreshold = Number(cfg.weightedTokenThreshold) || 46000;
+    const messageThreshold = Number(cfg.messageThreshold) || 48;
+    const renderedTokens = Number(metrics && metrics.estimatedRenderedTokens) || 0;
+    const messageCount = Number(metrics && metrics.renderedMessageCount) || 0;
+    const weightedPressure = estimateWeightedPressure(metrics || {}, cfg);
+    return renderedTokens >= tokenThreshold || weightedPressure >= weightedTokenThreshold || messageCount >= messageThreshold;
   }
 
   function shouldAutoHandoff(packet, settings) {
@@ -365,6 +382,7 @@
     latestTranscriptEvents,
     buildReplayPrompts,
     buildWorkingSetPrompts,
+    estimateWeightedPressure,
     shouldPreempt,
     shouldAutoHandoff
   });

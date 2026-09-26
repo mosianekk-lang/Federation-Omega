@@ -97,7 +97,7 @@
       conversationKey: captured.packet.conversationKey,
       reason: reason || "CAPACITY_HANDOFF"
     });
-    if (!result || !result.ok) throw new Error(result && result.error || "OPEN_FAILED");
+    if (!result || !result.ok) throw new Error(result && (result.error || result.recoveryState) || "OPEN_FAILED");
     status(
       `ChatBridge successor ${result.reused ? "reused" : "opened"} with ${result.packetCount} replay packets`,
       "ready",
@@ -193,18 +193,107 @@
     return false;
   }
 
+  function normalizedText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function exactUserPromptVisible(text) {
+    const expected = normalizedText(text);
+    if (!expected) return false;
+    return core.collectMessages(document).some((message) => {
+      return String(message.role || "").toLowerCase() === "user" && normalizedText(message.text) === expected;
+    });
+  }
+
+  async function waitForUserEcho(text, timeoutMs) {
+    const started = Date.now();
+    while (Date.now() - started < timeoutMs) {
+      if (exactUserPromptVisible(text)) return true;
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+    return false;
+  }
+
+  async function reconcilePossiblePacketEffect(pending) {
+    if (!pending || !pending.effectReadbackRequired) return {resolved: false};
+    if (exactUserPromptVisible(pending.prompt.text)) {
+      const committed = await chrome.runtime.sendMessage({
+        type: "CHATBRIDGE_PACKET_EFFECT_READBACK",
+        transferId: pending.transferId,
+        clientEpoch: pending.clientEpoch,
+        packetIndex: pending.packetIndex,
+        observed: "COMMITTED"
+      });
+      return {resolved: true, committed: true, result: committed};
+    }
+
+    // Absence is weaker evidence than presence. Require a loaded composer and two
+    // separated current-client reads before declaring the provider send unobserved.
+    const composer = await waitForComposer(15000);
+    if (!composer) return {resolved: false};
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    const firstAbsent = !exactUserPromptVisible(pending.prompt.text);
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    const secondAbsent = !exactUserPromptVisible(pending.prompt.text);
+    if (!firstAbsent || !secondAbsent) {
+      const committed = await chrome.runtime.sendMessage({
+        type: "CHATBRIDGE_PACKET_EFFECT_READBACK",
+        transferId: pending.transferId,
+        clientEpoch: pending.clientEpoch,
+        packetIndex: pending.packetIndex,
+        observed: "COMMITTED"
+      });
+      return {resolved: true, committed: true, result: committed};
+    }
+    const noEffect = await chrome.runtime.sendMessage({
+      type: "CHATBRIDGE_PACKET_EFFECT_READBACK",
+      transferId: pending.transferId,
+      clientEpoch: pending.clientEpoch,
+      packetIndex: pending.packetIndex,
+      observed: "NO_EFFECT_PROVEN"
+    });
+    return {resolved: Boolean(noEffect && noEffect.ok), committed: false, result: noEffect};
+  }
+
+  async function markResultRenderVerified(pending) {
+    return chrome.runtime.sendMessage({
+      type: "CHATBRIDGE_RESULT_RENDER_VERIFIED",
+      transferId: pending.transferId,
+      clientEpoch: pending.clientEpoch
+    });
+  }
+
   async function sendPendingPackets() {
     while (true) {
       const result = await chrome.runtime.sendMessage({type: "CHATBRIDGE_GET_PENDING"});
       const pending = result && result.pending;
       if (!pending) return;
+
+      if (pending.effectReadbackRequired) {
+        const recovery = await reconcilePossiblePacketEffect(pending);
+        if (!recovery.resolved) {
+          status(`ChatBridge packet ${pending.packetIndex} held for possible-effect readback`, "error", 12000);
+          return;
+        }
+        if (recovery.committed) {
+          if (recovery.result && recovery.result.complete) {
+            const before = assistantCount();
+            const rendered = await waitForAssistantAfter(before, 180000);
+            if (rendered) await markResultRenderVerified(pending);
+            return;
+          }
+          continue;
+        }
+        continue;
+      }
+
       const composer = await waitForComposer(45000);
       if (!composer) {
         status("ChatBridge successor opened; composer not available", "error", 10000);
         return;
       }
       setComposerText(composer, pending.prompt.text);
-      if (!settings.autoSend) {
+      if (!settings.autoSend || pending.autosendAllowed === false) {
         status(`ChatBridge packet ${pending.packetIndex}/${pending.packetCount} prepared for review`, "ready", 12000);
         return;
       }
@@ -215,21 +304,50 @@
         status(`ChatBridge packet ${pending.packetIndex}/${pending.packetCount} prepared; send button unavailable`, "error", 12000);
         return;
       }
+
+      const effectStarted = await chrome.runtime.sendMessage({
+        type: "CHATBRIDGE_PACKET_EFFECT_STARTED",
+        transferId: pending.transferId,
+        clientEpoch: pending.clientEpoch,
+        packetIndex: pending.packetIndex
+      });
+      if (!effectStarted || !effectStarted.ok) {
+        status(`ChatBridge packet ${pending.packetIndex} effect fence rejected`, "error", 12000);
+        return;
+      }
+
       sendButton.click();
+      const userEcho = await waitForUserEcho(pending.prompt.text, 30000);
       const isFinal = pending.packetIndex === pending.packetCount;
+      let assistantRendered = false;
       if (!isFinal) {
-        const acknowledged = await waitForAssistantAfter(before, 180000);
-        if (!acknowledged) {
+        assistantRendered = await waitForAssistantAfter(before, 180000);
+        if (!assistantRendered) {
           status(`ChatBridge packet ${pending.packetIndex} sent; acknowledgement timeout`, "error", 12000);
           return;
         }
       }
+      if (!userEcho && !assistantRendered) {
+        status(`ChatBridge packet ${pending.packetIndex} send outcome uncertain; exact readback required`, "error", 12000);
+        return;
+      }
+
       const consumed = await chrome.runtime.sendMessage({
         type: "CHATBRIDGE_PACKET_CONSUMED",
-        transferId: pending.transferId
+        transferId: pending.transferId,
+        clientEpoch: pending.clientEpoch,
+        packetIndex: pending.packetIndex,
+        evidenceKind: assistantRendered ? "RENDERED_USER_MESSAGE_AND_ASSISTANT" : "RENDERED_USER_MESSAGE"
       });
-      if (!consumed || !consumed.ok || consumed.complete) {
-        if (consumed && consumed.complete) status("ChatBridge Ω4.9 replay packets delivered", "ready", 12000);
+      if (!consumed || !consumed.ok) return;
+      if (consumed.complete) {
+        if (!assistantRendered) assistantRendered = await waitForAssistantAfter(before, 180000);
+        if (assistantRendered) {
+          await markResultRenderVerified(pending);
+          status("ChatBridge Ω4.9 replay complete; current-client render verified", "ready", 12000);
+        } else {
+          status("ChatBridge Ω4.9 replay committed; final render delivery debt retained", "error", 12000);
+        }
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, 700));
@@ -256,8 +374,18 @@
     }
   });
 
+  document.addEventListener("click", (event) => {
+    if (!event.isTrusted) return;
+    const button = event.target && event.target.closest ? event.target.closest("button") : null;
+    if (!button) return;
+    const label = `${button.getAttribute("aria-label") || ""} ${button.textContent || ""}`;
+    if (!/stop generating|stop response/i.test(label)) return;
+    chrome.runtime.sendMessage({type: "CHATBRIDGE_USER_INTERRUPTION"}).catch(() => {});
+  }, true);
+
   chrome.runtime.sendMessage({type: "CHATBRIDGE_SETTINGS"}).then((result) => {
     if (result && result.ok) settings = Object.assign(settings, result.settings);
+    chrome.runtime.sendMessage({type: "CHATBRIDGE_RECONCILE", reason: "CONTENT_SCRIPT_LOAD"}).catch(() => {});
     sendPendingPackets().catch((error) => status(String(error.message || error), "error", 10000));
     scheduleCheckpoint("INITIAL_LOAD");
     clearInterval(periodicTimer);

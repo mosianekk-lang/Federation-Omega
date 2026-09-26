@@ -12,7 +12,7 @@ class NOmegaAgenticFrontierTests(unittest.TestCase):
     def test_frontier_coverage_and_truth_boundary(self):
         s = frontier_summary()
         self.assertEqual(s["vendor_reference_count"], 22)
-        self.assertEqual(s["capability_gene_count"], 53)
+        self.assertEqual(s["capability_gene_count"], 63)
         self.assertEqual(s["domain_count"], 18)
         self.assertTrue(s["zero_unrouted"])
         self.assertTrue(s["one_mutating_lane"])
@@ -68,7 +68,7 @@ class NOmegaAgenticFrontierTests(unittest.TestCase):
         c = AgenticFrontierCompiler()
         c.validate()
         ids = list(c.genes)
-        self.assertEqual(len(ids), 53)
+        self.assertEqual(len(ids), 63)
         self.assertEqual(len(ids), len(set(ids)))
         for gene in c.genes.values():
             self.assertTrue(gene.sources)
@@ -102,7 +102,7 @@ class NOmegaAgenticFrontierTests(unittest.TestCase):
         self.assertTrue(s["clean_room_harvest"])
         self.assertFalse(s["proprietary_weights_imported"])
         self.assertFalse(s["undocumented_vendor_internals_imported"])
-        self.assertEqual(len(s["frontier_2026_gene_ids"]), 13)
+        self.assertEqual(len(s["frontier_2026_gene_ids"]), 23)
 
     def test_explicit_residual_flags_select_without_broad_domains(self):
         p = AgenticFrontierCompiler().compile(MissionProfile(
@@ -122,6 +122,44 @@ class NOmegaAgenticFrontierTests(unittest.TestCase):
         ))
         for gene in [f"AGF-{i:03d}" for i in range(41,54)]:
             self.assertIn(gene, p.selected_gene_ids)
+
+
+    def test_external_frontier_residuals_054_063_auto_adopt(self):
+        p = AgenticFrontierCompiler().compile(MissionProfile(
+            mission_id="EXT2026",
+            domains=frozenset({"DURABILITY", "TOOLS", "ORCHESTRATION", "EXECUTION", "ROUTING", "SECURITY"}),
+            long_running=True,
+            tool_heavy=True,
+            code_execution=True,
+            browser_or_computer=True,
+            consequential=True,
+            requires_release=True,
+            requires_persistent_agent=True,
+            requires_local_multimodal=True,
+        ))
+        for gene in [f"AGF-{i:03d}" for i in range(54,64)]:
+            self.assertIn(gene, p.selected_gene_ids)
+        self.assertIn("ACTION_SPECIFIC_AUTHORITY", p.proof_required)
+        self.assertIn("POST_EFFECT_READBACK", p.proof_required)
+
+    def test_external_frontier_residual_flags_select_individually(self):
+        p = AgenticFrontierCompiler().compile(MissionProfile(
+            mission_id="EXTFLAGS",
+            domains=frozenset({"SPECIFICATION"}),
+            requires_async_job_handle=True,
+            requires_exact_resume=True,
+            requires_tool_catalog_cache=True,
+            requires_async_task_delivery=True,
+            requires_browser_offscreen_liveness=True,
+            requires_replay_safe_versioning=True,
+            requires_adaptive_worker_capacity=True,
+            requires_local_openai_compat=True,
+            requires_failure_domain_spread=True,
+            requires_oauth_mixup_hardening=True,
+        ))
+        for gene in [f"AGF-{i:03d}" for i in range(54,64)]:
+            self.assertIn(gene, p.selected_gene_ids)
+
 
 
 if __name__ == "__main__":

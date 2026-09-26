@@ -24,7 +24,7 @@ def test_required_surface_estate_is_registered():
         "GOOGLE-AI-STUDIO-GEMINI", "CANVA", "ADOBE", "GITHUB", "GITHUB-COPILOT",
         "GOOGLE-DRIVE", "GMAIL", "GOOGLE-CALENDAR", "GOOGLE-CONTACTS",
         "MICROSOFT-COPILOT-STUDIO", "OUTLOOK-EMAIL", "OUTLOOK-CALENDAR",
-        "WINDOWS-FEDERATION-PLANE", "LUNO-OBSERVER", "LONA-TRADING-ASSISTANT", "BOOKING-COM",
+        "WINDOWS-FEDERATION-PLANE", "LOCAL-LM-STUDIO", "LUNO-OBSERVER", "LONA-TRADING-ASSISTANT", "BOOKING-COM",
     }
     assert required.issubset(registry.surfaces)
 
@@ -37,6 +37,29 @@ def test_astra_harvest_exposes_load_bearing_primitives():
     assert "computer_use" in astra.capabilities
     assert "hosted_shell" in astra.capabilities
     assert f"MCP/{MCP_PROTOCOL_VERSION}" in astra.protocols
+
+
+def test_local_lm_studio_is_registered_but_runtime_revalidated():
+    surface = build_default_registry().surfaces["LOCAL-LM-STUDIO"]
+    assert surface.state == SurfaceState.USER_NAMED_REVALIDATE_RUNTIME
+    assert "responses" in surface.capabilities
+    assert "tool_calling" in surface.capabilities
+    assert "remote_mcp" in surface.capabilities
+    assert "stateful_chat" in surface.capabilities
+    assert "model_load_unload" in surface.capabilities
+    assert "RESPONSES_API" in surface.protocols
+    assert f"MCP/{MCP_PROTOCOL_VERSION}" in surface.protocols
+    assert surface.live_execution_claimed is False
+
+def test_local_lm_studio_can_cover_private_runtime_need_without_claiming_execution():
+    route = build_default_registry().plan(MissionNeed(
+        mission_id="local-private",
+        capabilities=("local_inference", "responses", "tool_calling", "stateful_chat"),
+        maximum_effect=EffectClass.INTERNAL,
+    ))
+    assert route.complete
+    assert "LOCAL-LM-STUDIO" in route.selected_surface_ids
+    assert route.provider_execution_proven is False
 
 
 def test_financial_surfaces_are_observe_only():
