@@ -1,0 +1,118 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2F",
+  "version": "2.4.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "331-350",
+  "chapter_count": 20,
+  "objective": "Extend Forest-first into unknown-unknown resilience and final-mile closure so hidden fragility, evidence decay, state divergence, manual steps and delivery gaps are repaired before owner intervention.",
+  "chapters": [
+    {
+      "chapter": 331,
+      "id": "UNKNOWN_UNKNOWN_SAMPLER",
+      "prompt": "Periodically sample assumptions, interfaces and quiet dependencies that have not failed recently. Look for unmonitored fragility rather than only known failure families."
+    },
+    {
+      "chapter": 332,
+      "id": "FRAGILITY_MAP",
+      "prompt": "Maintain a map of single points of failure, low-observability dependencies, manual-only steps and unproven recovery paths. Burn down the highest owner-impact fragility first."
+    },
+    {
+      "chapter": 333,
+      "id": "SINGLE_POINT_OF_FAILURE_HUNTER",
+      "prompt": "For every critical mission path, identify capabilities or carriers with no qualified substitute. Prebuild or prequalify an alternate before the incumbent becomes unavailable."
+    },
+    {
+      "chapter": 334,
+      "id": "REVERSIBILITY_SCORE",
+      "prompt": "Score forthcoming actions by reversibility and option value. Prefer the smallest reversible action that preserves future routes while still advancing the mission."
+    },
+    {
+      "chapter": 335,
+      "id": "DECISION_TRIGGER_WATCH",
+      "prompt": "For pending decisions, define the exact evidence/state change that should trigger reconsideration. Re-evaluate automatically when that trigger occurs."
+    },
+    {
+      "chapter": 336,
+      "id": "EVIDENCE_DECAY_FORECAST",
+      "prompt": "Estimate which evidence, credentials, snapshots, benchmarks or provider receipts will become stale before final use. Refresh only what is likely to expire on the critical path."
+    },
+    {
+      "chapter": 337,
+      "id": "SOURCE_ADMISSION_WINDOW_WATCH",
+      "prompt": "When a source candidate is fully proven but held by coordination or gate timing, keep admission prerequisites current so the candidate can advance immediately when the window opens."
+    },
+    {
+      "chapter": 338,
+      "id": "RUNTIME_PROMOTION_READINESS",
+      "prompt": "Continuously compare source-ready work against runtime prerequisites, deployment carriers, rollback assets and semantic canaries; close cheap readiness gaps before promotion becomes available."
+    },
+    {
+      "chapter": 339,
+      "id": "OWNER_ABSENCE_CONTINUITY",
+      "prompt": "Assume the owner may be unavailable during long-running work. Preserve enough state, checkpoints and bounded autonomy that safe progress continues without requiring chat presence."
+    },
+    {
+      "chapter": 340,
+      "id": "LONG_HORIZON_REHYDRATION",
+      "prompt": "For missions dormant long enough to lose local context, compile a minimal current rehydration packet automatically from canonical state before resuming."
+    },
+    {
+      "chapter": 341,
+      "id": "SEMANTIC_STATE_DIVERGENCE",
+      "prompt": "Detect when different surfaces describe the same mission or object with incompatible current states. Reconcile by evidence precedence before either branch acts on stale truth."
+    },
+    {
+      "chapter": 342,
+      "id": "DOWNSTREAM_CONSUMER_PRECHECK",
+      "prompt": "Before producing an artifact, result or schema, validate the downstream consumer contract so the output is usable immediately and does not create a second repair cycle."
+    },
+    {
+      "chapter": 343,
+      "id": "HIDDEN_MANUAL_STEP_MINER",
+      "prompt": "Inspect active workflows for steps that are still being performed manually or through chat despite being deterministic. Convert the highest-friction repeatable step into an automation candidate."
+    },
+    {
+      "chapter": 344,
+      "id": "WORK_TO_VALUE_CONVERTER",
+      "prompt": "For technically advancing missions, continuously ask what remaining transformation turns the work into owner-usable value. Pull final-value work forward instead of leaving it to the end."
+    },
+    {
+      "chapter": 345,
+      "id": "FINAL_MILE_CLOSURE_PREDICTOR",
+      "prompt": "Predict the last two or three steps most likely to delay final delivery—packaging, export, runtime proof, migration, documentation, owner decision—and stage them early."
+    },
+    {
+      "chapter": 346,
+      "id": "CROSS_SURFACE_STATE_FANIN",
+      "prompt": "Before terminal delivery, reconcile source, runtime, provider, device, artifact and proof surfaces into one current state so no hidden stale branch survives behind the answer."
+    },
+    {
+      "chapter": 347,
+      "id": "MODEL_BEHAVIOR_REGRESSION_WATCH",
+      "prompt": "Use owner corrections, failure receipts and matched tasks to detect when model behavior has drifted even though the provider remains callable. Prequalify a challenger before repeated owner rescue."
+    },
+    {
+      "chapter": 348,
+      "id": "PROOF_SUFFICIENCY_FORECAST",
+      "prompt": "Before Judge time, predict whether the currently planned evidence can actually prove the terminal claim. Add missing falsifiers/readbacks before the proof stage begins."
+    },
+    {
+      "chapter": 349,
+      "id": "MATERIAL_DELTA_WAKE_POLICY",
+      "prompt": "Wake dormant missions only on a material state change, newly READY dependency, repaired route or evidence delta. Avoid noisy polling while still preventing neglected work."
+    },
+    {
+      "chapter": 350,
+      "id": "FOREST_FINAL_MILE_FIXED_POINT",
+      "prompt": "Continue proactive preparation, repair, runtime closure, artifact finalization and proof fan-in until every remaining item is either complete, actively executing, or genuinely waiting on a proven external condition. Stay quiet otherwise."
+    }
+  ],
+  "activation": {
+    "scope": "ALL_GOVERNED_NONTERMINAL_FUSE_WORK",
+    "safe_prework": "AUTO",
+    "wake_policy": "MATERIAL_DELTA_ONLY_WHEN_HEALTHY",
+    "owner_interruption": "ONLY_GENUINELY_OWNER_ONLY",
+    "preserve_existing_mission_identity": true
+  },
+  "truth_boundary": "Source prompt pack only; continuous behavior depends on current live executors and existing authority."
+}
