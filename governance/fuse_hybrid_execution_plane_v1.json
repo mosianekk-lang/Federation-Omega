@@ -1,0 +1,61 @@
+{
+  "schema": "FUSE_HYBRID_EXECUTION_PLANE_V1",
+  "version": "1.0.0",
+  "startup_epoch": "START:FUSE_ONE_V4_56",
+  "owner": "Kim Kagiso Mosiane",
+  "role": "PRIMARY_EXECUTION_PROFILE_UNDER_FUSE_SOVEREIGN_PLANE",
+  "no_new_root": true,
+  "sovereign_plane": "MISSION_AND_CONTROL_AUTHORITY",
+  "sol62": "PREFERRED_TRANSACTIONAL_SPINE_WHEN_CURRENT_CALLABLE_AUTHORIZED_TASK_FIT",
+  "fdof_sicf": "SOURCE_EFFECT_FENCE_CAS_UNKNOWN_EFFECT_AUTHORITY",
+  "genesis": "DURABLE_WAKE_RESUME_BUILD_CARRIER",
+  "proofos_reality_judge": "INDEPENDENT_ASSURANCE_FINALITY",
+  "domains": [
+    "LOCAL_OWNER_EDGE",
+    "LOCAL_MODEL",
+    "DURABLE_GOOGLE",
+    "SOURCE_BUILD",
+    "HOSTED_MODEL_PROVIDER",
+    "CREATIVE_ARTIFACT",
+    "RESEARCH_DISCOVERY",
+    "PROOF_RECOVERY"
+  ],
+  "route_sequence": [
+    "FRESH_READ_CURRENTNESS",
+    "JOIN_REUSE_MISSION",
+    "ESTATE_RESOLVE",
+    "MISSIONIR_DAG_READY_COLLISIONS",
+    "HYBRID_PORTFOLIO_GENERATION",
+    "FAILURE_DOMAIN_VECTOR_MINCUT",
+    "SOL62_TRANSACTION_OR_EXPLICIT_CONTRACT_OVERLAY",
+    "FDOF_SICF_PREFLIGHT",
+    "QUALIFIED_CARRIER_EXECUTION",
+    "SEMANTIC_EFFECT_READBACK",
+    "VERIFIED_STATE_COMMIT",
+    "PROOFOS_JUDGE_WHEN_REQUIRED",
+    "DURABLE_CONTINUATION"
+  ],
+  "invariants": {
+    "reroute_not_restart": true,
+    "blocked_route_blocks_only_itself": true,
+    "local_route_offline_not_device_offline": true,
+    "cloud_route_unbound_not_cloud_capability_absent": true,
+    "route_name_diversity_not_failure_independence": true,
+    "sol62_preferred_not_hosting_monopoly": true,
+    "no_unconditional_local_first_or_cloud_first": true,
+    "unknown_effect_readback_before_retry": true
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "external_effect_default": false,
+    "provider_authority_inherited": false,
+    "source_authority_inherited": false
+  },
+  "truth_boundary": [
+    "HYBRID_PROFILE_SELECTED_NE_EXECUTOR_RUNNING",
+    "SOL62_PREFERRED_NE_SOL62_HOSTED",
+    "EXECUTOR_RUNNING_NE_EFFECT_COMMITTED",
+    "EFFECT_COMMITTED_NE_VERIFIED_REALITY",
+    "VERIFIED_REALITY_NE_COMPLETE_VERIFIED"
+  ]
+}
