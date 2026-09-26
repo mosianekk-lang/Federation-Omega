@@ -147,3 +147,125 @@ The harvest is successful only when FUSE can obtain equivalent or better owner o
 - provider-independent proof;
 - recoverability;
 - lower owner burden.
+
+
+## 2026-09-24 external resilience / interoperability harvest
+
+This second clean-room wave was triggered by the full START:FUSE_ONE chat/estate audit. It keeps all vendor code, credentials, private prompts, weights and proprietary internals out of Federation source; only publicly documented mechanisms are generalized.
+
+### Primary-source mechanisms
+
+**OpenAI**
+- Background Responses: https://developers.openai.com/api/docs/guides/background
+- Agents SDK sessions / resumable RunState: https://openai.github.io/openai-agents-python/sessions/ and https://openai.github.io/openai-agents-python/ref/run_state/
+- Handoffs/input filters and tracing: https://openai.github.io/openai-agents-python/handoffs/ and https://openai.github.io/openai-agents-python/tracing/
+
+Harvest:
+- durable async response/job identity independent of the foreground connection;
+- exact resume state and pending-batch reconciliation that does not rerun already-completed tools;
+- minimum-context handoff and traceable delegation.
+
+**Model Context Protocol 2026**
+- https://blog.modelcontextprotocol.io/posts/2026-07-28/
+- https://modelcontextprotocol.io/specification/
+
+Harvest:
+- TTL/cache-scope metadata for tools/resources/prompts so discovery may be safely cached and invalidated;
+- issuer validation and explicit application type during OAuth dynamic client registration.
+
+**Agent2Agent**
+- https://a2aproject.github.io/A2A/latest/specification/
+- https://a2aproject.github.io/A2A/latest/topics/streaming-and-async/
+
+Harvest:
+- stateful task/artifact identity;
+- stream resubscription and asynchronous push notifications for disconnected/long-running clients.
+
+**Chrome Extensions**
+- https://developer.chrome.com/docs/extensions/reference/api/offscreen
+- https://developer.chrome.com/docs/extensions/reference/runtime
+
+Harvest:
+- an offscreen DOM-capable helper for MV3 service-worker gaps;
+- runtime context enumeration + singleflight creation to prevent duplicate hidden helpers.
+
+**Temporal / Microsoft Durable Task**
+- https://docs.temporal.io/
+- https://docs.temporal.io/develop/worker-performance
+- https://learn.microsoft.com/en-us/azure/durable-task/common/what-is-durable-task
+
+Harvest:
+- replay-safe durable execution and deployment/versioning discipline;
+- adaptive worker slots/pollers driven by resource/backlog state rather than fixed concurrency.
+
+**Google Agent Platform / ADK**
+- https://google.github.io/adk-docs/tools/google-cloud/code-exec-agent-engine/
+- https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/sessions/manage-sessions-api
+
+Harvest:
+- persistent sandbox state across multi-step code execution;
+- explicit session/event APIs for durable agent context and event history.
+
+**LM Studio**
+- https://lmstudio.ai/docs/developer/core/server
+- https://lmstudio.ai/docs/developer/rest
+- https://lmstudio.ai/docs/developer/openai-compat/tools
+
+Harvest:
+- local OpenAI-compatible Responses/chat/embeddings plus tool calling, MCP and stateful-chat/model-management capabilities behind a replaceable local endpoint.
+
+**Kubernetes**
+- https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
+- https://kubernetes.io/docs/reference/kubernetes-api/policy/pod-disruption-budget-v1/
+
+Harvest:
+- topology/failure-domain placement and bounded planned-disruption semantics for FUSE Portfolio V2/min-cut reduction.
+
+OpenTelemetry 1.44 semantic conventions were already present in the Federation source and therefore were not duplicated as a new gene.
+
+### Added provider-neutral residual genes
+
+AGF-054 Durable Async Job Handle / Poll-Push Continuation  
+AGF-055 Exact Run-State / Pending-Batch Reconciliation  
+AGF-056 TTL / Cache-Scope Tool Catalogue Currentness  
+AGF-057 Stateful Agent Task / Artifact Resubscribe & Push  
+AGF-058 Browser Offscreen Liveness / Singleflight Context  
+AGF-059 Replay-Safe Durable Workflow Versioning  
+AGF-060 Resource-Adaptive Worker Slots / Poller Autoscaling  
+AGF-061 Local Responses / Tools / MCP Runtime Compatibility  
+AGF-062 Failure-Domain Placement / Disruption Budget  
+AGF-063 OAuth Issuer / Dynamic-Client Mix-Up Hardening
+
+### Existing-organ bindings
+
+- AGF-054/055/057/059 -> FDOF/SOL6.2/Genesis/DeliveryJournal durable mission path.
+- AGF-056 -> Capability Market + deferred tool/schema loader + currentness reducer.
+- AGF-058 -> ChatBridge/BEF client-liveness receiver.
+- AGF-060 -> Execution Power Pools / throughput intelligence.
+- AGF-061 -> LocalLLM/OmniSurface provider-neutral model gateway.
+- AGF-062 -> Portfolio V2/min-cut reducer / FPPRE.
+- AGF-063 -> SOVARA/FIO auth envelope and connector binding preflight.
+
+### Proof boundary
+
+Source adoption means the frontier compiler knows how to select and compose these mechanisms. It does not prove a Chrome offscreen runtime, OpenAI background job, A2A server, Temporal/Durable Task worker, Google Agent Engine session, local LM Studio server, or any provider OAuth flow is currently bound or authorized. Those remain action-specific runtime/provider/behavior/value courts.
+
+
+## External Algorithm Genome 100 — START v4.37
+
+Control cohort: `HG-EXTALG-001..100` / `CFM-EXTALG100-001`.
+
+This cohort is an external-mechanism harvest pool, not 100 source-admitted features. Startup carries only metadata. A material mission gap triggers lazy source refresh, overlap/equivalence/superset collapse against existing FUSE mechanisms, then the strongest lawful disposition. New code is allowed only for a true residual.
+
+Families:
+- 001..020 reasoning/planning/search;
+- 021..040 optimization/experimentation/resource allocation;
+- 041..050 scheduling/flow/routing;
+- 051..065 distributed intelligence/concurrency/recovery;
+- 066..078 retrieval/memory/knowledge;
+- 079..090 causal/currentness/drift/uncertainty;
+- 091..100 proof/falsification/debugging/epistemics.
+
+The first tournament tranche is ordered by current estate leverage: ReAct, graph/tree search, Reflexion, MCTS/UCT, LPA*/D* Lite, Bayesian Optimization, Thompson Sampling, Hyperband/BOHB, CMA-ES, NSGA-II/MOEA-D, Max-Flow/Min-Cut, HEFT, Work-Stealing, Chandy-Lamport, SWIM/Phi, HNSW/RRF/ColBERT, FCI/NOTEARS, BOCPD/ADWIN, Conformal Prediction, QuickXplain, Delta Debugging and CEGAR/CEGIS.
+
+Promotion requires current primary-source evidence when the gene is materially selected, matched incumbent/challenger evaluation, untouched/falsifier cases and independent ProofOS/Reality Judge. Consensus or replicated-state algorithms remain subordinate to FUSE sovereign truth and authority roots.

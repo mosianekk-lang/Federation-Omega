@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.0.0",
+  "version": "3.8.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -17,14 +17,19 @@
     "AO-CRA-FEDERATION-INHERITANCE-V1",
     "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
     "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
-    "N_OMEGA_AGENTIC_FRONTIER_V1"
+    "N_OMEGA_AGENTIC_FRONTIER_V1",
+    "FUSE-ESTATE-RESOLUTION-START433",
+    "FUSE-MISSION-ROUTE-PORTFOLIO-V2",
+    "FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2",
+    "FUSE-EXTERNAL-ALGORITHM-GENOME100-V1"
   ],
   "required_contracts": {
     "n_directive": "governance/federation_n_directive_v3.yaml",
     "mission_compiler": "governance/cfbe_parallel_mission_compiler_v4.json",
     "prompt_scientist": "governance/cfbe_prompt_scientist_v1.json",
     "ao_cra": "governance/ao_cra_federation_inheritance_v1.json",
-    "frontier_compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py"
+    "frontier_compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
+    "frontier_resilience_interop": "federation/frontier_resilience_interop_v1.py"
   },
   "required_engines": {
     "formation_engine": "REQUIRED",
@@ -35,7 +40,12 @@
     "prompt_scientist_v1": "REQUIRED_WHEN_PROMPT_FRICTION_OR_REPEATED_MISSION_FAILURE_IS_OBSERVED",
     "innovation_frontier": "REQUIRED",
     "continuous_learning": "REQUIRED",
-    "agentic_frontier_compiler": "REQUIRED_FOR_NONTRIVIAL_MISSIONS"
+    "agentic_frontier_compiler": "REQUIRED_FOR_NONTRIVIAL_MISSIONS",
+    "estate_resolver": "REQUIRED_FOR_MATERIAL_CAPABILITY_ACCESS_AND_NO_ACCESS_DECISIONS",
+    "mission_route_portfolio_v2": "REQUIRED_FOR_MATERIAL_NONTRIVIAL_MISSIONS",
+    "more_autonomous_convergence_v2": "REQUIRED_ON_OWNER_MORE_AND_SAFE_POST_RESULT_CONTINUATION",
+    "frontier_resilience_interop": "REQUIRED_WHEN_AGF_054_063_SELECTED",
+    "external_algorithm_genome100": "LAZY_REQUIRED_ON_MORE_OR_MATERIAL_TRUE_RESIDUAL_GAP"
   },
   "required_sequence": [
     "PASS_FEDOMEGA_NODE_BOOTSTRAP_V2",
@@ -43,23 +53,43 @@
     "VERIFY_V3_CONTRACTS_ARE_ON_CURRENT_ADMITTED_MAIN",
     "LOAD_LATEST_VERIFIED_CHECKPOINT",
     "FRESH_READ_VOLATILE_SOURCE_PROVIDER_AND_ROUTE_STATE",
+    "RESOLVE_ESTATE_CAPABILITY_STATE_CAP00_TO_CAP70_BLK10_TO_BLK90",
+    "LOAD_PROVIDER_NEUTRAL_EXECUTION_CAPABILITY_PASSPORT_SURFACE_GRAPH_AND_CAPABILITY_FEDERATION_MAP",
     "FORMATION_INTENT_LOCK_AND_OBJECTIVE_MEANS_SEPARATION",
     "AO_CRA_BOUNDARY_TO_BUILD_PREFLIGHT",
     "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
     "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
     "COMPILE_FRONTIER_CAPABILITY_SUPERSTACK",
+    "LAZY_MATCH_HG_EXTALG100_AND_COLLAPSE_EXISTING_MECHANISM_OVERLAP",
+    "REFRESH_PUBLIC_PRIMARY_SOURCE_ONLY_FOR_MATERIAL_EXTALG_CANDIDATES",
+    "SELECT_STRONGEST_EXTALG_DISPOSITION_REUSE_REBIND_REPAIR_EXTEND_COMPOSE_HARVEST_BUILD_MINIMUM_OR_REJECT",
     "COMPILE_FINITE_DEPENDENCY_DAG",
+    "COMPILE_MULTIPLE_FEASIBLE_MISSION_ROUTE_PORTFOLIOS",
+    "BUILD_ROUTE_FAILURE_DOMAIN_VECTORS_AND_PORTFOLIO_MIN_CUT",
+    "RETAIN_BOUNDED_PARETO_NONDOMINATED_PORTFOLIOS",
+    "SCORE_PORTFOLIOS_WITH_PORTFOLIO_SCORE_V2_AND_HYSTERESIS",
     "CALCULATE_CRITICAL_PATH",
     "FORM_COLLISION_SAFE_WORK_PACKETS",
+    "COMPILE_BLOCKER_ENVELOPES_AND_COLLISION_DOMAINS",
+    "CLASSIFY_CHAT_TRANSPORT_INTERRUPTION_AND_RECONCILE_UNKNOWN_EFFECTS_BEFORE_RETRY",
+    "APPLY_CHAT_FAILURE_CONTINUITY_MATRIX_AND_CLIENT_EPOCH_FENCING",
+    "START_CLIENT_LIVENESS_SUPERVISOR_AND_DURABLE_REQUEST_JOURNAL",
+    "JOURNAL_TERMINAL_RESULT_AND_REQUIRE_OWNER_DELIVERY_ACK",
+    "HYDRATE_PENDING_DELIVERY_DEBT_AND_APPLY_DELIVERY_PROOF_TIERS",
+    "ASSERT_GLOBAL_STALL_ONLY_IF_READY_SET_EMPTY_AND_ALL_NONTERMINAL_REQUIRED_NODES_SHARE_CAUSAL_BLOCKER",
+    "WORK_STEAL_ALL_DISJOINT_READY_NODES",
+    "PREPARE_BUILD_TEST_BRANCH_PR_FOR_DISJOINT_SOURCE_WORK_WHILE_MAIN_ADMISSION_IS_HELD",
     "EXECUTE_MAXIMUM_USEFUL_EFFECT_FREE_PARALLELISM",
     "SERIALIZE_CANONICAL_SHARED_TARGET_PROVIDER_AND_EXTERNAL_EFFECT_MUTATIONS",
     "TEST_FALSIFY_AND_READ_BACK_MATERIAL_RESULTS",
+    "CALIBRATE_ROUTE_PREDICTION_VS_ACTUAL_AND_UPDATE_ROUTE_FAILURE_MEMORY",
     "CIRCUIT_BREAK_SECOND_IDENTICAL_DETERMINISTIC_FAILURE",
     "REPAIR_AND_BIND_REGRESSION",
     "EVALUATE_PROMPT_FRICTION_WHERE_APPLICABLE",
     "PROMOTE_ONLY_MEASURED_GREEN_PROMPT_CHALLENGER",
     "RECORD_TERMINAL_LEARNING_AND_MEASURED_VALUE",
     "ASSESS_MATURITY_WITH_PROOF_LADDER",
+    "EXECUTE_MORE_V2_CONVERGENCE_UNTIL_REAL_STOP_CONDITION",
     "CONTINUE_NEXT_ELIGIBLE_SAFE_PACKET"
   ],
   "parallelism": {
@@ -71,7 +101,15 @@
     "shared_target_mutations_serialized": true,
     "provider_mutations_serialized": true,
     "external_effects_serialized": true,
-    "provider_and_external_effect_default_under_a1": "HELD_EXTERNAL_AUTHORITY"
+    "provider_and_external_effect_default_under_a1": "HELD_EXTERNAL_AUTHORITY",
+    "blocker_scope_locality_required": true,
+    "global_stall_requires_empty_ready_set_and_universal_causal_dependency": true,
+    "blocked_node_releases_all_disjoint_ready_work": true,
+    "source_fence_blocks_only_intersecting_write_set_for_work_execution": true,
+    "branch_prepare_build_test_pr_may_continue_while_main_admission_is_held": true,
+    "disjoint_provider_mutations_may_parallelize_only_with_proven_target_effect_authority_cost_isolation": true,
+    "idle_qualified_capacity_with_ready_work_is_routing_defect": true,
+    "anti_head_of_line_court_required_before_waiting_or_blocked_status": true
   },
   "prompt_evolution": {
     "incumbent_preserved": true,
@@ -121,15 +159,719 @@
     "merge_is_provider_deployment": false,
     "parallelism_transfers_authority": false,
     "prompt_self_score_is_sufficient_for_promotion": false,
-    "ten_x_is_measured_target_only": true
+    "ten_x_is_measured_target_only": true,
+    "single_blocker_can_prove_global_mission_blocked": false,
+    "global_hold_requires_proven_universal_causal_dependency": true,
+    "route_portfolio_selected_is_execution": false,
+    "more_cycle_executed_is_best_in_market_proven": false,
+    "best_in_market_internal_score_is_sufficient": false,
+    "external_algorithm_genome_registered_is_implementation": false,
+    "external_algorithm_gene_source_is_runtime": false,
+    "external_algorithm_internal_score_is_superiority": false
   },
   "failure_state": "BOOTSTRAP_V3_BLOCKED_FAIL_CLOSED",
   "frontier_capability_adoption": {
     "compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
-    "capability_gene_range": "AGF-001..AGF-053",
-    "latest_clean_room_residual_range": "AGF-041..AGF-053",
+    "capability_gene_range": "AGF-001..AGF-063",
+    "latest_clean_room_residual_range": "AGF-054..AGF-063",
     "automatically_select_by_mission_profile": true,
     "provider_model_authority": "PROPOSAL_ONLY",
-    "runtime_provider_and_owner_value_proof_separate": true
+    "runtime_provider_and_owner_value_proof_separate": true,
+    "external_resilience_interop_contract": "federation/frontier_resilience_interop_v1.py"
+  },
+  "blocker_containment": {
+    "policy_id": "FUSE-BLOCKER-CONTAINMENT-V1",
+    "invariant": "A blocker quarantines only its proven dependency/effect/collision domain; it may not stop unrelated required work.",
+    "blocker_envelope_fields": [
+      "blocker_id",
+      "blocked_node",
+      "causal_dependency",
+      "source_write_set",
+      "provider_target",
+      "effect_id",
+      "resource_pool",
+      "authority_scope",
+      "privacy_scope",
+      "cost_scope",
+      "recheck_trigger"
+    ],
+    "collision_dimensions": [
+      "dependency",
+      "source_write_set",
+      "provider_target",
+      "effect_id",
+      "canonical_object",
+      "authority_scope",
+      "privacy_scope",
+      "cost_scope",
+      "resource_pool"
+    ],
+    "global_stall_valid_only_when": [
+      "ready_set_is_empty",
+      "every_remaining_required_nonterminal_node_has_proven_causal_dependency_on_the_same_irreducible_blocker",
+      "no_safe_prepare_build_test_research_proof_recovery_or_alternate_route_lane_exists"
+    ],
+    "mandatory_response_to_blocker": [
+      "quarantine_only_intersecting_nodes",
+      "recompute_ready_set",
+      "work_steal_disjoint_nodes",
+      "elect_alternate_execution_pools",
+      "prepare_future_dependency_outputs_early",
+      "arm_changed_state_recheck_for_blocked_domain",
+      "continue_until_terminal_or_true_global_irreducible_boundary"
+    ],
+    "forbidden": [
+      "whole_mission_wait_because_one_lane_is_blocked",
+      "whole_fleet_wait_because_one_source_fence_exists",
+      "owner_handoff_while_machine_safe_work_exists",
+      "idle_qualified_capacity_while_ready_work_exists",
+      "treating_queue_schedule_or_branch_hold_as_mission_stop"
+    ],
+    "failure_class": "CFAIL-20260919-029",
+    "regression": "REG-DISJOINT-SAFE-WORK-CONTINUES-001"
+  },
+  "source_concurrency": {
+    "current_legacy_v2_rule": "ACTIVE V2 may gate canonical main admission during migration but must never block disjoint branch preparation, build, test, proof, artifact, PR, provider-read or non-source work.",
+    "target_v3_rule": "When FDOF v3 scoped registry is operationally promoted, disjoint ACTIVE scoped leases may admit concurrently; only overlapping or repository-global write sets serialize.",
+    "v3_policy": "governance/federation_repository_coordination_v3.json",
+    "v3_registry_ref": "refs/heads/locks/fdof-v3-scoped-registry",
+    "migration_priority": "RETIRE_LONG_LIVED_GLOBAL_V2_SERIALIZATION_AFTER_V3_PROVIDER_CANARIES_AND_INDEPENDENT_JUDGE",
+    "repository_global_paths_still_serialize": true,
+    "merge_time_revalidation_required": true
+  },
+  "chat_capacity_continuity": {
+    "policy_id": "FUSE-CHAT-CAPACITY-CONTINUITY-V1",
+    "invariant": "Interactive chat/context/token/weighted-token capacity is a client route-transition condition, never a mission-stop condition.",
+    "semantic_signals": [
+      "maximum conversation/context length",
+      "conversation too long",
+      "token limit",
+      "weighted-token limit",
+      "capacity full/exhausted"
+    ],
+    "on_pressure": [
+      "checkpoint",
+      "durable egress",
+      "mark client draining",
+      "join/reuse same mission",
+      "automatic idempotent successor or durable executor handoff",
+      "capacity-safe working-set restore"
+    ],
+    "full_history_location": "GOVERNED_EXTERNAL_LEDGER",
+    "successor_context": "OBJECTIVE_PROOF_FENCE_EFFECT_OPEN_FRONTIER_NEXT_ACTION_BOUNDED_RECENT_TURNS",
+    "owner_click_copy_paste_required": false,
+    "terminality_requires_live_client_semantic_canary": true
+  },
+  "bible_fleet_completion": {
+    "policy_id": "FUSE-BIBLE-FLEET-COMPLETION-V1",
+    "fleet_source": "SYNC_BUS_UNIFIED_MASTER_VIEW_OWN_DOMAIN_CANONICAL_PLUS_REGISTERED_BIBLE_NODES",
+    "future_registered_owning_bibles_auto_inherit": true,
+    "hydrate_policy": "METADATA_INDEX_FIRST_TARGETED_BIBLE_SLICES_ONLY",
+    "compiler": "MASTER_BIBLE_MISSION_PRODUCTION_COMPILER",
+    "semantic_dedupe": "JOIN_REUSE_EXISTING_WORKPLANE_MISSION_BUS_FDOF",
+    "dependency_graph": "CROSS_BIBLE_SHARED_ENABLING_MISSION_DAG",
+    "completion_debt": [
+      "unresolved_next_action",
+      "unmet_terminal_predicate",
+      "missing_required_runtime_provider_semantic_behaviour_production_value_proof"
+    ],
+    "fleet_complete_only_when": "EVERY_CURRENT_REQUIRED_OWNING_BIBLE_TERMINAL_OR_LEGITIMATELY_SUPERSEDED_WITH_CURRENT_PROOF"
+  },
+  "chat_transport_continuity": {
+    "policy_id": "FUSE-CHAT-TRANSPORT-CONTINUITY-V1",
+    "observed_signature": "Connection interrupted. Waiting for the complete answer",
+    "classifier": "TRANSPORT_INTERRUPTION",
+    "secondary_classifier": "STALL_TIMEOUT",
+    "invariant": "Chat response-stream transport loss is a client-route failure, never proof that the mission stopped or that the in-flight action had no effect.",
+    "no_response_ne_no_effect": true,
+    "mandatory_sequence": [
+      "persist current mission checkpoint and pending action identity",
+      "freeze blind replay of any action whose effect state is unknown",
+      "read back FDOF/effect/provider/mission receipts for any possibly in-flight tool or external action",
+      "classify pending action as NO_EFFECT_PROVEN, EFFECT_COMMITTED, EFFECT_UNKNOWN, or RESPONSE_ONLY",
+      "if EFFECT_COMMITTED resume after the committed result without replay",
+      "if NO_EFFECT_PROVEN or RESPONSE_ONLY resume the same atomic action using idempotency identity",
+      "if EFFECT_UNKNOWN quarantine only that effect lane and work-steal all disjoint READY work",
+      "rebind or create/reuse a healthy successor/durable client route",
+      "fence the stale client from duplicate commit once another route has a verified continuation receipt",
+      "semantic fan-in the first verified continuation result exactly once"
+    ],
+    "forbidden": [
+      "treat interrupted stream as mission complete",
+      "treat interrupted stream as proof of no effect",
+      "blindly resend an effectful atomic action",
+      "wait indefinitely on the interrupted chat while another safe route exists",
+      "ask owner to copy/paste persisted mission state"
+    ],
+    "owner_action_required_while_safe_route_exists": false,
+    "full_runtime_proof_requires": "LIVE_CLIENT_INTERRUPTION_TO_EFFECT_READBACK_TO_REBIND_TO_CONTINUED_MISSION_CANARY"
+  },
+  "chat_failure_continuity_matrix": {
+    "policy_id": "FUSE-CHAT-FAILURE-CONTINUITY-MATRIX-V1",
+    "source_classifier": "EVIDENCEOPS_CHAT_FAILURE_RESILIENCE_CRFRE",
+    "classes": {
+      "TRANSPORT_INTERRUPTION": {
+        "scope": "CLIENT_ROUTE",
+        "effect_rule": "READBACK_BEFORE_REPLAY_IF_ANY_ACTION_MAY_HAVE_EXECUTED",
+        "recovery": [
+          "checkpoint",
+          "effect_readback",
+          "classify_effect_state",
+          "rebind_client_or_durable_executor",
+          "stale_client_fence",
+          "exact_once_fanin"
+        ]
+      },
+      "SERVER_GENERATION_FAILURE": {
+        "scope": "MODEL_OR_ORCHESTRATION_RESPONSE_PATH",
+        "effect_rule": "IF_TOOL_OR_EXTERNAL_ACTION_INFLIGHT_THEN_READBACK_BEFORE_RETRY",
+        "recovery": [
+          "checkpoint",
+          "classify_response_only_vs_effectful",
+          "alternate_qualified_model_or_route_when_safe",
+          "resume_atomic_action_idempotently"
+        ]
+      },
+      "STALL_TIMEOUT": {
+        "scope": "PROGRESS_HEARTBEAT_OR_RESPONSE_PATH",
+        "effect_rule": "BOUNDED_GRACE_THEN_EFFECT_READBACK_IF_INFLIGHT_STATE_UNCERTAIN",
+        "recovery": [
+          "bounded_health_grace",
+          "checkpoint",
+          "progress_readback",
+          "effect_readback_if_needed",
+          "reroute_or_rebind"
+        ]
+      },
+      "CONTEXT_PRESSURE": {
+        "scope": "INTERACTIVE_CONTEXT",
+        "effect_rule": "NO_BLIND_FULL_HISTORY_REPLAY",
+        "recovery": [
+          "durable_checkpoint",
+          "compact_working_set",
+          "idempotent_successor_or_durable_executor",
+          "full_history_external"
+        ]
+      },
+      "TOOL_OR_CONNECTOR_FAILURE": {
+        "scope": "TOOL_PROVIDER_LANE",
+        "effect_rule": "READBACK_TOOL_OUTCOME_BEFORE_RETRY",
+        "recovery": [
+          "checkpoint",
+          "effect_readback",
+          "isolate_tool_lane",
+          "alternate_authorized_route",
+          "continue_disjoint_work"
+        ]
+      },
+      "FILE_OR_ATTACHMENT_FAILURE": {
+        "scope": "ARTIFACT_LANE",
+        "effect_rule": "VERIFY_REFERENCE_AND_DIGEST_BEFORE_REGENERATION",
+        "recovery": [
+          "verify_artifact_pointer",
+          "regenerate_or_reattach_from_canonical",
+          "continue_disjoint_work"
+        ]
+      },
+      "AUTH_OR_SESSION_FAILURE": {
+        "scope": "AUTHORITY_LANE",
+        "effect_rule": "FAIL_CLOSED_NO_AUTHORITY_INFERENCE",
+        "recovery": [
+          "checkpoint",
+          "preserve_pending_action_without_replay",
+          "recheck_authorized_executor",
+          "rebind_only_with_current_authority"
+        ]
+      },
+      "RATE_OR_CAPACITY_LIMIT": {
+        "scope": "PROVIDER_OR_TASK_CAPACITY_LANE",
+        "effect_rule": "NO_GLOBAL_STOP",
+        "recovery": [
+          "checkpoint",
+          "changed_route",
+          "bounded_backoff_only_if_same_route_remains_best_safe_option",
+          "work_steal_other_pools"
+        ]
+      },
+      "CLIENT_RESOURCE_FAILURE": {
+        "scope": "CLIENT_DEVICE_OR_TAB",
+        "effect_rule": "NO_DEVICE_GLOBALITY_INFERENCE",
+        "recovery": [
+          "minimal_checkpoint",
+          "rebind_healthy_client_or_carrier",
+          "continue_external_durable_work"
+        ]
+      },
+      "USER_INTERRUPTION": {
+        "scope": "OWNER_INTENT",
+        "effect_rule": "EXPLICIT_USER_STOP_OR_CANCEL_IS_AUTHORITATIVE_FOR_THAT_INTENT",
+        "recovery": [
+          "preserve_checkpoint",
+          "do_not_auto_resume_cancelled_action",
+          "await_new_owner_intent"
+        ]
+      },
+      "UNKNOWN_CHAT_FAILURE": {
+        "scope": "UNKNOWN_ROUTE",
+        "effect_rule": "FAIL_CLOSED_ON_POSSIBLE_EFFECT_REPLAY",
+        "recovery": [
+          "minimal_telemetry",
+          "checkpoint",
+          "effect_readback_if_possible",
+          "lowest_risk_alternate_route",
+          "continue_disjoint_work"
+        ]
+      }
+    },
+    "cross_tab_takeover": {
+      "mission_client_epoch_required": true,
+      "one_effect_writer_per_mission_effect_lane": true,
+      "verified_takeover_increments_client_epoch": true,
+      "stale_client_auto_send_forbidden": true,
+      "observer_tabs_allowed": true
+    },
+    "partial_response": {
+      "partial_assistant_text_state": "PARTIAL_UNACKED",
+      "visible_tool_call_without_terminal_answer_state": "POSSIBLE_EFFECT_PENDING_READBACK",
+      "partial_text_is_not_terminal_proof": true,
+      "preserve_for_context_not_completion": true
+    },
+    "global_rules": [
+      "CHAT_FAILURE_BLOCKS_ONLY_AFFECTED_CLIENT_ROUTE_OR_EFFECT_LANE",
+      "NO_RESPONSE_NE_NO_EFFECT",
+      "NO_GLOBAL_STALL_WHILE_DISJOINT_READY_WORK_EXISTS",
+      "NO_OWNER_RECAP_WHILE_DURABLE_STATE_EXISTS",
+      "EXPLICIT_USER_STOP_IS_NOT_OVERRIDDEN"
+    ]
+  },
+  "estate_resolution": {
+    "policy_id": "FUSE-ESTATE-RESOLUTION-START433",
+    "service_id": "estate.resolve",
+    "capability_states": [
+      "CAP-00_UNKNOWN",
+      "CAP-10_TOOL_SCHEMA_KNOWN",
+      "CAP-20_CONNECTOR_DISCOVERED",
+      "CAP-30_AUTH_OR_SESSION_VALID",
+      "CAP-40_ROUTE_CALLABLE",
+      "CAP-50_ROUTE_EXECUTED",
+      "CAP-60_READBACK_VERIFIED",
+      "CAP-70_OBJECTIVE_COMPLETE"
+    ],
+    "blocker_states": [
+      "BLK-10_LOCAL_ROUTE_ERROR",
+      "BLK-20_INVALID_ARGUMENT_OR_SCHEMA",
+      "BLK-30_AUTH_OR_CONNECTION",
+      "BLK-40_APPROVAL_OR_PERMISSION",
+      "BLK-50_EXTERNAL_DEPENDENCY",
+      "BLK-60_TRANSIENT",
+      "BLK-70_SAFETY_OR_POLICY_HARD",
+      "BLK-80_PLATFORM_HARD_LIMIT",
+      "BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED"
+    ],
+    "provider_neutral_inputs": [
+      "EXECUTION_CAPABILITY_PASSPORT",
+      "EXECUTION_SURFACE_GRAPH",
+      "CAPABILITY_FEDERATION_MAP",
+      "FIO_SURFACE_AUTHORITY",
+      "ROUTE_MEMORY",
+      "FAILURE_MEMORY"
+    ],
+    "no_access_claim_requires": [
+      "BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED",
+      "GENUINE_HARD_SAFETY_OR_PLATFORM_BOUNDARY"
+    ],
+    "first_route_failure_is_estate_absence": false,
+    "legacy_provider_specific_mission_passport_is_primary_runtime_selector": false,
+    "strategic_service": "strategy.intelligence",
+    "hydrate_strategy_only_when_task_fit": true
+  },
+  "mission_route_portfolio_v2": {
+    "policy_id": "FUSE-MISSION-ROUTE-PORTFOLIO-V2",
+    "generate_multiple_feasible_portfolios_after_hard_gates": true,
+    "preserve_incumbent_lkg": true,
+    "preserve_bounded_pareto_nondominated_challengers": true,
+    "failure_domain_vector": [
+      "provider_company",
+      "provider_account_or_project",
+      "credential_or_auth_chain",
+      "network_or_region",
+      "host_or_runtime",
+      "queue_or_scheduler",
+      "state_store",
+      "code_or_release_lineage",
+      "model_or_runtime_family",
+      "owner_only_gate"
+    ],
+    "route_name_diversity_is_failure_independence": false,
+    "unknown_shared_dependency_counts_as_independent_redundancy": false,
+    "portfolio_min_cut_required_for_critical_missions": true,
+    "score_id": "PORTFOLIO_SCORE_V2",
+    "score_additions": [
+      "common_mode_failure_exposure",
+      "failover_restore_time",
+      "checkpoint_portability",
+      "proof_freshness",
+      "prediction_calibration",
+      "switching_cost",
+      "warm_fallback_readiness",
+      "concentration",
+      "expected_regret"
+    ],
+    "hysteresis_required": true,
+    "warm_fallback_requires_positive_expected_recovery_value": true,
+    "safe_shadow_or_hedge_only_for_effect_free_idempotent_work": true,
+    "post_execution_actual_vs_predicted_calibration_required": true,
+    "degraded_route_replaces_smallest_affected_subgraph": true
+  },
+  "more_autonomous_convergence_v2": {
+    "policy_id": "FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2",
+    "semantic_version": "BOOTSTRAP_MORE_V2",
+    "cycle": [
+      "FRESH_READ",
+      "JOIN_REUSE",
+      "ESTATE_RESOLVE",
+      "AUTO_SYNC",
+      "AUTO_REPAIR",
+      "AUTO_CONVERGE",
+      "MISSIONIR_DAG_READY_COLLISIONS",
+      "PORTFOLIO_V2_TOURNAMENT",
+      "SAFE_DISPATCH_WORK_STEAL",
+      "HG_EXTALG100_LAZY_GAP_MATCH_OVERLAP_COLLAPSE",
+      "AUTO_HARVEST_TRUE_RESIDUALS",
+      "AUTO_AUDIT",
+      "MATCHED_FRONTIER_MARKET_BENCHMARK_WHEN_MATERIAL",
+      "COMPOSE_OR_BUILD_MINIMUM_RESIDUAL_IF_TRAILING",
+      "VERIFY_READBACK",
+      "LEARNING_REGRET_UPDATE",
+      "AUTO_CONTINUE"
+    ],
+    "wait_for_another_more_while_safe_ready_work_exists": false,
+    "best_in_market_is_challenger_process_not_self_certification": true,
+    "best_in_market_claim_requires": [
+      "CURRENT_MATCHED_EXTERNAL_EVIDENCE",
+      "COMPARABLE_TASK_POPULATION_TIME_PERIOD",
+      "EXPLICIT_HARD_FLOORS",
+      "INDEPENDENT_PROOF_OR_JUDGE",
+      "NO_AUTHORITY_PRIVACY_SECURITY_RECOVERY_REGRESSION"
+    ],
+    "stop_conditions": [
+      "TERMINAL_PREDICATES_AND_REQUIRED_PROOF",
+      "IRREDUCIBLE_OWNER_ONLY_AUTHORITY_OR_CONSENT",
+      "ALL_LAWFUL_ROUTES_EXHAUSTED_DURABLE_HOLD",
+      "NO_POSITIVE_VALUE_ACTION"
+    ],
+    "owner_action_required_while_safe_machine_route_exists": false
+  },
+  "client_liveness_supervisor": {
+    "policy_id": "FUSE-CLIENT-LIVENESS-SUPERVISOR-V1",
+    "purpose": "Detect silent/orphaned chat-client failure without depending on provider banner wording, while preventing false takeover and duplicate effects.",
+    "request_lifecycle_states": [
+      "IDLE",
+      "REQUEST_ACCEPTED",
+      "STREAM_OPEN",
+      "RESPONSE_PROGRESS",
+      "TOOL_INFLIGHT",
+      "TOOL_RESULT_SEEN",
+      "RESPONSE_PARTIAL",
+      "TERMINAL_ACKED",
+      "SUSPECT_NO_PROGRESS",
+      "CONFIRMED_STALL",
+      "POSSIBLE_EFFECT_PENDING_READBACK",
+      "DETACHING",
+      "TAKEOVER_PENDING",
+      "TAKEN_OVER",
+      "OBSERVER_STALE"
+    ],
+    "durable_request_journal_fields": [
+      "mission_id",
+      "conversation_id",
+      "request_id",
+      "client_id",
+      "client_epoch",
+      "atomic_action_id",
+      "idempotency_key",
+      "effect_class",
+      "request_started_at",
+      "last_progress_at",
+      "last_dom_progress_digest",
+      "last_tool_marker_digest",
+      "last_tool_result_digest",
+      "terminal_ack_at",
+      "checkpoint_hash",
+      "effect_state",
+      "recovery_state"
+    ],
+    "progress_signals": [
+      "new_or_changed_assistant_rendered_content",
+      "tool_call_marker_change",
+      "tool_result_marker_change",
+      "request_control_state_change",
+      "provider_client_reconnect_or_error_signal",
+      "terminal_response_observation"
+    ],
+    "stall_detection": {
+      "pure_elapsed_time_is_not_terminal_failure": true,
+      "state_specific_grace_policy_required": true,
+      "suspect_requires_no_meaningful_progress": true,
+      "confirmed_stall_requires_independent_supporting_signal_or_hard_runtime_policy_boundary": true,
+      "suspect_action": "CHECKPOINT_AND_PREPARE_ALTERNATE_ROUTE_WITHOUT_DUPLICATE_REPLAY",
+      "confirmed_action": "EFFECT_READBACK_THEN_TAKEOVER_OR_REROUTE",
+      "long_running_reasoning_may_remain_active_when_progress_or_generation_liveness_is_observed": true
+    },
+    "takeover": {
+      "expiry_ne_release": true,
+      "stale_heartbeat_makes_client_suspect_not_released": true,
+      "current_epoch_cas_required": true,
+      "possible_effect_readback_required_before_new_writer_commit": true,
+      "takeover_receipt_required": true,
+      "previous_epoch_becomes_observer_stale": true,
+      "stale_epoch_auto_send_forbidden": true,
+      "late_stale_response_is_reconciliation_evidence_only": true
+    },
+    "terminal_ack": {
+      "terminal_text_alone_is_insufficient_when_effectful_tool_state_is_unknown": true,
+      "terminal_ack_requires_client_observation_plus_effect_state_consistency": true,
+      "response_only_terminal_may_ack_without_provider_effect_receipt": true,
+      "effectful_terminal_requires_corresponding_effect_or_provider_readback": true
+    },
+    "orphan_detection": {
+      "request_without_terminal_ack_remains_nonterminal": true,
+      "interrupted_tool_marker_without_result": "POSSIBLE_EFFECT_PENDING_READBACK",
+      "tool_result_without_terminal_assistant_response": "RESULT_PRESENT_RESPONSE_ORPHANED",
+      "late_terminal_after_takeover": "STALE_EPOCH_RECONCILE_ONLY"
+    },
+    "global_rules": [
+      "NO_BANNER_REQUIRED_FOR_LIVENESS_FAILURE_DETECTION",
+      "NO_PROGRESS_NE_NO_EFFECT",
+      "NO_HEARTBEAT_NE_RELEASE",
+      "TAKEOVER_NE_PERMISSION_EXPANSION",
+      "ONE_CURRENT_AUTO_SEND_WRITER_PER_MISSION_EFFECT_LANE",
+      "UNRELATED_READY_WORK_CONTINUES_DURING_CLIENT_SUSPECT_OR_STALL"
+    ],
+    "runtime_proof_required": [
+      "silent_response_stall_canary",
+      "long_reasoning_no_false_takeover_canary",
+      "tool_inflight_interruption_no_duplicate_effect_canary",
+      "cross_tab_epoch_takeover_canary",
+      "late_stale_response_reconciliation_canary",
+      "response_only_recovery_canary"
+    ]
+  },
+  "terminal_delivery_assurance": {
+    "policy_id": "FUSE-TERMINAL-DELIVERY-ASSURANCE-V1",
+    "existing_primitive": "evidenceops.build_system.runtime_controls.DeliveryJournal",
+    "invariant": "EXECUTION_COMPLETE != OWNER_DELIVERY_ACKNOWLEDGED",
+    "durable_states": [
+      "RESULT_READY",
+      "ORPHANED_UNACKNOWLEDGED",
+      "ACKNOWLEDGED"
+    ],
+    "result_transaction": {
+      "immutable_transaction_id": true,
+      "immutable_artifact_id": true,
+      "immutable_artifact_sha256": true,
+      "payload_or_pointer_must_be_durably_reconstructable": true
+    },
+    "before_owner_delivery": [
+      "freeze final result artifact or reconstructable result pointer",
+      "hash result identity",
+      "journal terminal delivery transaction before/with first delivery attempt"
+    ],
+    "on_missing_ack": [
+      "mark ORPHANED_UNACKNOWLEDGED",
+      "do not rerun mission effects",
+      "keep result eligible for redelivery on current or successor client",
+      "redeliver identical artifact under same transaction identity",
+      "transition to ACKNOWLEDGED only after owner-visible/current-client acknowledgement"
+    ],
+    "delivery_complete_requires": [
+      "artifact identity/hash consistency",
+      "owner-visible delivery acknowledgement or equivalent verified current-client receipt",
+      "delivery journal readback"
+    ],
+    "forbidden": [
+      "rerun underlying work merely because final response was not delivered",
+      "mint a new result transaction for the same terminal artifact to bypass an orphan",
+      "mark mission owner-delivered from execution success alone",
+      "drop orphaned result because chat client detached",
+      "overwrite acknowledged result with different content under same transaction"
+    ],
+    "bootstrap_recovery": [
+      "scan pending ORPHANED_UNACKNOWLEDGED results",
+      "semantic-dedupe against current owner-visible deliveries",
+      "redeliver highest-value pending result through current healthy client/durable result surface",
+      "acknowledge same transaction after verified delivery",
+      "leave underlying mission/effects terminal and unchanged unless new work is separately required"
+    ],
+    "runtime_proof_required": [
+      "effectful_execution_completes_then_response_stream_dies_then_successor_redelivers_without_effect_replay",
+      "response_only_final_delivery_orphan_then_same_transaction_acknowledges",
+      "duplicate_redelivery_is_idempotent",
+      "content_rebinding_under_same_transaction_is_rejected",
+      "acknowledged_result_survives_client_restart"
+    ]
+  },
+  "delivery_proof_tiers": {
+    "policy_id": "FUSE-DELIVERY-PROOF-TIERS-V1",
+    "tiers": {
+      "D0_RESULT_READY": "terminal result artifact/pointer exists with immutable identity/hash",
+      "D1_DELIVERY_JOURNALED": "DeliveryJournal transaction exists and exact readback succeeds",
+      "D2_CURRENT_CLIENT_RENDER_VERIFIED": "current authorized client/result surface confirms the identical result/pointer rendered or was made available",
+      "D3_EXPLICIT_OWNER_INTERACTION_CONFIRMED": "explicit owner interaction/acknowledgement references the result"
+    },
+    "default_delivery_complete_tier": "D2_CURRENT_CLIENT_RENDER_VERIFIED",
+    "journal_acknowledged_maps_to": "D2_CURRENT_CLIENT_RENDER_VERIFIED",
+    "human_read_inferred_from_render": false,
+    "D3_required_for_normal_delivery_complete": false,
+    "D3_may_be_required_by_specific_mission_contract": true,
+    "cross_session_hydration": [
+      "after bootstrap currentness and effect reconciliation scan pending ORPHANED_UNACKNOWLEDGED transactions",
+      "compare result hash/pointer against current client visible-result index",
+      "if exact result already rendered on current client, acknowledge same delivery transaction without redelivering",
+      "otherwise deliver highest-priority pending result through authorized current surface",
+      "batch or defer low-value duplicate/noise deliveries without dropping them",
+      "never reopen terminal execution merely to satisfy delivery debt"
+    ],
+    "pending_delivery_priority": [
+      "explicit_owner_requested_result",
+      "critical_or_security_result",
+      "mission_terminal_result",
+      "material_failure_or_hold_result",
+      "high_owner_value_result",
+      "routine_completion_result",
+      "low_value_progress_result"
+    ],
+    "privacy": {
+      "authorized_surface_required": true,
+      "matter_wall_preserved": true,
+      "minimum_necessary_result_payload": true,
+      "large_or_sensitive_artifact_prefer_pointer_hash": true,
+      "cross_provider_delivery_requires_same_authority_and_privacy_eligibility": true
+    },
+    "forbidden": [
+      "claim human read from browser render",
+      "drop a pending terminal result because another result was delivered later",
+      "redeliver identical result repeatedly when exact hash is already current-client visible",
+      "cross a matter wall to clear delivery debt",
+      "expand provider authority merely to deliver a result"
+    ]
+  },
+  "external_algorithm_genome100": {
+    "policy_id": "FUSE-EXTERNAL-ALGORITHM-GENOME100-V1",
+    "cohort": "HG-EXTALG-001..100",
+    "control_source": "START:FUSE_ONE-V4.37-EXTERNAL-ALGORITHM-GENOME100-20260924",
+    "capability_map_ref": "CFM-EXTALG100-001",
+    "load_policy": "METADATA_INDEX_ONLY_AT_BOOTSTRAP__DETAILS_ON_MATERIAL_MISSION_MATCH",
+    "families": {
+      "HG-EXTALG-001..020": "DELIBERATIVE_REASONING_PLANNING_SEARCH",
+      "HG-EXTALG-021..040": "OPTIMIZATION_EXPERIMENTATION_RESOURCE_ALLOCATION",
+      "HG-EXTALG-041..050": "SCHEDULING_FLOW_ROUTING",
+      "HG-EXTALG-051..065": "DISTRIBUTED_INTELLIGENCE_CONCURRENCY_RECOVERY",
+      "HG-EXTALG-066..078": "RETRIEVAL_MEMORY_KNOWLEDGE",
+      "HG-EXTALG-079..090": "CAUSAL_CURRENTNESS_DRIFT_UNCERTAINTY",
+      "HG-EXTALG-091..100": "PROOF_FALSIFICATION_DEBUGGING_EPISTEMICS"
+    },
+    "organ_bindings": {
+      "HG-EXTALG-001..020": [
+        "ALPHA_OMEGA",
+        "MISSION_IR",
+        "FORMATION",
+        "COGNITIVE_COUNCIL",
+        "FPPRE_RIF"
+      ],
+      "HG-EXTALG-021..040": [
+        "RAEFI",
+        "THROUGHPUT_INTELLIGENCE",
+        "CFBE_TOURNAMENTS",
+        "RESOURCE_ALLOCATOR"
+      ],
+      "HG-EXTALG-041..050": [
+        "PORTFOLIO_V2",
+        "EXECUTION_POWER_POOLS",
+        "THROUGHPUT_INTELLIGENCE"
+      ],
+      "HG-EXTALG-051..065": [
+        "FDOF",
+        "SICF",
+        "WORK_PLANE",
+        "PORTABLE_STATE",
+        "ARTIFACT_VAULT"
+      ],
+      "HG-EXTALG-066..078": [
+        "MEMORY_CONTINUUM",
+        "KDV",
+        "BIBLE_RETRIEVAL",
+        "EVIDENCEOPS",
+        "CAPABILITY_TRUTH"
+      ],
+      "HG-EXTALG-079..090": [
+        "PRECOG",
+        "AECL",
+        "FAILURE_HARVEST",
+        "REALITYGUARD"
+      ],
+      "HG-EXTALG-091..100": [
+        "PROOFOS",
+        "REALITY_JUDGE",
+        "FORMATION",
+        "SICF",
+        "FAILURE_HARVEST"
+      ]
+    },
+    "method": [
+      "MISSION_GAP_MATCH",
+      "MAP_TO_EXISTING_FUSE_MECHANISM",
+      "OVERLAP_EQUIVALENCE_SUPERSET_COLLAPSE",
+      "PUBLIC_PRIMARY_SOURCE_REFRESH_FOR_MATERIAL_CANDIDATES",
+      "REUSE_REBIND_REPAIR_EXTEND_COMPOSE_HARVEST_BUILD_MINIMUM_OR_REJECT",
+      "SOURCE_INDEPENDENT_MATCHED_INCUMBENT_CHALLENGER",
+      "UNTOUCHED_OR_FALSIFIER_CASES",
+      "PROOFOS_REALITY_JUDGE",
+      "SCOPED_SOURCE_RUNTIME_VALUE_PROOF",
+      "LEARNING_REGRET_UPDATE"
+    ],
+    "priority_tranche": [
+      "ReAct",
+      "Graph/Tree Search",
+      "Reflexion",
+      "MCTS/UCT",
+      "LPA*/D* Lite",
+      "Bayesian Optimization",
+      "Thompson Sampling",
+      "Hyperband/BOHB",
+      "CMA-ES",
+      "NSGA-II/MOEA-D",
+      "Max-Flow/Min-Cut",
+      "HEFT",
+      "Work-Stealing",
+      "Chandy-Lamport",
+      "SWIM/Phi Failure Detection",
+      "HNSW/RRF/ColBERT",
+      "FCI/NOTEARS",
+      "BOCPD/ADWIN",
+      "Conformal Prediction",
+      "QuickXplain",
+      "Delta Debugging",
+      "CEGAR/CEGIS"
+    ],
+    "proof_rules": {
+      "algorithm_name_or_paper_proves_capability_gap": false,
+      "registry_control_proves_source_implementation": false,
+      "source_implementation_proves_runtime": false,
+      "internal_score_proves_market_superiority": false,
+      "builders_self_certify": false,
+      "matched_incumbent_challenger_required": true,
+      "untouched_or_falsifier_required": true,
+      "independent_judge_required_before_promotion": true
+    },
+    "sovereignty": {
+      "consensus_replicated_state_or_alternate_truth_mechanisms_subordinate": true,
+      "may_replace_fuse_truth_authority_or_scheduler_root": false
+    },
+    "budget": {
+      "expensive_search_or_evolution_requires_information_gain": true,
+      "bounded_by_cost_privacy_and_terminal_relevance": true
+    },
+    "more_inheritance": true
   }
 }
