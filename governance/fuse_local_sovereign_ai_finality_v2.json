@@ -1,9 +1,9 @@
 {
   "schema": "FUSE_LOCAL_SOVEREIGN_AI_FINALITY_V2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "profile_id": "FUSE-LOCAL-SOVEREIGN-AI-FINALITY-001",
   "mission_target": "COMMERCIAL_READY_VERIFIED",
-  "purpose": "Drive FUSE LocalLLM/FUSE.exe from current estate state to a portable Windows sovereign AI workstation with zero mandatory terminal debt, OpenAI-disabled core operation, Google Drive distribution, cross-PC install, recovery and commercial-readiness proof.",
+  "purpose": "Drive the existing FUSE LocalLLM to a mature owner-controlled Windows sovereign AI environment first; converge valid FUSE runtime organs into that system, prove OpenAI-disabled/offline owner workflows, and only then package the same mature system for portable Windows distribution, recovery and commercial-readiness proof.",
   "authority": {
     "sovereign_kernel": "FUSE_SOVEREIGN_PLANE_R59",
     "cognition": "FUSE-HIPB-001>=2.0.0",
@@ -66,7 +66,8 @@
       "id": "FUSE_EXE_WINDOWS_PRODUCT",
       "family": "WINDOWS_PRODUCT",
       "deps": [
-        "ALL_VALID_FUSE_COMPONENTS_RESOLVED"
+        "NATURAL_OWNER_WORKLOAD",
+        "OFFLINE_CORE_VERIFIED"
       ],
       "maturity": [
         "DESIGN",
@@ -83,7 +84,7 @@
       "id": "LOCALLLM_MODEL_FABRIC",
       "family": "MODEL",
       "deps": [
-        "FUSE_EXE_WINDOWS_PRODUCT"
+        "ALL_VALID_FUSE_COMPONENTS_RESOLVED"
       ],
       "maturity": [
         "SOURCE",
@@ -146,7 +147,7 @@
       "id": "DURABLE_MEMORY",
       "family": "MEMORY",
       "deps": [
-        "FUSE_EXE_WINDOWS_PRODUCT"
+        "LOCALLLM_MODEL_FABRIC"
       ],
       "maturity": [
         "SOURCE",
@@ -181,7 +182,7 @@
       "id": "LOCAL_TOOL_EXECUTION",
       "family": "TOOLS",
       "deps": [
-        "FUSE_EXE_WINDOWS_PRODUCT"
+        "LOCALLLM_MODEL_FABRIC"
       ],
       "maturity": [
         "SOURCE",
@@ -341,7 +342,7 @@
       "id": "SELF_DIAGNOSTICS",
       "family": "RELIABILITY",
       "deps": [
-        "FUSE_EXE_WINDOWS_PRODUCT"
+        "LOCALLLM_MODEL_FABRIC"
       ],
       "maturity": [
         "SOURCE",
@@ -672,5 +673,11 @@
     "terminal_success_requires_zero_mandatory_debt": true,
     "owner_action_only_after_machine_prerequisites": true
   },
-  "truth_boundary": "PROFILE_BOUND != DEBT_CLOSED != SOURCE_ADMITTED != WINDOWS_RUNTIME_VERIFIED != CROSS_PC_VERIFIED != COMMERCIAL_READY_VERIFIED"
+  "truth_boundary": "PROFILE_BOUND != DEBT_CLOSED != SOURCE_ADMITTED != WINDOWS_RUNTIME_VERIFIED != CROSS_PC_VERIFIED != COMMERCIAL_READY_VERIFIED",
+  "product_identity_contract": {
+    "existing_localllm_is_primary_system": true,
+    "new_parallel_localllm_forbidden": true,
+    "windows_product_role": "DISTRIBUTION_WRAPPER_AFTER_RUNTIME_MATURITY",
+    "packaging_may_not_gate_model_memory_tools": true
+  }
 }

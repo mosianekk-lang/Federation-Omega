@@ -220,6 +220,20 @@ class TerminalDebtV1Tests(unittest.TestCase):
         for node in graph:
             visit(node)
     
+        identity = profile["product_identity_contract"]
+        assert identity["existing_localllm_is_primary_system"] is True
+        assert identity["new_parallel_localllm_forbidden"] is True
+        assert identity["windows_product_role"] == "DISTRIBUTION_WRAPPER_AFTER_RUNTIME_MATURITY"
+        assert identity["packaging_may_not_gate_model_memory_tools"] is True
+
+        assert graph["LOCALLLM_MODEL_FABRIC"] == {"ALL_VALID_FUSE_COMPONENTS_RESOLVED"}
+        for node in ("DURABLE_MEMORY", "LOCAL_TOOL_EXECUTION", "SELF_DIAGNOSTICS"):
+            assert graph[node] == {"LOCALLLM_MODEL_FABRIC"}
+            assert "FUSE_EXE_WINDOWS_PRODUCT" not in graph[node]
+        assert graph["FUSE_EXE_WINDOWS_PRODUCT"] == {"NATURAL_OWNER_WORKLOAD", "OFFLINE_CORE_VERIFIED"}
+        assert "FUSE_EXE_WINDOWS_PRODUCT" in graph["INSTALLER_REPAIR_UNINSTALL"]
+        assert "FUSE_EXE_WINDOWS_PRODUCT" in graph["AUTOMATIC_STARTUP"]
+
         final = next(x for x in specs if x.debt_id == "COMMERCIAL_READY_VERIFIED")
         assert "COMMERCIAL_PRODUCT_UX" in final.dependencies
         assert "COMMERCIAL_RELEASE_ENGINEERING" in final.dependencies
