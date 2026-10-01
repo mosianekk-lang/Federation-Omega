@@ -1,0 +1,197 @@
+name: SOVARA Google Interactions V2 Semantic Canary
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/sovara-google-interactions-v2-canary.yml"
+      - "config/fuse-google-intelligence-runtime-v2.json"
+      - "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md"
+      - "frontier_convergence/gemini_adapter.py"
+      - "frontier_convergence/intelligence_formation_v2.py"
+      - "frontier_convergence/__init__.py"
+      - "respawn/federation_manifest.json"
+      - "respawn/bootstrap_service.py"
+      - "tests/test_fuse_google_intelligence_runtime_v2.py"
+      - "tests/test_sovara_google_interactions_v2_canary.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sovara-google-interactions-v2-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  LOCATION: global
+  INTERACTIONS_MODEL: gemini-3.8-flash
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RECEIPT_DIR: /tmp/fuse-google-interactions-v2
+
+jobs:
+  semantic-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate V2 zero-effect contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          c=json.load(open('config/fuse-google-intelligence-runtime-v2.json',encoding='utf-8'))
+          assert c['schema']=='FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2'
+          assert c['version']=='2.0.0'
+          assert c['primary_google_protocol']=='VERTEX_AI_INTERACTIONS_REST'
+          assert c['primary_google_model_candidate']=='gemini-3.8-flash'
+          assert c['sensitive_default_store'] is False
+          assert c['provider_output_can_expand_authority'] is False
+          assert c['secret_payload_to_model'] is False
+          p=Path(c['prompt_path'])
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==c['prompt_sha256']
+          assert c['predecessor']['rollback_preserved'] is True
+          PY
+
+      - name: Authenticate canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Run stateless Gemini 3.8 Interactions semantic nonce canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p "$RECEIPT_DIR"
+          python3 - <<'PY'
+          import hashlib, json, os, subprocess, time, urllib.error, urllib.request
+          from pathlib import Path
+
+          project=os.environ['PROJECT_ID']
+          location=os.environ['LOCATION']
+          model=os.environ['INTERACTIONS_MODEL']
+          out=Path(os.environ['RECEIPT_DIR'])/'INTERACTIONS_V2_SEMANTIC_RECEIPT.json'
+          token=subprocess.check_output(['gcloud','auth','print-access-token'],text=True).strip()
+          nonce=f"FUSE-V2-{os.environ.get('GITHUB_RUN_ID','local')}-{os.environ.get('GITHUB_RUN_ATTEMPT','0')}-{str(os.environ.get('GITHUB_SHA',''))[:12]}"
+          expected=f"FUSE_INTERACTIONS_V2_VERIFIED:{nonce}"
+          payload={
+              'model': model,
+              'input': [{
+                  'role':'user',
+                  'content':[{
+                      'type':'text',
+                      'text':f'Return exactly this text and nothing else: {expected}'
+                  }]
+              }],
+              'store': False,
+          }
+          endpoint=f'https://aiplatform.googleapis.com/v1beta1/projects/{project}/locations/{location}/interactions'
+          request=urllib.request.Request(
+              endpoint,
+              data=json.dumps(payload,separators=(',',':')).encode(),
+              headers={'Authorization':f'Bearer {token}','Content-Type':'application/json'},
+              method='POST',
+          )
+          started=time.perf_counter()
+          status=None; body={}; headers={}
+          try:
+              with urllib.request.urlopen(request,timeout=90) as response:
+                  status=int(response.status)
+                  raw=response.read().decode('utf-8','replace')
+                  body=json.loads(raw) if raw else {}
+                  headers={k.lower():v for k,v in response.headers.items()}
+          except urllib.error.HTTPError as exc:
+              status=int(exc.code)
+              raw=exc.read().decode('utf-8','replace')
+              try: body=json.loads(raw) if raw else {}
+              except Exception: body={'raw_sha256':hashlib.sha256(raw.encode()).hexdigest()}
+              headers={k.lower():v for k,v in exc.headers.items()}
+          latency_ms=round((time.perf_counter()-started)*1000,3)
+
+          texts=[]
+          for step in body.get('steps') or []:
+              if step.get('type')!='model_output':
+                  continue
+              for part in step.get('content') or []:
+                  if part.get('type')=='text':
+                      texts.append(str(part.get('text') or ''))
+          output=''.join(texts).strip()
+          interaction_id=body.get('id')
+          interaction_status=body.get('status')
+          usage=body.get('usage') or {}
+          exact=(status==200 and interaction_status=='completed' and interaction_id and output==expected)
+          response_digest=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          receipt={
+              'schema':'FUSE_GOOGLE_INTERACTIONS_V2_SEMANTIC_RECEIPT_V1',
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'run_id':os.environ.get('GITHUB_RUN_ID'),
+              'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'project_id':project,
+              'project_number':os.environ.get('PROJECT_NUMBER'),
+              'provider_identity':'GOOGLE_VERTEX_AI',
+              'protocol':'VERTEX_AI_INTERACTIONS_REST',
+              'requested_model':model,
+              'provider_model_identity_observed':body.get('model'),
+              'model_identity':body.get('model') or model,
+              'model_identity_source':'PROVIDER_RESPONSE' if body.get('model') else 'BOUND_REQUEST',
+              'credential_mode':'GITHUB_WIF_ADC',
+              'http_status':status,
+              'interaction_id':interaction_id,
+              'interaction_status':interaction_status,
+              'provider_request_id':interaction_id or headers.get('x-request-id') or headers.get('x-goog-request-id'),
+              'semantic_nonce_sha256':hashlib.sha256(nonce.encode()).hexdigest(),
+              'expected_output_sha256':hashlib.sha256(expected.encode()).hexdigest(),
+              'response_text_sha256':hashlib.sha256(output.encode()).hexdigest() if output else None,
+              'response_digest':response_digest,
+              'semantic_verified':bool(exact),
+              'store':False,
+              'usage':{
+                  'total_tokens':usage.get('total_tokens'),
+                  'total_input_tokens':usage.get('total_input_tokens'),
+                  'total_output_tokens':usage.get('total_output_tokens'),
+              },
+              'latency_ms':latency_ms,
+              'case_data_processed':False,
+              'provider_mutation_performed':False,
+              'iam_mutation_performed':False,
+              'secret_value_recorded':False,
+              'deployment_performed':False,
+              'traffic_change_performed':False,
+              'external_communication_performed':False,
+          }
+          body_to_seal=dict(receipt)
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(body_to_seal,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          if not exact:
+              raise SystemExit('Gemini 3.8 Interactions semantic proof held')
+          PY
+
+      - name: Upload immutable redacted Interactions receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-google-interactions-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-google-interactions-v2/INTERACTIONS_V2_SEMANTIC_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
