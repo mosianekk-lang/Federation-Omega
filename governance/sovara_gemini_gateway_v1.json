@@ -8,7 +8,7 @@
   "region": "africa-south1",
   "provider_location": "global",
   "service": "sovara-gemini-gateway",
-  "runtime_service_account": "sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
   "deployer_service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
   "credential_mode": "CLOUD_RUN_SERVICE_ACCOUNT_ADC",
   "service_account_keys_allowed": false,
