@@ -34,9 +34,9 @@
       ],
       "depends_on": [
         "FEDERATION_CORE",
-        "RESPAWN",
-        "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
-        "FEDERATION_PROOFOS_OMEGA",
+        "AO_HARMONIC",
+        "CFBE",
+        "SUPERIOR_LOGIC",
         "SOVARA"
       ]
     }
