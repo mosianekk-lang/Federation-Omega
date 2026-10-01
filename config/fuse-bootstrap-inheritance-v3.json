@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "boot_kernel": "5.10.1",
   "authority": "START:FUSE_ONE",
   "enabled": true,
@@ -179,15 +179,20 @@
     "executable_next_action_withheld_ceiling": 0
   },
   "google_intelligence_runtime": {
-    "contract_id": "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-001",
-    "schema": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V1",
-    "version": "1.0.0",
+    "contract_id": "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-002",
+    "schema": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
+    "version": "2.0.0",
     "enabled": true,
-    "prompt_path": "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md",
-    "prompt_sha256": "5622203476ab7d2952ed738a14242077199373973815794ad0fd8cf1d18b1e2b",
+    "prompt_path": "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md",
+    "prompt_sha256": "325cdb3384fc3196d2f4778e9736f168e64b7344467cdb5c78fb42dd53ba4018",
+    "config_path": "config/fuse-google-intelligence-runtime-v2.json",
     "authority_expansion": false,
     "required_before_route_compilation": true,
+    "primary_google_protocol": "VERTEX_AI_INTERACTIONS_REST",
+    "primary_google_model_candidate": "gemini-3.8-flash",
+    "predecessor_main_sha": "52742a8e32dfe0e246a09e330552150311b4c5cd",
+    "rollback_v1_preserved": true,
     "ai_studio_role": "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME",
-    "truth_boundary": "PROMPT_BOUND!=SOURCE_ADMITTED!=DEPLOYED!=PROVIDER_CALLABLE!=SEMANTICALLY_VERIFIED!=TOOL_VERIFIED!=EFFECT_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
+    "truth_boundary": "V2_PROMPT_BOUND!=V2_SOURCE_ADMITTED!=INTERACTIONS_CALLABLE!=GEMINI_3_8_SEMANTIC_VERIFIED!=CHAMPION_PROMOTED!=LIVE_VERIFIED!=RESEARCH_VERIFIED!=MCP_EFFECT_VERIFIED!=CROSS_PROVIDER_FUSION_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
   }
 }
