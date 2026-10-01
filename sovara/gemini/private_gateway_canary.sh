@@ -67,6 +67,48 @@ if p.get('service_account_key_created') is not False or p.get('secret_payload_ac
     raise SystemExit('credential truth boundary violated')
 PY
 
+# Cold-start canary safety requires create/invoke/inspect/delete authority
+# before any Cloud Run service-create effect.
+ACCESS_TOKEN="$(gcloud auth print-access-token)"
+export ACCESS_TOKEN PROJECT_ID
+python3 - <<'PY' > "$RECEIPT_DIR/G3_DEPLOYER_PERMISSION_PREFLIGHT.json"
+import json, os, urllib.request
+required=[
+    'run.services.create',
+    'run.services.get',
+    'run.services.update',
+    'run.services.delete',
+    'run.operations.get',
+    'run.routes.invoke',
+]
+body=json.dumps({'permissions':required},separators=(',',':')).encode()
+req=urllib.request.Request(
+    f"https://cloudresourcemanager.googleapis.com/v1/projects/{os.environ['PROJECT_ID']}:testIamPermissions",
+    data=body,
+    method='POST',
+    headers={
+        'Authorization':f"Bearer {os.environ['ACCESS_TOKEN']}",
+        'Content-Type':'application/json',
+        'X-Goog-User-Project':os.environ['PROJECT_ID'],
+    },
+)
+with urllib.request.urlopen(req,timeout=30) as response:
+    payload=json.loads(response.read().decode() or '{}')
+granted=sorted(payload.get('permissions') or [])
+missing=sorted(set(required)-set(granted))
+receipt={
+    'schema':'SOVARA_G3_DEPLOYER_PERMISSION_PREFLIGHT_V1',
+    'required_permissions':required,
+    'granted_permissions':granted,
+    'missing_permissions':missing,
+    'cold_start_create_delete_ready':not missing,
+}
+print(json.dumps(receipt,sort_keys=True))
+if missing:
+    raise SystemExit(f'G3 cold-start create/delete permissions missing: {missing}')
+PY
+unset ACCESS_TOKEN
+
 IMAGE_NAME="sovara-gemini-gateway"
 IMAGE_TAG="g3-${SOURCE_SHA:0:12}-${RUN_ID}-${RUN_ATTEMPT}"
 IMAGE_TAG_REF="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}"
@@ -104,6 +146,12 @@ fi
 # Capture pre-effect provider state for rollback/readback attribution.
 SERVICE_PREEXISTED=false
 PREVIOUS_READY=""
+TARGET_SERVICE="$SERVICE"
+DEPLOYMENT_MODE="EXISTING_SERVICE_ZERO_TRAFFIC"
+EPHEMERAL_SERVICE=false
+EPHEMERAL_CREATED=false
+EPHEMERAL_SERVICE_NAME="sovara-gemini-g3-${RUN_ID}-${RUN_ATTEMPT}"
+
 if gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json \
   > "$RECEIPT_DIR/G3_SERVICE_BEFORE.json" 2>/dev/null; then
   SERVICE_PREEXISTED=true
@@ -113,7 +161,23 @@ p=json.load(open(sys.argv[1],encoding='utf-8'))
 print((p.get('status') or {}).get('latestReadyRevisionName') or '')
 PY
 )"
+else
+  : > "$RECEIPT_DIR/G3_SERVICE_BEFORE.json"
+  TARGET_SERVICE="$EPHEMERAL_SERVICE_NAME"
+  DEPLOYMENT_MODE="EPHEMERAL_SERVICE_COLD_START"
+  EPHEMERAL_SERVICE=true
 fi
+
+cleanup_on_exit() {
+  rc=$?
+  trap - EXIT
+  if [[ "$EPHEMERAL_CREATED" == true ]]; then
+    gcloud run services delete "$TARGET_SERVICE" \
+      --project "$PROJECT_ID" --region "$REGION" --quiet >/dev/null 2>&1 || true
+  fi
+  exit "$rc"
+}
+trap cleanup_on_exit EXIT
 
 # Build and publish exact admitted source. The deploy step uses the immutable digest, not the tag.
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
@@ -124,31 +188,59 @@ DIGEST="$(gcloud artifacts docker images describe "$IMAGE_TAG_REF" --project "$P
 IMAGE_DIGEST_REF="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/${IMAGE_NAME}@${DIGEST}"
 printf '%s\n' "$IMAGE_DIGEST_REF" > "$RECEIPT_DIR/G3_IMAGE_DIGEST_REF.txt"
 
-# Create an authenticated tagged revision with zero normal service traffic.
-gcloud run deploy "$SERVICE" \
-  --project "$PROJECT_ID" \
-  --region "$REGION" \
-  --image "$IMAGE_DIGEST_REF" \
-  --service-account "$RUNTIME_SA" \
-  --platform managed \
-  --tag "$CANARY_TAG" \
-  --no-traffic \
-  --no-allow-unauthenticated \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=${MODEL},INTERACTIONS_MODEL=${INTERACTIONS_MODEL},EXPECTED_RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA}" \
-  --quiet
+if [[ "$SERVICE_PREEXISTED" == true ]]; then
+  # Existing canonical service: add a tagged revision with zero normal service traffic.
+  gcloud run deploy "$SERVICE" \
+    --project "$PROJECT_ID" \
+    --region "$REGION" \
+    --image "$IMAGE_DIGEST_REF" \
+    --service-account "$RUNTIME_SA" \
+    --platform managed \
+    --tag "$CANARY_TAG" \
+    --no-traffic \
+    --no-allow-unauthenticated \
+    --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=${MODEL},INTERACTIONS_MODEL=${INTERACTIONS_MODEL},EXPECTED_RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA}" \
+    --quiet
+else
+  # Cold start: gcloud does not support --no-traffic for the first revision.
+  # Use a uniquely named authenticated ephemeral service, never the production
+  # service name; prove semantics, then delete and verify absence.
+  gcloud run deploy "$TARGET_SERVICE" \
+    --project "$PROJECT_ID" \
+    --region "$REGION" \
+    --image "$IMAGE_DIGEST_REF" \
+    --service-account "$RUNTIME_SA" \
+    --platform managed \
+    --no-allow-unauthenticated \
+    --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=${MODEL},INTERACTIONS_MODEL=${INTERACTIONS_MODEL},EXPECTED_RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA}" \
+    --quiet
+  EPHEMERAL_CREATED=true
+fi
 
-gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json \
+gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json \
   > "$RECEIPT_DIR/G3_SERVICE_AFTER_DEPLOY.json"
 
-python3 - "$RECEIPT_DIR/G3_SERVICE_AFTER_DEPLOY.json" "$CANARY_TAG" "$IMAGE_DIGEST_REF" "$RUNTIME_SA" <<'PY' > "$RECEIPT_DIR/G3_CANARY_TARGET.json"
+python3 - "$RECEIPT_DIR/G3_SERVICE_AFTER_DEPLOY.json" "$CANARY_TAG" "$IMAGE_DIGEST_REF" "$RUNTIME_SA" "$DEPLOYMENT_MODE" "$SERVICE" "$TARGET_SERVICE" <<'PY' > "$RECEIPT_DIR/G3_CANARY_TARGET.json"
 import json,sys
 p=json.load(open(sys.argv[1],encoding='utf-8'))
-tag=sys.argv[2]; expected_image=sys.argv[3]; expected_sa=sys.argv[4]
-status=p.get('status') or {}; spec=p.get('spec') or {}; template=spec.get('template') or {}; tmpl_spec=template.get('spec') or {}
+tag=sys.argv[2]
+expected_image=sys.argv[3]
+expected_sa=sys.argv[4]
+mode=sys.argv[5]
+production_service=sys.argv[6]
+target_service=sys.argv[7]
+status=p.get('status') or {}
+spec=p.get('spec') or {}
+template=spec.get('template') or {}
+tmpl_spec=template.get('spec') or {}
+metadata=p.get('metadata') or {}
 created=status.get('latestCreatedRevisionName') or ''
 ready=status.get('latestReadyRevisionName') or ''
 if not created or created != ready:
     raise SystemExit(f'canary revision not ready: created={created!r}, ready={ready!r}')
+observed_name=str(metadata.get('name') or '')
+if observed_name and observed_name != target_service:
+    raise SystemExit(f'canary service identity mismatch: {observed_name!r}')
 containers=tmpl_spec.get('containers') or []
 observed_image=str((containers[0] if containers else {}).get('image') or '')
 if observed_image != expected_image:
@@ -157,26 +249,44 @@ observed_sa=str(tmpl_spec.get('serviceAccountName') or '')
 if observed_sa != expected_sa:
     raise SystemExit(f'runtime service account mismatch: {observed_sa!r}')
 traffic=status.get('traffic') or []
-tagged=next((x for x in traffic if x.get('tag')==tag),{})
-url=str(tagged.get('url') or '')
-if not url:
-    raise SystemExit('tagged canary URL missing')
-canary_percent=sum(int(x.get('percent') or 0) for x in traffic if x.get('revisionName')==created)
-if canary_percent != 0:
-    raise SystemExit(f'canary unexpectedly has normal traffic allocation: {canary_percent}')
+if mode == 'EXISTING_SERVICE_ZERO_TRAFFIC':
+    tagged=next((x for x in traffic if x.get('tag')==tag),{})
+    url=str(tagged.get('url') or '')
+    if not url:
+        raise SystemExit('tagged canary URL missing')
+    canary_percent=sum(int(x.get('percent') or 0) for x in traffic if x.get('revisionName')==created)
+    if canary_percent != 0:
+        raise SystemExit(f'canary unexpectedly has normal traffic allocation: {canary_percent}')
+    ephemeral_percent=None
+    production_mutated=True
+else:
+    url=str(status.get('url') or '')
+    if not url:
+        raise SystemExit('ephemeral canary service URL missing')
+    ephemeral_percent=sum(int(x.get('percent') or 0) for x in traffic if x.get('revisionName')==created)
+    if ephemeral_percent != 100:
+        raise SystemExit(f'cold-start ephemeral service expected 100 percent private canary traffic: {ephemeral_percent}')
+    canary_percent=0
+    production_mutated=False
 print(json.dumps({
   'revision':created,
-  'tag':tag,
-  'tagged_url':url,
+  'tag':tag if mode=='EXISTING_SERVICE_ZERO_TRAFFIC' else None,
+  'invocation_url':url,
   'image_digest_ref':observed_image,
   'runtime_service_account':observed_sa,
+  'deployment_mode':mode,
+  'production_service':production_service,
+  'canary_service':target_service,
+  'ephemeral_service':mode=='EPHEMERAL_SERVICE_COLD_START',
+  'ephemeral_service_traffic_percent':ephemeral_percent,
   'normal_traffic_percent':canary_percent,
+  'production_service_mutated':production_mutated,
 },sort_keys=True))
 PY
 
 CANARY_URL="$(python3 - "$RECEIPT_DIR/G3_CANARY_TARGET.json" <<'PY'
 import json,sys
-print(json.load(open(sys.argv[1]))['tagged_url'])
+print(json.load(open(sys.argv[1]))['invocation_url'])
 PY
 )"
 CANARY_REVISION="$(python3 - "$RECEIPT_DIR/G3_CANARY_TARGET.json" <<'PY'
