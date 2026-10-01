@@ -2,11 +2,31 @@ import unittest
 
 from federation.fcoa.intelligence_v1.fcoa_intelligence import FCOAIntelligenceBinding
 from federation.formation_power_inheritance_v2 import WorkflowClass, WorkflowFormationSpec
-from federation.formation_surface_load_balancer_v1 import (
-    FormationWorkPackage,
-    SurfaceRuntimeState,
-    WorkKind,
-)
+from federation.formation_surface_load_balancer_v1 import FormationWorkPackage, SurfaceRuntimeState, WorkKind
+
+
+def runtime(surface_id: str, domain: str) -> SurfaceRuntimeState:
+    return SurfaceRuntimeState(
+        surface_id=surface_id,
+        authority_pass=True,
+        privacy_pass=True,
+        currentness_pass=True,
+        proof_pass=True,
+        health_pass=True,
+        quota_pass=True,
+        quality=0.9,
+        reliability=0.95,
+        proof_strength=0.95,
+        latency_ms=100.0,
+        estimated_cost=0.01,
+        owner_burden=0.01,
+        privacy_cost=0.01,
+        maintenance_cost=0.01,
+        strategic_value=0.7,
+        parallel_slots=2,
+        correlation_domains=(domain,),
+        proof_refs=(f"proof:{surface_id}",),
+    )
 
 
 class FCOAIntelligenceBindingTests(unittest.TestCase):
@@ -18,23 +38,8 @@ class FCOAIntelligenceBindingTests(unittest.TestCase):
             workflow_class=WorkflowClass.CREATIVE,
             domains=frozenset({"CREATIVE","DEVICE","ROUTING"}),
         )
-        packages=(FormationWorkPackage(
-            package_id="p1",
-            kind=WorkKind.COGNITION,
-            required_capabilities=frozenset({"reasoning"}),
-        ),)
-        states=(SurfaceRuntimeState(
-            surface_id="local",
-            current=True,
-            healthy=True,
-            callable=True,
-            authority=True,
-            privacy=True,
-            cost_ok=True,
-            supported_kinds=frozenset({WorkKind.COGNITION}),
-            capabilities=frozenset({"reasoning"}),
-            failure_domain="local",
-        ),)
+        packages=(FormationWorkPackage("p1",WorkKind.COGNITION,("reasoning",)),)
+        states=(runtime("OPENAI-GPT6-ASTRA","openai"),)
         plan=binding.compile(spec=spec,packages=packages,runtime_states=states)
         self.assertEqual(plan.hipb_contract_id,"FUSE-HIPB-001")
         self.assertEqual(plan.autonomous_improvement_iterations,10)
