@@ -3,6 +3,11 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
+from scripts.run_google_interactions_v2_canary import (
+    _extract_output,
+    _normalize_interaction_response,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -49,6 +54,75 @@ class SovaraGoogleInteractionsV2CanaryTests(unittest.TestCase):
         v2_index = self.workflow.index("Run V2 Gemini 3.8 Interactions semantic canary")
         legacy_index = self.workflow.index("Run bounded portable reasoning role matrix")
         self.assertLess(v2_index, legacy_index)
+
+    def test_direct_interaction_response_normalizes(self) -> None:
+        raw = {
+            "id": "i1",
+            "status": "completed",
+            "model": "gemini-3.8-flash",
+            "steps": [
+                {
+                    "type": "model_output",
+                    "content": [{"type": "text", "text": "ok"}],
+                }
+            ],
+        }
+        interaction, shape = _normalize_interaction_response(raw)
+        self.assertEqual(shape["normalization"], "DIRECT_INTERACTION_OBJECT")
+        self.assertEqual(interaction["id"], "i1")
+        self.assertEqual(_extract_output(interaction), "ok")
+
+    def test_singleton_interaction_list_normalizes_without_guessing(self) -> None:
+        raw = [
+            {
+                "id": "i2",
+                "status": "completed",
+                "steps": [
+                    {
+                        "type": "model_output",
+                        "content": [{"type": "text", "text": "verified"}],
+                    }
+                ],
+            }
+        ]
+        interaction, shape = _normalize_interaction_response(raw)
+        self.assertEqual(shape["normalization"], "SINGLETON_INTERACTION_LIST")
+        self.assertEqual(shape["list_length"], 1)
+        self.assertEqual(_extract_output(interaction), "verified")
+
+    def test_interaction_event_list_reconstructs_only_typed_events(self) -> None:
+        raw = [
+            {
+                "event_type": "interaction.created",
+                "interaction": {"id": "i3", "status": "in_progress", "model": "gemini-3.8-flash"},
+            },
+            {
+                "event_type": "step.delta",
+                "delta": {"type": "text", "text": "ver"},
+            },
+            {
+                "event_type": "step.delta",
+                "delta": {"type": "text", "text": "ified"},
+            },
+            {
+                "event_type": "interaction.status_update",
+                "status": "completed",
+            },
+        ]
+        interaction, shape = _normalize_interaction_response(raw)
+        self.assertEqual(shape["normalization"], "INTERACTION_EVENT_LIST")
+        self.assertEqual(interaction["status"], "completed")
+        self.assertEqual(_extract_output(interaction), "verified")
+
+    def test_unrecognized_list_fails_closed(self) -> None:
+        interaction, shape = _normalize_interaction_response([{"unexpected": True}, "noise"])
+        self.assertEqual(interaction, {})
+        self.assertEqual(shape["normalization"], "UNSUPPORTED")
+        self.assertEqual(shape["list_length"], 2)
+
+    def test_runner_always_attests_response_shape(self) -> None:
+        self.assertIn('"response_shape": response_shape', self.runner)
+        self.assertIn("FUSE_GOOGLE_INTERACTIONS_V2_SEMANTIC_RECEIPT_V2", self.runner)
 
     def test_interactions_receipt_upload_is_immutable_artifact(self) -> None:
         self.assertIn("Upload immutable redacted V2 Interactions receipt", self.workflow)
