@@ -514,6 +514,11 @@ jobs:
               and bool(g3.get('model_identity'))
               and g3.get('production_promotion_performed') is False
               and g3.get('case_data_processed') is False
+              and g3.get('cleanup_verified') is True
+              and (
+                  g3.get('ephemeral_service') is not True
+                  or g3.get('ephemeral_service_deleted') is True
+              )
               and bool(g3.get('receipt_sha256'))
               and g3_code == 0
           )
@@ -572,6 +577,12 @@ jobs:
               'gemini_private_canary_provider_request_id':g3.get('provider_request_id') if g3 else None,
               'gemini_private_canary_model_identity':g3.get('model_identity') if g3 else None,
               'gemini_private_canary_receipt_sha256':g3.get('receipt_sha256') if g3 else None,
+              'gemini_private_canary_deployment_mode':g3.get('deployment_mode') if g3 else None,
+              'gemini_private_canary_service':g3.get('canary_service') if g3 else None,
+              'gemini_private_canary_ephemeral_service':g3.get('ephemeral_service') if g3 else None,
+              'gemini_private_canary_ephemeral_service_deleted':g3.get('ephemeral_service_deleted') if g3 else None,
+              'gemini_private_canary_cleanup_verified':g3.get('cleanup_verified') if g3 else None,
+              'gemini_private_canary_production_service_mutated':g3.get('production_service_mutated') if g3 else None,
               'production_promotion_performed':bool(g3.get('production_promotion_performed',False)) if g3 else False,
               'case_data_processed':False,
               'model_inference_performed':g3_ok if scope=='G3_PRIVATE_GATEWAY_CANARY' else (challenge_ok if scope=='G2_CREATIVE_ARCHITECTURE_CHALLENGE' else (False if scope in {'G0_READ_ONLY_VERIFY','G1_ADC_APPLY_VERIFY'} else None)),
@@ -642,7 +653,7 @@ jobs:
                 echo "G3 private Gemini gateway canary stopped at a provider proof gate. Redacted receipts were retained when available." >&2
                 exit "$code"
               fi
-              jq -e '.execution_scope == "G3_PRIVATE_GATEWAY_CANARY" and (.wif_verified == true or .wif_g3_transport_sufficient == true) and .adc_verified == true and .gemini_private_canary_verified == true and .gemini_private_canary_normal_traffic_percent == 0 and .production_promotion_performed == false and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == true and (.gemini_private_canary_provider_request_id | length > 0)' "$receipt" >/dev/null
+              jq -e '.execution_scope == "G3_PRIVATE_GATEWAY_CANARY" and (.wif_verified == true or .wif_g3_transport_sufficient == true) and .adc_verified == true and .gemini_private_canary_verified == true and .gemini_private_canary_normal_traffic_percent == 0 and .gemini_private_canary_cleanup_verified == true and ((.gemini_private_canary_ephemeral_service != true) or (.gemini_private_canary_ephemeral_service_deleted == true and .gemini_private_canary_production_service_mutated == false)) and .production_promotion_performed == false and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == true and (.gemini_private_canary_provider_request_id | length > 0)' "$receipt" >/dev/null
               if jq -e '.wif_verified == true' "$receipt" >/dev/null; then
                 echo "G3 private Gemini gateway canary verified with hardened WIF plus independently verified runtime AI authority."
               else
