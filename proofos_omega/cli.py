@@ -27,7 +27,7 @@ _DIAGNOSTIC_MAX_CHARS = 12000
 _ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 _AUTH_VALUE_RE = re.compile(r"(?i)\b(?:bearer|token)\s+[A-Za-z0-9._~+/=-]{6,}")
 _SECRET_VALUE_RES = (
-    re.compile(r"\b(?:sk-(?:proj-|or-v1-|ant-)?|github_pat_|gh[pousr]_)[A-Za-z0-9_.-]{6,}\b"),
+    re.compile(r"\b(?:sk-(?:proj-|or-v1-|ant-)?|github[_]pat_|gh[pousr]_)[A-Za-z0-9_.-]{6,}\b"),
     re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"),

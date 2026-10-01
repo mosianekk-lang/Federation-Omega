@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -169,6 +170,8 @@ class PhoenixExportTests(unittest.TestCase):
             archive.extractall(extracted, filter="data")
         env = os.environ.copy()
         env.setdefault("TERM", "dumb")
+        env["PYTHONPATH"] = str(extracted)
+        env["LOCALAPPDATA"] = str(extracted.parent / "isolated-local-appdata")
         if install_requirements:
             requirements = extracted / "requirements.txt"
             if not requirements.is_file():
@@ -253,6 +256,151 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertEqual(0, process.returncode, process.stdout + process.stderr)
         self.assertIn("test_core_is_runnable", process.stderr)
 
+    def test_exported_proofos_cli_imports_and_redacts_with_real_core_policy(self):
+        # Exercise production source through the actual archive pipeline, not
+        # only classify_core: the secret-marker stage previously removed cli.py.
+        self.policy_payload["core"] = json.loads(
+            (ROOT / "phoenix/export_policy.json").read_text(encoding="utf-8")
+        )["core"]
+        self.policy.write_text(json.dumps(self.policy_payload), encoding="utf-8")
+        shutil.copytree(ROOT / "proofos_omega", self.root / "proofos_omega",
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        for name in ("test_proofos_execution_budget.py",
+                     "test_fuse_one_os_browser_admission.py",
+                     "test_fuse_one_os_integration_admission.py"):
+            shutil.copyfile(ROOT / "tests" / name, self.root / "tests" / name)
+        (self.root / "docs/fine-grained-token.txt").write_text(
+            "github" + "_pat_" + "synthetic_not_a_real_credential", encoding="utf-8"
+        )
+        output = self.root / "output"
+        EXPORTS.build(self.root, output, self.policy)
+        extracted = self.root / "isolated-core"
+        extracted.mkdir()
+        with tarfile.open(output / "Federation-Omega-Core.tar.gz", "r:gz") as archive:
+            names = set(archive.getnames())
+            self.assertIn("proofos_omega/cli.py", names)
+            self.assertIn("tests/test_proofos_execution_budget.py", names)
+            self.assertIn("tests/test_fuse_one_os_integration_admission.py", names)
+            self.assertNotIn("tests/test_fuse_one_os_browser_admission.py", names)
+            self.assertNotIn("docs/credential.md", names)
+            self.assertNotIn("docs/fine-grained-token.txt", names)
+            archive.extractall(extracted, filter="data")
+        process = subprocess.run(
+            [sys.executable, "-I", "-c", "\n".join((
+                "import pathlib, sys",
+                "root = pathlib.Path.cwd()",
+                "sys.path.insert(0, str(root))",
+                "sys.path.insert(0, str(root / 'tests'))",
+                "from proofos_omega import cli",
+                "import test_proofos_execution_budget",
+                "assert pathlib.Path(cli.__file__).resolve() == root / 'proofos_omega/cli.py'",
+                "secret = 'github' + '_pat_' + 'abcdefghijklmnopqrstuvwxyz'",
+                "assert cli._redact_diagnostic(secret) == '[REDACTED_SECRET]'",
+                "print('EXPORTED_PROOFOS_IMPORT_AND_REDACTION_PASS')",
+            ))],
+            cwd=extracted, text=True, capture_output=True, timeout=20,
+            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        )
+        self.assertEqual(0, process.returncode, process.stdout + process.stderr)
+        self.assertIn("EXPORTED_PROOFOS_IMPORT_AND_REDACTION_PASS", process.stdout)
+
+    def test_browser_core_exclusion_preserves_required_source_admission(self):
+        from proofos_omega.core import ProofSelector
+        from proofos_omega.impact import ImpactCompiler
+        from proofos_omega.policy import ProofPolicy
+
+        policy = json.loads((ROOT / "phoenix/export_policy.json").read_text(encoding="utf-8"))
+        browser_path = "tests/test_fuse_one_os_browser_admission.py"
+        self.assertIn(browser_path, policy["core"]["excluded_test_globs"])
+        self.assertIn("source admission", policy["core"]["excluded_test_rationales"][browser_path])
+        self.assertFalse(EXPORTS.is_migration_control_test(
+            "tests/test_fuse_one_os_integration_admission.py", policy))
+        self.assertNotIn(".mjs", policy["core"]["include_extensions"])
+        proof_policy = ProofPolicy.from_path(ROOT / "governance/proofos_omega_policy_v1.json")
+        manifest = ProofSelector(proof_policy).compile_manifest(
+            base_sha="a" * 40, head_sha="b" * 40,
+            impact=ImpactCompiler(proof_policy).assess(["scripts/fuse_one_os_browser_test.mjs"]),
+        )
+        self.assertIn("fuse_one_os_browser_runtime", {item.test_id for item in manifest.selected_tests})
+        browser = proof_policy.tests["fuse_one_os_browser_runtime"]
+        self.assertEqual("test_fuse_one_os_browser_admission.py", browser.target)
+        self.assertFalse(browser.optional_if_missing)
+        self.assertEqual("GLOBAL", browser.block_scope)
+
+    def test_exact_source_paths_are_normalized_and_fail_closed(self):
+        for invalid in ("asset.mjs", ["/asset.mjs"], ["../asset.mjs"],
+                        ["a/../asset.mjs"], ["a//asset.mjs"], ["./asset.mjs"],
+                        ["a\\asset.mjs"], ["a/*.mjs"], ["C:/asset.mjs"],
+                        ["asset.mjs", "asset.mjs"], [None]):
+            with self.subTest(invalid=invalid):
+                policy = json.loads(json.dumps(self.policy_payload))
+                policy["core"]["include_source_paths"] = invalid
+                with self.assertRaises(ValueError):
+                    EXPORTS.exact_core_source_paths(policy)
+
+    def test_exact_source_paths_cannot_bypass_export_security(self):
+        files = {
+            "assets/approved.mjs": "export const safe = true;\n",
+            "assets/unrelated.mjs": "export const safe = true;\n",
+            "assets/unrelated.cpp": "int main() { return 0; }\n",
+            "assets/unrelated.cmd": "@exit /b 0\n",
+            "assets/Dockerfile": "FROM scratch\n",
+            "assets/credential.mjs": "github" + "_pat_" + "synthetic_not_a_real_credential",
+            "assets/private.pem": "synthetic private key\n",
+            "runtime/unsafe.mjs": "runtime state\n",
+            "assets/receipts/unsafe.mjs": "receipt state\n",
+            ".github/workflows/unsafe.mjs": "workflow source\n",
+        }
+        for name, content in files.items():
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+        (self.root / "assets/link.mjs").symlink_to(self.root / "assets/approved.mjs")
+        with (self.root / "assets/oversize.mjs").open("wb") as stream:
+            stream.truncate(10 * 1024 * 1024 + 1)
+        unrelated = {"assets/unrelated.mjs", "assets/unrelated.cpp", "assets/unrelated.cmd", "assets/Dockerfile"}
+        self.policy_payload["core"]["include_source_paths"] = sorted(
+            (set(files) - unrelated) | {"assets/link.mjs", "assets/oversize.mjs"}
+        )
+        included, excluded = EXPORTS.stage_core(self.root, self.root / "stage", self.policy_payload)
+        included_paths = {row.path for row in included}
+        reasons = {row.path: row.reason for row in excluded}
+        self.assertIn("assets/approved.mjs", included_paths)
+        self.assertFalse((set(files) - {"assets/approved.mjs"}) & included_paths)
+        self.assertEqual("SYMLINK_PROHIBITED", reasons["assets/link.mjs"])
+        self.assertEqual("FILE_EXCEEDS_CORE_EXPORT_LIMIT", reasons["assets/oversize.mjs"])
+        self.assertTrue(reasons["assets/credential.mjs"].startswith("SECRET_MARKER:"))
+        for name in unrelated:
+            self.assertEqual("UNAPPROVED_EXTENSION", reasons[name])
+
+    def test_production_exact_assets_and_source_workflow_court_are_bound(self):
+        from proofos_omega.core import ProofSelector
+        from proofos_omega.impact import ImpactCompiler
+        from proofos_omega.policy import ProofPolicy
+
+        policy = json.loads((ROOT / "phoenix/export_policy.json").read_text(encoding="utf-8"))
+        assets = EXPORTS.exact_core_source_paths(policy)
+        self.assertEqual(19, len(assets))
+        for name in assets:
+            with self.subTest(name=name):
+                self.assertTrue((ROOT / name).is_file())
+                self.assertEqual((True, "APPROVED_EXACT_SOURCE_FILE"),
+                                 EXPORTS.classify_core(ROOT / name, ROOT, policy))
+        proof_policy = ProofPolicy.from_path(ROOT / "governance/proofos_omega_policy_v1.json")
+        court = proof_policy.tests["phoenix_core_workflow_source_contracts"]
+        self.assertFalse(court.optional_if_missing)
+        self.assertEqual("GLOBAL", court.block_scope)
+        for path in ("tests/test_fuse_localllm_desktop_source_v1.py",
+                     "tests/test_fuse_localllm_gemini_provider_v1.py",
+                     "tests/test_sovara_google_interactions_v2_canary.py",
+                     "tests/phoenix_core_test_profile.py", "phoenix/build_exports.py"):
+            with self.subTest(path=path):
+                manifest = ProofSelector(proof_policy).compile_manifest(
+                    base_sha="a" * 40, head_sha="b" * 40,
+                    impact=ImpactCompiler(proof_policy).assess([path]),
+                )
+                self.assertIn(court.test_id, {item.test_id for item in manifest.selected_tests})
+
     def test_repository_core_archive_test_suite_is_independently_runnable(self):
         with tempfile.TemporaryDirectory(prefix="phoenix-real-core-") as temporary:
             temporary_root = Path(temporary)
@@ -263,6 +411,14 @@ class PhoenixExportTests(unittest.TestCase):
                 ROOT / "phoenix" / "export_policy.json",
             )
             self.assertEqual("VERIFIED", receipt["status"])
+            policy = json.loads((ROOT / "phoenix/export_policy.json").read_text(encoding="utf-8"))
+            with tarfile.open(output / "Federation-Omega-Core.tar.gz", "r:gz") as archive:
+                for name in EXPORTS.exact_core_source_paths(policy):
+                    with self.subTest(exported_asset=name):
+                        member = archive.extractfile(name)
+                        self.assertIsNotNone(member)
+                        with member:
+                            self.assertEqual((ROOT / name).read_bytes(), member.read())
             process = self.run_exported_tests(
                 output / "Federation-Omega-Core.tar.gz",
                 temporary_root / "extracted-core",

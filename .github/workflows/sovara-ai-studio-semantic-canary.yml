@@ -45,6 +45,9 @@ env:
 
 jobs:
   semantic-canary:
+    # Provider inference requires the existing explicit dispatch path. Routine
+    # source pushes are verified by source CI and cannot invoke this job.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

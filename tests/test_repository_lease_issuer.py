@@ -4,274 +4,265 @@ import json
 import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
-from proofos_omega.repository_lease_issuer import (
-    LEASE_SCHEMA,
-    SCHEMA,
-    build_lease_commit_spec,
-    load_policy,
-)
+from proofos_omega import repository_lease_issuer as issuer
+from proofos_omega import repository_coordination as legacy
+from proofos_omega import repository_coordination_v3 as scoped
 
-LOCK_REF = "refs/heads/locks/fdof-repository-critical-section"
-
-
-def run_git(root: Path, *args: str) -> str:
-    process = subprocess.run(
-        ["git", *args],
-        cwd=root,
-        text=True,
-        capture_output=True,
-    )
-    if process.returncode:
-        raise AssertionError(process.stderr)
-    return process.stdout.strip()
+NOW = datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc)
+LOCK = legacy.DEFAULT_LEASE_REF
+REGISTRY = scoped.DEFAULT_REGISTRY_REF
 
 
-def lease(source_head: str, token: int = 18) -> dict:
-    return {
-        "schema": LEASE_SCHEMA,
-        "state": "ACTIVE",
-        "fencing_token": token,
-        "writer_node": "NODE-LEASE-ISSUER-TEST",
-        "system": "FDOF/ProofOS",
-        "workstream": "lease-issuer-test",
-        "transaction_id": "TXN-LEASE-ISSUER-TEST",
-        "idempotency_key": f"LEASE-ISSUER-TEST:F{token}",
-        "source_head": source_head,
-        "scope": ["repository:test"],
-        "acquired_at": "2026-09-03T03:36:00+02:00",
-        "expires_at": "2026-09-03T04:06:00+02:00",
-        "turn_capture_id": "TC-LEASE-ISSUER-TEST",
-        "effect": "NONE",
-        "authority": "A1_INTERNAL_SOURCE_CI",
-    }
-
-
-def witness(capture_id: str = "TC-LEASE-ISSUER-TEST", verified: bool = True) -> dict:
-    return {
-        "provider": "FEDERATION_SYNC_BUS_TURN_CAPTURE",
-        "capture_id": capture_id,
-        "provider_readback_verified": verified,
-    }
-
-
-def predecessor_commit(root: Path, source_head: str, *, state: str = "RELEASED", token: int = 17) -> str:
-    tree = run_git(root, "show", "-s", "--format=%T", source_head)
-    payload = {
-        "schema": LEASE_SCHEMA,
-        "state": state,
-        "fencing_token": token,
-        "source_head": source_head,
-        "effect": "NONE",
-    }
-    message = LEASE_SCHEMA + "\n" + json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return run_git(root, "commit-tree", tree, "-p", source_head, "-m", message)
-
-
-def publish_lock(root: Path, sha: str) -> None:
-    run_git(root, "push", "-q", "--force", "origin", f"{sha}:{LOCK_REF}")
+def witness(capture="tc-cutover", verified=True):
+    return {"provider":"FEDERATION_SYNC_BUS_TURN_CAPTURE", "capture_id":capture,
+            "provider_readback_verified":verified}
 
 
 class RepositoryLeaseIssuerTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.policy = load_policy()
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        base = Path(self.temp.name)
+        self.root = base / "work"
+        self.root.mkdir()
+        self.git("init", "--bare", "-q", str(base / "origin.git"))
+        self.git("init", "-q")
+        self.git("config", "user.name", "Lease Test")
+        self.git("config", "user.email", "lease@example.invalid")
+        self.git("remote", "add", "origin", str(base / "origin.git"))
+        (self.root / "source.txt").write_text("source\n")
+        self.git("add", "source.txt")
+        self.git("commit", "-qm", "source")
+        self.head = self.git("rev-parse", "HEAD")
+        self.tree = self.git("show", "-s", "--format=%T", self.head)
+        self.push(self.head, "refs/heads/main")
+        self.legacy_payload = {"schema":legacy.LEASE_SCHEMA,"state":"RELEASED","fencing_token":355,
+                               "source_head":self.head,"effect":"NONE"}
+        self.legacy_sha = self.commit(legacy.LEASE_SCHEMA, self.legacy_payload, self.head)
+        self.push(self.legacy_sha, LOCK)
+        self.registry = {"schema":scoped.REGISTRY_SCHEMA,"generation":12,"active_leases":[],
+                         "mode":"SHADOW_CANARY","custom_metadata":{"preserve":True}}
+        self.registry_sha = self.commit(scoped.REGISTRY_SCHEMA,self.registry,self.head)
+        self.push(self.registry_sha,REGISTRY)
 
-    def make_repo(self) -> tuple[tempfile.TemporaryDirectory, Path, str, str]:
-        td = tempfile.TemporaryDirectory()
-        base = Path(td.name)
-        origin = base / "origin.git"
-        root = base / "work"
-        subprocess.run(["git", "init", "--bare", "-q", str(origin)], check=True)
-        root.mkdir()
-        run_git(root, "init", "-q")
-        run_git(root, "config", "user.name", "Lease Issuer Test")
-        run_git(root, "config", "user.email", "lease-issuer-test@example.invalid")
-        run_git(root, "remote", "add", "origin", str(origin))
-        (root / "seed.txt").write_text("source\n", encoding="utf-8")
-        run_git(root, "add", "seed.txt")
-        run_git(root, "commit", "-q", "-m", "source")
-        head = run_git(root, "rev-parse", "HEAD")
-        tree = run_git(root, "show", "-s", "--format=%T", head)
-        run_git(root, "push", "-q", "origin", f"{head}:refs/heads/main")
-        return td, root, head, tree
+    def git(self,*args,check=True):
+        result=subprocess.run(["git",*args],cwd=self.root,text=True,capture_output=True)
+        if check and result.returncode:
+            self.fail(result.stderr)
+        return result.stdout.strip() if check else result
 
-    def test_policy_requires_current_ref_tree_capture_and_explicit_terminal_predecessor(self):
-        contract = self.policy["lease_issuer_contract"]
-        self.assertEqual("EXACT_DECLARED_SOURCE_HEAD_TREE", contract["commit_tree_source"])
-        self.assertEqual("PROVIDER_READBACK_VERIFIED_EXACT_ID", contract["turn_capture_precondition"])
-        self.assertEqual("EXACT_PROVIDER_VISIBLE_CANONICAL_LOCK_REF_HEAD", contract["predecessor_current_ref_precondition"])
-        self.assertEqual("EXPLICIT_RELEASED_OR_ABORTED_PROVIDER_READBACK", contract["predecessor_terminal_precondition"])
-        self.assertTrue(contract["fail_closed_on_nonterminal_predecessor"])
-        self.assertTrue(contract["fail_closed_on_stale_predecessor_ref"])
-        self.assertEqual(
-            "proofos_omega.repository_lease_issuer.build_lease_commit_spec",
-            contract["canonical_issuer"],
-        )
+    def push(self,sha,ref,check=True):
+        return self.git("push","-q","origin",f"{sha}:{ref}",check=check)
 
-    def test_commit_spec_uses_declared_source_tree_and_current_terminal_predecessor(self):
-        td, root, head, tree = self.make_repo()
-        try:
-            predecessor = predecessor_commit(root, head, state="RELEASED", token=17)
-            publish_lock(root, predecessor)
-            spec = build_lease_commit_spec(
-                root,
-                lease(head, token=18),
-                predecessor_lease_sha=predecessor,
-                turn_capture_witness=witness(),
-                policy=self.policy,
-            )
-            self.assertEqual(SCHEMA, spec["schema"])
-            self.assertEqual(head, spec["source_head"])
-            self.assertEqual(tree, spec["tree_sha"])
-            self.assertEqual(predecessor, spec["parent_sha"])
-            self.assertEqual(predecessor, spec["current_lease_ref_head"])
-            self.assertEqual("RELEASED", spec["predecessor_state"])
-            self.assertEqual(17, spec["predecessor_fencing_token"])
-            self.assertTrue(spec["message"].startswith(LEASE_SCHEMA + "\n"))
-            self.assertFalse(spec["provider_effect_authorized"])
-        finally:
-            td.cleanup()
+    def commit(self,schema,payload,parent):
+        return self.git("commit-tree",self.tree,"-p",parent,"-m",schema+"\n"+json.dumps(payload,sort_keys=True))
 
-    def test_aborted_current_predecessor_is_terminal(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            predecessor = predecessor_commit(root, head, state="ABORTED", token=17)
-            publish_lock(root, predecessor)
-            spec = build_lease_commit_spec(
-                root,
-                lease(head, token=18),
-                predecessor_lease_sha=predecessor,
-                turn_capture_witness=witness(),
-                policy=self.policy,
-            )
-            self.assertEqual("ABORTED", spec["predecessor_state"])
-        finally:
-            td.cleanup()
+    def publish(self,spec):
+        sha=self.git("commit-tree",spec["tree_sha"],"-p",spec["parent_sha"],"-m",spec["message"])
+        self.push(sha,spec["lease_ref"])
+        return sha
 
-    def test_stale_historical_released_sha_is_rejected_when_current_ref_advanced_to_active(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            released = predecessor_commit(root, head, state="RELEASED", token=17)
-            current_active = predecessor_commit(root, released, state="ACTIVE", token=18)
-            publish_lock(root, current_active)
-            with self.assertRaisesRegex(ValueError, "PREDECESSOR_LEASE_NOT_CURRENT_LOCK_REF"):
-                build_lease_commit_spec(
-                    root,
-                    lease(head, token=19),
-                    predecessor_lease_sha=released,
-                    turn_capture_witness=witness(),
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def freeze_spec(self):
+        return issuer.build_migration_freeze_commit_spec(self.root,
+            predecessor_lease_sha=self.legacy_sha,predecessor_registry_sha=self.registry_sha,
+            cutover_id="cutover-355",turn_capture_id="tc-cutover",turn_capture_witness=witness(),now=NOW)
 
-    def test_current_active_predecessor_fails_even_if_caller_supplies_exact_current_sha(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            predecessor = predecessor_commit(root, head, state="ACTIVE", token=17)
-            publish_lock(root, predecessor)
-            with self.assertRaisesRegex(ValueError, "PREDECESSOR_LEASE_NOT_TERMINAL"):
-                build_lease_commit_spec(
-                    root,
-                    lease(head, token=18),
-                    predecessor_lease_sha=predecessor,
-                    turn_capture_witness=witness(),
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def activate(self):
+        self.tombstone_sha=self.publish(self.freeze_spec())
+        spec=issuer.build_registry_cutover_commit_spec(self.root,
+            predecessor_registry_sha=self.registry_sha,migration_tombstone_sha=self.tombstone_sha,
+            turn_capture_witness=witness(),now=NOW)
+        self.registry_sha=self.publish(spec)
+        self.registry=json.loads(spec["message"].split("\n",1)[1])
 
-    def test_missing_provider_visible_canonical_ref_fails_closed(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            predecessor = predecessor_commit(root, head, state="RELEASED", token=17)
-            with self.assertRaisesRegex(ValueError, "CANONICAL_LEASE_REF_UNRESOLVED"):
-                build_lease_commit_spec(
-                    root,
-                    lease(head, token=18),
-                    predecessor_lease_sha=predecessor,
-                    turn_capture_witness=witness(),
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def lease(self,name="a",paths=None):
+        paths=paths or ["alpha/**"]
+        return {"schema":scoped.LEASE_SCHEMA,"lease_id":name,"state":"ACTIVE",
+            "fencing_token":self.registry["generation"]+1,"writer_node":"writer-"+name,
+            "system":"FDOF","workstream":"test","transaction_id":"txn-"+name,
+            "idempotency_key":"idem-"+name,"source_head":self.head,"source_tree":self.tree,
+            "write_set":paths,"write_set_digest":scoped.write_set_digest(paths),
+            "acquired_at":"2026-10-01T11:59:00+00:00","expires_at":"2026-10-01T13:00:00+00:00",
+            "turn_capture_id":"tc-"+name,"effect":"NONE","authority":"A1_INTERNAL_SOURCE_CI"}
 
-    def test_fencing_token_must_advance_past_current_terminal_predecessor(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            predecessor = predecessor_commit(root, head, state="RELEASED", token=18)
-            publish_lock(root, predecessor)
-            with self.assertRaisesRegex(ValueError, "LEASE_FENCING_TOKEN_NOT_MONOTONIC"):
-                build_lease_commit_spec(
-                    root,
-                    lease(head, token=18),
-                    predecessor_lease_sha=predecessor,
-                    turn_capture_witness=witness(),
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def spec(self,payload):
+        return issuer.build_lease_commit_spec(self.root,payload,predecessor_lease_sha=self.registry_sha,
+            turn_capture_witness=witness(payload["turn_capture_id"]),now=NOW)
 
-    def test_capture_id_mismatch_fails_closed_before_provider_ref_read(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            with self.assertRaisesRegex(ValueError, "TURN_CAPTURE_ID_MISMATCH"):
-                build_lease_commit_spec(
-                    root,
-                    lease(head),
-                    predecessor_lease_sha="2" * 40,
-                    turn_capture_witness=witness("TC-OTHER"),
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def acquire(self,payload):
+        spec=self.spec(payload)
+        self.registry_sha=self.publish(spec)
+        self.registry=json.loads(spec["message"].split("\n",1)[1])
+        return spec
 
-    def test_unverified_capture_fails_closed_before_provider_ref_read(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            with self.assertRaisesRegex(ValueError, "TURN_CAPTURE_REFERENCE_UNVERIFIED"):
-                build_lease_commit_spec(
-                    root,
-                    lease(head),
-                    predecessor_lease_sha="2" * 40,
-                    turn_capture_witness=witness(verified=False),
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def test_default_rejects_new_v2_even_with_explicit_legacy_policy(self):
+        with self.assertRaisesRegex(ValueError,"V2_NEW_ACQUISITION_FROZEN"):
+            issuer.build_lease_commit_spec(self.root,dict(self.legacy_payload,state="ACTIVE"),
+                predecessor_lease_sha=self.legacy_sha,turn_capture_witness=witness(),policy=legacy.load_policy())
 
-    def test_wrong_turn_capture_provider_fails_closed(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            bad = witness()
-            bad["provider"] = "UNVERIFIED_OTHER_LEDGER"
-            with self.assertRaisesRegex(ValueError, "TURN_CAPTURE_PROVIDER_MISMATCH"):
-                build_lease_commit_spec(
-                    root,
-                    lease(head),
-                    predecessor_lease_sha="2" * 40,
-                    turn_capture_witness=bad,
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def test_v3_issue_requires_barrier_and_preserves_source_tree_capture(self):
+        with self.assertRaisesRegex(ValueError,"MIGRATION"):
+            self.spec(self.lease())
+        self.activate()
+        spec=self.acquire(self.lease())
+        self.assertEqual(self.tree,spec["tree_sha"])
+        self.assertEqual(REGISTRY,spec["lease_ref"])
+        self.assertFalse(spec["provider_effect_authorized"])
+        self.assertEqual("SHADOW_CANARY",self.registry["mode"])
+        self.assertEqual({"preserve":True},self.registry["custom_metadata"])
+        self.assertEqual(self.tombstone_sha,self.registry["migration"]["legacy_tombstone_sha"])
+        self.assertEqual(self.head,self.registry["migration"]["issuer_source_head"])
+        self.assertEqual(self.tree,self.registry["migration"]["issuer_source_tree"])
 
-    def test_non_none_effect_is_rejected(self):
-        td, root, head, _ = self.make_repo()
-        try:
-            payload = lease(head)
-            payload["effect"] = "WRITE"
-            with self.assertRaisesRegex(ValueError, "LEASE_EFFECT_SCOPE_INVALID"):
-                build_lease_commit_spec(
-                    root,
-                    payload,
-                    predecessor_lease_sha="2" * 40,
-                    turn_capture_witness=witness(),
-                    policy=self.policy,
-                )
-        finally:
-            td.cleanup()
+    def test_active_or_expired_legacy_cannot_be_retired(self):
+        for expiry in ["2099-01-01T00:00:00+00:00","2020-01-01T00:00:00+00:00"]:
+            self.legacy_payload.update(state="ACTIVE",expires_at=expiry)
+            self.legacy_sha=self.commit(legacy.LEASE_SCHEMA,self.legacy_payload,self.legacy_sha)
+            self.push(self.legacy_sha,LOCK)
+            with self.assertRaisesRegex(ValueError,"PREDECESSOR_LEASE_NOT_TERMINAL"):
+                self.freeze_spec()
+
+    def test_v2_acquire_wins_race_and_cutover_loses_non_fast_forward(self):
+        freeze=self.freeze_spec()
+        old_acquire=self.commit(legacy.LEASE_SCHEMA,dict(self.legacy_payload,state="ACTIVE"),self.legacy_sha)
+        self.push(old_acquire,LOCK)
+        tombstone=self.git("commit-tree",freeze["tree_sha"],"-p",freeze["parent_sha"],"-m",freeze["message"])
+        self.assertNotEqual(0,self.push(tombstone,LOCK,check=False).returncode)
+        with self.assertRaisesRegex(ValueError,"MIGRATION"):
+            issuer.build_registry_cutover_commit_spec(self.root,predecessor_registry_sha=self.registry_sha,
+                migration_tombstone_sha=tombstone,turn_capture_witness=witness(),now=NOW)
+
+    def test_tombstone_wins_race_and_stale_v2_acquire_loses(self):
+        old_acquire=self.commit(legacy.LEASE_SCHEMA,dict(self.legacy_payload,state="ACTIVE"),self.legacy_sha)
+        tombstone=self.publish(self.freeze_spec())
+        self.assertNotEqual(0,self.push(old_acquire,LOCK,check=False).returncode)
+        descriptor=json.loads(self.git("show","-s","--format=%B",tombstone).split("\n",1)[1])
+        self.assertEqual("MIGRATED_TO_V3",descriptor["state"])
+        self.assertNotIn(descriptor["state"],issuer.TERMINAL_STATES)
+        with self.assertRaisesRegex(ValueError,"MIGRATION"):
+            self.spec(self.lease())
+        activated=issuer.build_registry_cutover_commit_spec(self.root,
+            predecessor_registry_sha=self.registry_sha,migration_tombstone_sha=tombstone,
+            turn_capture_witness=witness(),now=NOW)
+        self.assertEqual(self.registry_sha,activated["parent_sha"])
+
+    def test_disjoint_same_parent_cas_loser_rereads_and_recompiles(self):
+        self.activate()
+        a,b=self.spec(self.lease("a")),self.spec(self.lease("b",["beta/**"]))
+        a_sha=self.publish(a)
+        b_sha=self.git("commit-tree",b["tree_sha"],"-p",b["parent_sha"],"-m",b["message"])
+        self.assertNotEqual(0,self.push(b_sha,REGISTRY,check=False).returncode)
+        with self.assertRaisesRegex(ValueError,"CURRENT"):
+            self.spec(self.lease("b",["beta/**"]))
+        self.registry_sha=a_sha
+        self.registry=json.loads(a["message"].split("\n",1)[1])
+        self.acquire(self.lease("b",["beta/**"]))
+        self.assertEqual({"a","b"},{x["lease_id"] for x in self.registry["active_leases"]})
+        self.assertEqual(15,self.registry["generation"])
+
+    def test_global_and_scoped_leases_share_overlap_exclusion(self):
+        self.activate()
+        self.acquire(self.lease("a"))
+        for paths in [["alpha/x.py"],["repository:*"]]:
+            with self.assertRaisesRegex(ValueError,"V3_ACQUIRE_CONFLICT"):
+                self.spec(self.lease("b",paths))
+
+    def test_new_global_scope_blocks_every_other_scope(self):
+        self.activate()
+        self.acquire(self.lease("global",["repository:*"]))
+        with self.assertRaisesRegex(ValueError,"V3_ACQUIRE_CONFLICT"):
+            self.spec(self.lease("b",["unrelated/**"]))
+
+    def test_capture_source_head_tree_and_fence_fail_closed(self):
+        self.activate()
+        for changes,error in [({"source_tree":"0"*40},"TREE"),({"source_head":"1"*40},"SOURCE"),
+                              ({"fencing_token":12},"FENCE"),({"effect":"WRITE"},"EFFECT")]:
+            with self.subTest(changes=changes),self.assertRaisesRegex(ValueError,error):
+                self.spec(dict(self.lease(),**changes))
+        for capture in [witness("wrong"),witness("tc-a",False),dict(witness("tc-a"),provider="wrong")]:
+            with self.assertRaisesRegex(ValueError,"TURN_CAPTURE"):
+                issuer.build_lease_commit_spec(self.root,self.lease(),predecessor_lease_sha=self.registry_sha,
+                    turn_capture_witness=capture,now=NOW)
+
+    def test_release_requires_exact_owner_fence_and_preserves_migration(self):
+        self.activate()
+        self.acquire(self.lease())
+        original=dict(self.registry["migration"])
+        args=dict(predecessor_registry_sha=self.registry_sha,lease_id="a",fencing_token=14,
+                  writer_node="writer-a",terminal_state="RELEASED",turn_capture_id="tc-release",
+                  turn_capture_witness=witness("tc-release"),now=NOW)
+        for changes,error in [({"writer_node":"other"},"OWNER"),({"fencing_token":13},"FENCE")]:
+            with self.assertRaisesRegex(ValueError,error):
+                issuer.build_release_commit_spec(self.root,**dict(args,**changes))
+        for invalid in [True,14.75,"14",None]:
+            with self.assertRaisesRegex(ValueError,"FENCE"):
+                issuer.build_release_commit_spec(self.root,**dict(args,fencing_token=invalid))
+        spec=issuer.build_release_commit_spec(self.root,**args)
+        result=json.loads(spec["message"].split("\n",1)[1])
+        self.assertEqual([],result["active_leases"])
+        self.assertEqual(original,result["migration"])
+        self.assertEqual("SHADOW_CANARY",result["mode"])
+        self.assertIn(14,result["stale_fencing_tokens"])
+        self.assertEqual(15,result["generation"])
+
+    def test_mismatched_barrier_and_registry_drift_fail_closed(self):
+        self.activate()
+        for migration in [None,{},dict(self.registry["migration"],cutover_id="fake")]:
+            changed=dict(self.registry,migration=migration)
+            self.registry_sha=self.commit(scoped.REGISTRY_SCHEMA,changed,self.registry_sha)
+            self.push(self.registry_sha,REGISTRY)
+            with self.assertRaisesRegex(ValueError,"MIGRATION"):
+                self.spec(self.lease())
+
+    def test_nonempty_pre_cutover_registry_is_not_discarded(self):
+        self.registry["active_leases"]=[self.lease()]
+        self.registry_sha=self.commit(scoped.REGISTRY_SCHEMA,self.registry,self.registry_sha)
+        self.push(self.registry_sha,REGISTRY)
+        with self.assertRaisesRegex(ValueError,"EMPTY"):
+            self.freeze_spec()
+
+    def test_registry_change_during_cutover_gap_cannot_rebind_seed(self):
+        tombstone=self.publish(self.freeze_spec())
+        old_seed=self.registry_sha
+        changed=dict(self.registry,generation=13,other_observation="changed")
+        self.registry_sha=self.commit(scoped.REGISTRY_SCHEMA,changed,old_seed)
+        self.push(self.registry_sha,REGISTRY)
+        for seed,error in [(old_seed,"CURRENT"),(self.registry_sha,"SEED_MISMATCH")]:
+            with self.assertRaisesRegex(ValueError,error):
+                issuer.build_registry_cutover_commit_spec(self.root,predecessor_registry_sha=seed,
+                    migration_tombstone_sha=tombstone,turn_capture_witness=witness(),now=NOW)
+        with self.assertRaisesRegex(ValueError,"MIGRATION"):
+            self.spec(self.lease())
+
+    def test_stale_release_cas_cannot_erase_new_disjoint_owner(self):
+        self.activate()
+        self.acquire(self.lease())
+        args=dict(predecessor_registry_sha=self.registry_sha,lease_id="a",fencing_token=14,
+                  writer_node="writer-a",terminal_state="RELEASED",turn_capture_id="tc-release",
+                  turn_capture_witness=witness("tc-release"),now=NOW)
+        release=issuer.build_release_commit_spec(self.root,**args)
+        self.acquire(self.lease("b",["beta/**"]))
+        stale=self.git("commit-tree",release["tree_sha"],"-p",release["parent_sha"],"-m",release["message"])
+        self.assertNotEqual(0,self.push(stale,REGISTRY,check=False).returncode)
+        with self.assertRaisesRegex(ValueError,"CURRENT"):
+            issuer.build_release_commit_spec(self.root,**args)
+        release=issuer.build_release_commit_spec(self.root,**dict(args,predecessor_registry_sha=self.registry_sha))
+        result=json.loads(release["message"].split("\n",1)[1])
+        self.assertEqual(["b"],[x["lease_id"] for x in result["active_leases"]])
+        self.assertEqual(self.registry["migration"],result["migration"])
+
+    def test_freeze_source_provenance_tree_mismatch_cannot_activate(self):
+        spec=self.freeze_spec()
+        payload=json.loads(spec["message"].split("\n",1)[1])
+        payload["migration"]["issuer_source_tree"]="0"*40
+        bad=self.commit(legacy.LEASE_SCHEMA,payload,spec["parent_sha"])
+        self.push(bad,LOCK)
+        with self.assertRaisesRegex(ValueError,"TREE"):
+            issuer.build_registry_cutover_commit_spec(self.root,predecessor_registry_sha=self.registry_sha,
+                migration_tombstone_sha=bad,turn_capture_witness=witness(),now=NOW)
 
 
 if __name__ == "__main__":

@@ -15,7 +15,18 @@ import tarfile
 import tempfile
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+
+
+PORTABLE_CORE_TEST_PROFILE = {
+    "schema": "PHOENIX_PORTABLE_CORE_TEST_PROFILE_V1",
+    "source_workflow_court": "tests/test_phoenix_core_workflow_source_contracts.py",
+    "workflow_paths": [
+        ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+    ],
+    "source_admission_required": True,
+}
 
 
 @dataclass(frozen=True)
@@ -67,10 +78,29 @@ def is_github_workflow_path(path: str) -> bool:
     )
 
 
+def exact_core_source_paths(policy: dict) -> frozenset[str]:
+    """Validate narrow source exceptions without granting security exceptions."""
+    paths = policy["core"].get("include_source_paths", [])
+    if not isinstance(paths, list):
+        raise ValueError("Core include_source_paths must be a list")
+    for value in paths:
+        if (not isinstance(value, str) or not value
+                or PurePosixPath(value).is_absolute()
+                or PurePosixPath(value).as_posix() != value
+                or any(part in {"", ".", ".."} for part in value.split("/"))
+                or any(ord(character) < 32 for character in value)
+                or any(character in value for character in "\\:*?[]{}!\x00")):
+            raise ValueError("Core include_source_paths requires normalized exact relative paths")
+    if len(set(paths)) != len(paths):
+        raise ValueError("Core include_source_paths must not contain duplicates")
+    return frozenset(paths)
+
+
 def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
     rel = path.relative_to(root).as_posix()
     parts = set(path.relative_to(root).parts)
     core = policy["core"]
+    exact_paths = exact_core_source_paths(policy)
 
     if path.is_symlink():
         return False, "SYMLINK_PROHIBITED"
@@ -90,12 +120,19 @@ def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
         return False, "EXCLUDED_STATE_OR_AUTHORITY_SEGMENT"
     if path.suffix.lower() in set(core["excluded_suffixes"]):
         return False, "EXCLUDED_SENSITIVE_OR_GENERATED_SUFFIX"
+    if path.stat().st_size > 10 * 1024 * 1024:
+        return False, "FILE_EXCEEDS_CORE_EXPORT_LIMIT"
+    if rel in exact_paths:
+        # An exact source exception affects only the extension gate. All path,
+        # state, authority, size and secret exclusions remain authoritative.
+        marker = secret_marker(path, core["secret_markers"])
+        if marker:
+            return False, f"SECRET_MARKER:{marker}"
+        return True, "APPROVED_EXACT_SOURCE_FILE"
     if path.name in core["include_root_files"] and path.parent == root:
         return True, "APPROVED_ROOT_FILE"
     if path.suffix.lower() not in set(core["include_extensions"]):
         return False, "UNAPPROVED_EXTENSION"
-    if path.stat().st_size > 10 * 1024 * 1024:
-        return False, "FILE_EXCEEDS_CORE_EXPORT_LIMIT"
     return True, "APPROVED_SOURCE_FILE"
 
 
@@ -150,6 +187,7 @@ def stage_core(
     included: list[FileRecord] = []
     excluded: list[FileRecord] = []
     markers = policy["core"]["secret_markers"]
+    exact_core_source_paths(policy)
 
     for path in sorted(root.rglob("*"), key=lambda item: item.as_posix()):
         if not path.is_file() and not path.is_symlink():
@@ -267,6 +305,7 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
             **common,
             "target": "Federation-Omega-Core",
             "repository_role": "CANONICAL_SOURCE_ONLY",
+            "test_profile": PORTABLE_CORE_TEST_PROFILE,
             "included_count": len(core_included),
             "excluded_count": len(core_excluded),
             "files": [asdict(item) for item in core_included],

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 import subprocess
 import tempfile
@@ -34,6 +35,27 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = "1" * 40
 REGISTRY_SHA = "9" * 40
 NOW = datetime(2026, 9, 2, 20, 50, tzinfo=timezone.utc)
+
+
+def load_tests(loader, standard_tests, pattern):
+    """Keep the real issuer CAS court inside the existing ProofOS bootstrap.
+
+    Load one explicit TestCase, never this module or another load_tests hook.
+    Missing, empty or skipped issuer coverage is an admission failure.
+    """
+    path = Path(__file__).with_name("test_repository_lease_issuer.py")
+    spec = importlib.util.spec_from_file_location("_f355_issuer_court", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    case = module.RepositoryLeaseIssuerTests
+    issuer_suite = unittest.TestLoader().loadTestsFromTestCase(case)
+    if issuer_suite.countTestCases() == 0:
+        raise RuntimeError("F355_ISSUER_COURT_EMPTY")
+    for test in issuer_suite:
+        method = getattr(test, test._testMethodName)
+        if getattr(case, "__unittest_skip__", False) or getattr(method, "__unittest_skip__", False):
+            raise RuntimeError("F355_ISSUER_COURT_SKIPPED")
+    return unittest.TestSuite([standard_tests, issuer_suite])
 
 
 def lease(lease_id: str, write_set: list[str], fence: int, writer: str, *, expires="2026-09-02T23:19:04+02:00") -> dict:
@@ -103,7 +125,7 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         self.assertFalse(self.policy["registry_transaction_model"]["work_duration_serialized"])
 
     def test_v31_policy_declares_recovery_and_stale_fence_law(self):
-        self.assertEqual("3.1.0", self.policy["version"])
+        self.assertEqual("3.2.0", self.policy["version"])
         recovery = self.policy["recovery_lifecycle"]
         self.assertEqual(["ACTIVE", "SUSPECT", "ORPHANED", "RECLAIMABLE"], recovery["nonterminal_states"])
         self.assertTrue(self.policy["proof_boundary"]["orphan_recovery_canary_required"])
@@ -343,16 +365,18 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         }
 
     def hosted_assess(self, legacy, *, body="unrelated PR", tree_matches=True, legacy_error=None,
-                      event_payload=None, event_name="pull_request"):
+                      event_payload=None, event_name="pull_request", registry_payload=None, paths="docs/x.md", source_tree="5" * 40):
         legacy_sha = "7" * 40
         legacy_message = legacy if isinstance(legacy, str) else legacy_coordination.LEASE_SCHEMA + "\n" + json.dumps(legacy)
         def fake_git(root, args):
             if args[0] == "ls-remote":
                 return REGISTRY_SHA + "\t" + DEFAULT_REGISTRY_REF
             if args[0] == "show":
-                return message(registry(generation=1))
+                if "--format=%T" in args:
+                    return "5" * 40 if args[-1] == "a" * 40 else source_tree
+                return message(registry(generation=1) if registry_payload is None else registry_payload)
             if args[0] == "diff":
-                return "docs/x.md"
+                return paths
             return ""
         with tempfile.TemporaryDirectory() as td:
             event = Path(td) / "event.json"
@@ -376,7 +400,7 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         self.assertEqual("FAIL", result["status"])
         self.assertIn("ACTIVE_REPOSITORY_LEASE_UNCLAIMED", self.rules(result))
         legacy_read.assert_called_once_with(ROOT, legacy_coordination.DEFAULT_LEASE_REF)
-        registry_read.assert_not_called()
+        self.assertTrue(registry_read.called)
 
     def test_hosted_exact_active_legacy_claim_keeps_v2_absolute_without_v3_promotion(self):
         active = self.legacy_lease()
@@ -386,7 +410,7 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         self.assertEqual("PASS", result["status"])
         self.assertEqual("V3_DEFERRED_TO_ACTIVE_V2", result["state"])
         self.assertFalse(result["provider_effect_authorized"])
-        registry_read.assert_not_called()
+        self.assertTrue(registry_read.called)
 
     def test_hosted_expired_legacy_active_and_malformed_descriptors_fail_closed(self):
         for value, expected_rule in (
@@ -397,7 +421,8 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
                 result, _, registry_read = self.hosted_assess(value)
                 self.assertEqual("FAIL", result["status"])
                 self.assertIn(expected_rule, self.rules(result))
-                registry_read.assert_not_called()
+                if isinstance(value, dict):
+                    self.assertTrue(registry_read.called)
 
     def test_hosted_explicit_terminal_legacy_lease_allows_v3_assessment(self):
         for state in ("RELEASED", "ABORTED"):
@@ -414,6 +439,118 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         self.assertEqual("FAIL", result["status"])
         self.assertEqual("V3_LEGACY_PROVIDER_READBACK_FAILED", result["state"])
         registry_read.assert_not_called()
+
+    def migration(self):
+        return {"schema":"FEDERATION_FDOF_MIGRATION_V1", "state":"COMPLETE", "cutover_id":"cutover-355",
+                "legacy_ref":legacy_coordination.DEFAULT_LEASE_REF,"registry_ref":DEFAULT_REGISTRY_REF,
+                "predecessor_registry_sha":"8"*40,"legacy_tombstone_sha":"7"*40,"turn_capture_id":"tc-cutover",
+                "issuer_source_head":"a"*40,"issuer_source_tree":"5"*40}
+
+    def tombstone(self):
+        frozen=dict(self.migration(),state="FROZEN")
+        frozen.pop("legacy_tombstone_sha")
+        return dict(self.legacy_lease(state="MIGRATED_TO_V3"),migration=frozen,turn_capture_id="tc-cutover")
+
+    def test_migrated_registry_requires_claim_even_with_legacy_compatibility(self):
+        reg=dict(registry(generation=12),migration=self.migration())
+        result,_,_=self.hosted_assess(self.tombstone(),registry_payload=reg)
+        self.assertEqual("FAIL",result["status"])
+        self.assertIn("V3_SCOPED_CLAIM_REQUIRED",self.rules(result))
+
+    def test_migrated_legacy_active_exact_claim_is_drift_not_authority(self):
+        active=self.legacy_lease()
+        body=dict(active,schema=legacy_coordination.CLAIM_SCHEMA,
+                  lock_ref=legacy_coordination.DEFAULT_LEASE_REF,lease_commit_sha="7"*40)
+        reg=dict(registry(generation=12),migration=self.migration())
+        result,_,_=self.hosted_assess(active,body=json.dumps(body),registry_payload=reg)
+        self.assertEqual("FAIL",result["status"])
+        self.assertIn("MIGRATION_LEGACY_DRIFT",self.rules(result))
+
+    def test_frozen_gap_mismatched_barrier_and_tombstone_tree_fail_closed(self):
+        complete=dict(registry(generation=12),migration=self.migration())
+        for reg,tree_matches in [(registry(generation=12),True),
+                (dict(complete,migration=dict(self.migration(),cutover_id="other")),True),(complete,False)]:
+            result,_,_=self.hosted_assess(self.tombstone(),registry_payload=reg,tree_matches=tree_matches)
+            self.assertEqual("FAIL",result["status"])
+            self.assertEqual("V3_MIGRATION_REJECTED",result["state"])
+        for changes in [{"fencing_token":True},{"turn_capture_id":"wrong"},{"effect":"WRITE"}]:
+            result,_,_=self.hosted_assess(dict(self.tombstone(),**changes),registry_payload=complete)
+            self.assertEqual("FAIL",result["status"])
+        for tree in ["malformed", "0"*40]:
+            bad_registry=dict(complete,migration=dict(self.migration(),issuer_source_tree=tree))
+            bad_tombstone=dict(self.tombstone(),migration=dict(self.tombstone()["migration"],issuer_source_tree=tree))
+            result,_,_=self.hosted_assess(bad_tombstone,registry_payload=bad_registry)
+            self.assertEqual("FAIL",result["status"])
+
+    def test_migrated_hosted_claim_checks_actual_paths_global_scope_and_source_tree(self):
+        for scopes,paths,tree,expected in [(["docs/**"],"docs/x.md","5"*40,None),
+                (["docs/**"],"src/app.py","5"*40,"V3_WRITE_SET_ESCAPE"),
+                (["proofos_omega/**"],"proofos_omega/repository_lease_issuer.py","5"*40,"V3_GLOBAL_PATH_REQUIRES_REPOSITORY_SCOPE"),
+                (["docs/**"],"docs/x.md","6"*40,"V3_SOURCE_TREE_MISMATCH")]:
+            own=lease("A",scopes,12,"writer",expires="2099-01-01T00:00:00+00:00")
+            reg=dict(registry(own,generation=12),migration=self.migration())
+            result,_,_=self.hosted_assess(self.tombstone(),registry_payload=reg,body=json.dumps(claim(own)),paths=paths,source_tree=tree)
+            self.assertEqual("PASS" if expected is None else "FAIL",result["status"])
+            if expected:
+                self.assertIn(expected,self.rules(result))
+
+    def test_recovery_and_reclaim_preserve_migration_and_unrelated_metadata(self):
+        own=lease("A",["alpha/**"],12,"original",expires="2020-01-01T00:00:00+00:00")
+        reg=dict(registry(own,generation=12),migration=self.migration(),custom_metadata={"keep":True})
+        for state in ["SUSPECT","ORPHANED","RECLAIMABLE"]:
+            result=transition_recovery(reg,"A",target_state=state,expected_fencing_token=12,actor="recovery",now=NOW,policy=self.policy)
+            self.assertEqual("PASS",result["status"])
+            reg=result["registry"]
+        replacement=lease("B",["alpha/**"],reg["generation"]+1,"new-owner")
+        result=reclaim_lease(reg,"A",replacement,expected_fencing_token=12,actor="recovery",now=NOW,policy=self.policy)
+        self.assertEqual("PASS",result["status"])
+        self.assertEqual(self.migration(),result["registry"]["migration"])
+        self.assertEqual({"keep":True},result["registry"]["custom_metadata"])
+
+    def test_recovery_and_fence_validation_reject_nonexact_integer_fences(self):
+        active=lease("A",["alpha/**"],12,"original",expires="2020-01-01T00:00:00+00:00")
+        reg=registry(active,generation=15)
+        reclaimable=registry(dict(active,state="RECLAIMABLE"),generation=15)
+        replacement=lease("B",["alpha/**"],16,"new-owner")
+        for invalid in [True,False,12.9,"12",None]:
+            with self.subTest(fence=invalid):
+                self.assertEqual("FAIL",transition_recovery(reg,"A",expected_fencing_token=invalid,
+                    actor="recovery",target_state="SUSPECT",now=NOW)["status"])
+                self.assertEqual("FAIL",reclaim_lease(reclaimable,"A",replacement,
+                    expected_fencing_token=invalid,actor="recovery",now=NOW)["status"])
+                self.assertEqual("FAIL",validate_fence(reg,"A",invalid)["status"])
+        for invalid in [True,16.75,"16"]:
+            self.assertEqual("FAIL",reclaim_lease(reclaimable,"A",dict(replacement,fencing_token=invalid),
+                expected_fencing_token=12,actor="recovery",now=NOW)["status"])
+        for invalid in [True,12.9,"12"]:
+            self.assertEqual("FAIL",validate_fence(dict(reg,stale_fencing_tokens=[invalid]),"A",12)["status"])
+
+    def test_reclaim_rejects_expired_future_or_incoherent_replacement_time(self):
+        old=lease("A",["alpha/**"],12,"original",expires="2020-01-01T00:00:00+00:00")
+        reg=registry(dict(old,state="RECLAIMABLE"),generation=15)
+        replacement=lease("B",["alpha/**"],16,"new-owner")
+        for changes in [{"expires_at":"2020-01-01T00:00:00+00:00"},
+                        {"acquired_at":replacement["expires_at"]},
+                        {"acquired_at":"2098-01-01T00:00:00+00:00","expires_at":"2099-01-01T00:00:00+00:00"},
+                        {"acquired_at":"invalid"}]:
+            result=reclaim_lease(reg,"A",dict(replacement,**changes),
+                expected_fencing_token=12,actor="recovery",now=NOW)
+            self.assertEqual("FAIL",result["status"])
+
+    def test_recovery_cannot_erase_original_registry_corruption(self):
+        own=lease("A",["alpha/**"],12,"original",expires="2020-01-01T00:00:00+00:00")
+        replacement=lease("B",["alpha/**"],16,"new-owner")
+        for changes in [{"source_head":"invalid"},{"effect":"WRITE"},{"write_set_digest":"0"*64}]:
+            active=registry(dict(own,**changes),generation=15)
+            result=transition_recovery(active,"A",expected_fencing_token=12,
+                actor="recovery",target_state="SUSPECT",now=NOW)
+            self.assertEqual("FAIL",result["status"])
+            self.assertEqual(active,result["registry"])
+            reclaimable=registry(dict(own,state="RECLAIMABLE",**changes),generation=15)
+            result=reclaim_lease(reclaimable,"A",replacement,expected_fencing_token=12,
+                actor="recovery",now=NOW)
+            self.assertEqual("FAIL",result["status"])
+            self.assertEqual(reclaimable,result["registry"])
 
     def test_hosted_malformed_or_non_pr_context_cannot_pass_empty_compatibility(self):
         for event in ({}, {"merge_group": {}}, {"pull_request": []}, {"pull_request": {"base": {}, "head": {}}}):

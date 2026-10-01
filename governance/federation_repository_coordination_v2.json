@@ -1,12 +1,15 @@
 {
   "schema": "FEDERATION-REPOSITORY-COORDINATION-V2",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "owner": "Kim Kagiso Mosiane",
   "purpose": "Make the existing cooperative repository critical section machine-verifiable inside the already-admitted Federation Omega Airlock without creating another scheduler, store, authority plane or private credential dependency.",
   "lease_ref": "refs/heads/locks/fdof-repository-critical-section",
   "lease_schema": "FEDERATION_REPOSITORY_LEASE_V2",
   "claim_schema": "FEDERATION_COORDINATION_V1",
-  "terminal_states": ["RELEASED", "ABORTED"],
+  "terminal_states": [
+    "RELEASED",
+    "ABORTED"
+  ],
   "initial_scope": "repository:*",
   "lease_descriptor_location": "HEAD_COMMIT_MESSAGE_ON_EXISTING_LOCK_REF",
   "write_ahead_capture_required": true,
@@ -24,7 +27,11 @@
     "fail_closed_on_capture_witness_mismatch": true,
     "fail_closed_on_nonterminal_predecessor": true,
     "fail_closed_on_stale_predecessor_ref": true,
-    "provider_effect_authorized": false
+    "provider_effect_authorized": false,
+    "new_acquisition": "DENIED_USE_V3",
+    "migration_freeze_issuer": "proofos_omega.repository_lease_issuer.build_migration_freeze_commit_spec",
+    "migration_terminal_state": "MIGRATED_TO_V3",
+    "historical_fields_scope": "PRESERVED_PRE_CUTOVER_V2_CONTRACT_NOT_NEW_ACQUISITION_AUTHORITY"
   },
   "required_lease_fields": [
     "state",
@@ -63,7 +70,9 @@
     "active_lease_tree_mismatch": "FAIL",
     "missing_or_malformed_pr_claim": "FAIL",
     "writer_or_transaction_mismatch": "FAIL",
-    "fencing_token_or_lease_commit_mismatch": "FAIL"
+    "fencing_token_or_lease_commit_mismatch": "FAIL",
+    "migration_tombstone": "VALIDATE_EXACT_V3_CUTOVER_LINKAGE_IN_COMPOSITE_HOSTED_EVALUATOR",
+    "active_v2_after_verified_cutover": "FAIL_MIGRATION_DRIFT_FOR_ALL_CLAIMANTS"
   },
   "claim_surfaces": [
     "whole PR body JSON with schema FEDERATION_COORDINATION_V1",
@@ -83,5 +92,5 @@
     "lock_ref_is_not_source_authority": true,
     "lock_ref_is_not_provider_effect_authority": true
   },
-  "truth_boundary": "Every ACTIVE lease fails closed until an explicit RELEASED or ABORTED transition. Expiry is scheduling metadata, not terminal authority. A successor issuer must first resolve the exact provider-visible canonical lock-ref head and require predecessor_lease_sha to equal that current head; only then may it accept the predecessor if its descriptor is explicitly RELEASED or ABORTED and the new fencing token is strictly greater. A historical terminal commit is not reusable authority after the canonical lock ref advances. GitHub main still lacks provider-enforced ruleset/branch protection, so provider-enforced Main Airlock remains separate."
+  "truth_boundary": "Every ACTIVE lease fails closed until an explicit RELEASED or ABORTED transition. Expiry is scheduling metadata, not terminal authority. A successor issuer must first resolve the exact provider-visible canonical lock-ref head and require predecessor_lease_sha to equal that current head; only then may it accept the predecessor if its descriptor is explicitly RELEASED or ABORTED and the new fencing token is strictly greater. A historical terminal commit is not reusable authority after the canonical lock ref advances. GitHub main still lacks provider-enforced ruleset/branch protection, so provider-enforced Main Airlock remains separate. New canonical issuance uses the existing V3 registry only. A one-way MIGRATED_TO_V3 tombstone may replace only a freshly read explicit terminal V2 head and binds an exact empty V3 predecessor. This migration state deliberately remains outside legacy terminal_states so old issuers reject it. Before cutover any ACTIVE legacy lease is preserved; after cutover reappearing ACTIVE legacy state blocks all admission as migration drift. The two-ref cutover is ordered and resumable, not an atomic transaction across refs."
 }

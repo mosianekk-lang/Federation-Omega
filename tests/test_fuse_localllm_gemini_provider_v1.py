@@ -1,8 +1,13 @@
 from __future__ import annotations
 import json, pathlib, unittest
+import importlib.util
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 OVER=ROOT/"products"/"fuse_localllm_desktop"/"v0.3.0"
 CONTRACT=ROOT/"governance"/"fuse_localllm_gemini_provider_v1.json"
+_profile_spec = importlib.util.spec_from_file_location("phoenix_core_test_profile", ROOT / "tests/phoenix_core_test_profile.py")
+_profile = importlib.util.module_from_spec(_profile_spec)
+_profile_spec.loader.exec_module(_profile)
+_profile.attach_source_case(globals(), ROOT, "GeminiWorkflowSourceContracts")
 
 class FuseLocalLLMGeminiProviderTests(unittest.TestCase):
     def test_contract_and_roles(self):
@@ -37,14 +42,8 @@ class FuseLocalLLMGeminiProviderTests(unittest.TestCase):
         self.assertIn("install_core_current_user.ps1",install)
         self.assertIn("uninstall_core_current_user.ps1",uninstall)
         self.assertNotIn("HKLM",install+uninstall)
-    def test_windows_package_recursively_attests_overlay(self):
-        workflow=(ROOT/".github"/"workflows"/"fuse-localllm-desktop-windows-build-v1.yml").read_text(encoding="utf-8")
-        self.assertIn("Get-ChildItem $releaseRoot -Recurse -File", workflow)
-        self.assertIn("provider-fabric/FUSE-LocalLLM-ProviderFabric.ps1", workflow)
-        self.assertIn("provider-fabric/gemini_roles.json", workflow)
-        self.assertIn("provider_fabric_sha256", workflow)
-        self.assertIn("gemini_roles_sha256", workflow)
-        self.assertIn("checksum_manifest_sha256", workflow)
+    def test_declared_archive_or_source_collection_profile(self):
+        self.assertIn(_profile.collection_profile(ROOT), {"SOURCE", "PORTABLE_CORE"})
 
     def test_v022_custody_baseline_not_replaced(self):
         self.assertTrue((ROOT/"products"/"fuse_localllm_desktop"/"v0.2.2"/"upstream"/"SOURCE_MANIFEST.json").is_file())
