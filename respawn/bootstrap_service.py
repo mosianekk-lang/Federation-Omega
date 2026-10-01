@@ -22,6 +22,8 @@ HIPB_MODULE_PATH = ROOT.parent / "fuse_runtime" / "hyper_intelligence_performanc
 HIPB_COURT_PATH = ROOT.parent / "benchmarks" / "hyper_intelligence_performance_court_v1.mjs"
 TERMINAL_DEBT_MODULE_PATH = ROOT.parent / "federation" / "terminal_debt_v1.py"
 LOCAL_SOVEREIGN_AI_PROFILE_PATH = ROOT.parent / "governance" / "fuse_local_sovereign_ai_finality_v2.json"
+GOOGLE_INTELLIGENCE_RUNTIME_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v1.json"
+GOOGLE_INTELLIGENCE_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
@@ -205,6 +207,70 @@ def hyper_intelligence_performance_bootstrap_guard(payload: Optional[Dict[str, A
         "truth_boundary": contract.get("truth_boundary"),
     }
 
+
+
+def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("google_intelligence_runtime", {})
+    contract = load_json(GOOGLE_INTELLIGENCE_RUNTIME_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("GOOGLE_INTELLIGENCE_RUNTIME_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-001":
+        issues.append("GOOGLE_INTELLIGENCE_MANIFEST_CONTRACT_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V1":
+        issues.append("GOOGLE_INTELLIGENCE_SCHEMA_MISMATCH")
+    if contract.get("version") != "1.0.0":
+        issues.append("GOOGLE_INTELLIGENCE_VERSION_MISMATCH")
+    if contract.get("creates_new_controller") is not False or contract.get("creates_new_authority_root") is not False:
+        issues.append("GOOGLE_INTELLIGENCE_AUTHORITY_DUPLICATION")
+    if contract.get("ai_studio_role") != "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME":
+        issues.append("GOOGLE_AI_STUDIO_ROLE_MISMATCH")
+    if contract.get("provider_output_can_expand_authority") is not False:
+        issues.append("GOOGLE_PROVIDER_AUTHORITY_EXPANSION_NOT_BLOCKED")
+    if contract.get("secret_payload_to_model") is not False:
+        issues.append("GOOGLE_SECRET_MODEL_ACCESS_NOT_BLOCKED")
+
+    if not GOOGLE_INTELLIGENCE_PROMPT_PATH.exists():
+        issues.append("GOOGLE_INTELLIGENCE_PROMPT_MISSING")
+        measured_prompt_sha256 = None
+    else:
+        measured_prompt_sha256 = hashlib.sha256(GOOGLE_INTELLIGENCE_PROMPT_PATH.read_bytes()).hexdigest()
+        if contract.get("prompt_sha256") != measured_prompt_sha256:
+            issues.append("GOOGLE_INTELLIGENCE_PROMPT_HASH_MISMATCH")
+        if declared.get("prompt_sha256") != measured_prompt_sha256:
+            issues.append("GOOGLE_INTELLIGENCE_MANIFEST_PROMPT_HASH_MISMATCH")
+
+    for step in ("load_google_intelligence_runtime_contract", "compile_google_intelligence_route"):
+        if step not in order:
+            issues.append(f"GOOGLE_INTELLIGENCE_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"GOOGLE_INTELLIGENCE_STEP_AFTER_EXECUTE:{step}")
+
+    required_invariants = {
+        "GOOGLE_AI_STUDIO_IS_BUILD_CONTROL_PLANE_NOT_SOVEREIGN_AUTHORITY",
+        "GOOGLE_PROVIDER_LIVE_CLAIMS_REQUIRE_PROVIDER_SEMANTIC_READBACK",
+        "GOOGLE_MODEL_OUTPUT_CANNOT_EXPAND_FUSE_AUTHORITY",
+    }
+    for item in sorted(required_invariants - invariants):
+        issues.append(f"GOOGLE_INTELLIGENCE_INVARIANT_MISSING:{item}")
+
+    return {
+        "schema": "FUSE_GOOGLE_INTELLIGENCE_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "prompt_sha256": contract.get("prompt_sha256"),
+        "measured_prompt_sha256": measured_prompt_sha256,
+        "ai_studio_role": contract.get("ai_studio_role"),
+        "provider_live_proven": False,
+        "live_provider_state": contract.get("live_provider_state"),
+        "truth_boundary": contract.get("truth_boundary"),
+    }
 
 def terminal_debt_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     source = payload if payload is not None else manifest()
@@ -442,11 +508,12 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     memory_bundle = bootstrap_memory_bundle()
     autonomy_guard = autonomous_improvement_bootstrap_guard(source_manifest)
     hipb_guard = hyper_intelligence_performance_bootstrap_guard(source_manifest)
+    google_guard = google_intelligence_runtime_bootstrap_guard(source_manifest)
     debt_guard = terminal_debt_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not debt_guard["ok"]:
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not debt_guard["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "terminal_debt_bootstrap_guard": debt_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "terminal_debt_bootstrap_guard": debt_guard},
         )
     s = state()
     solved = search_state(
@@ -482,6 +549,8 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "autonomous_improvement_guard": autonomy_guard,
         "hyper_intelligence_performance": source_manifest.get("hyper_intelligence_performance", {}),
         "hyper_intelligence_performance_guard": hipb_guard,
+        "google_intelligence_runtime": source_manifest.get("google_intelligence_runtime", {}),
+        "google_intelligence_runtime_guard": google_guard,
         "terminal_debt_finality": source_manifest.get("terminal_debt_finality", {}),
         "terminal_debt_bootstrap_guard": debt_guard,
         "historical_chat_backfill": source_manifest.get("historical_chat_backfill", {}),

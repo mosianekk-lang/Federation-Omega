@@ -78,6 +78,8 @@
     "run_autonomous_improvement_10_iterations",
     "load_hyper_intelligence_performance_contract",
     "compile_hyper_intelligence_plan",
+    "load_google_intelligence_runtime_contract",
+    "compile_google_intelligence_route",
     "load_terminal_debt_finality_contract",
     "reconcile_terminal_debt",
     "hyper_pre_compile_gate",
@@ -121,7 +123,10 @@
     "MANDATORY_TERMINAL_DEBT_ZERO_BEFORE_TERMINAL_SUCCESS",
     "TERMINAL_DEBT_DURABLE_ACROSS_CHAT_AND_CLIENT_LOSS",
     "PACKET_COMPLETION_DOES_NOT_CLEAR_TERMINAL_DEBT_WITHOUT_EVIDENCE",
-    "AAREK_MBMPC_PORTFOLIO_DEBT_FEEDS_EXISTING_DURABLE_FINALITY_RUNTIME"
+    "AAREK_MBMPC_PORTFOLIO_DEBT_FEEDS_EXISTING_DURABLE_FINALITY_RUNTIME",
+    "GOOGLE_AI_STUDIO_IS_BUILD_CONTROL_PLANE_NOT_SOVEREIGN_AUTHORITY",
+    "GOOGLE_PROVIDER_LIVE_CLAIMS_REQUIRE_PROVIDER_SEMANTIC_READBACK",
+    "GOOGLE_MODEL_OUTPUT_CANNOT_EXPAND_FUSE_AUTHORITY"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -372,5 +377,19 @@
     "authority_expansion": false,
     "provider_effect_authorized": false,
     "truth_boundary": "BOOTSTRAP_CONTRACT_AND_DURABLE_DEBT_RUNTIME_BOUND != EVERY_DEBT_HANDLER_AVAILABLE != WINDOWS_PRODUCT_VERIFIED != COMMERCIAL_READY_VERIFIED"
+  },
+  "google_intelligence_runtime": {
+    "contract_id": "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-001",
+    "schema": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-google-intelligence-runtime-v1.json",
+    "prompt_path": "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md",
+    "prompt_sha256": "5622203476ab7d2952ed738a14242077199373973815794ad0fd8cf1d18b1e2b",
+    "mission_reuse": "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+    "ai_studio_role": "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME",
+    "authority_expansion": false,
+    "live_provider_state": "REQUIRES_PROVIDER_SEMANTIC_READBACK",
+    "truth_boundary": "PROMPT_BOUND!=SOURCE_ADMITTED!=DEPLOYED!=PROVIDER_CALLABLE!=SEMANTICALLY_VERIFIED!=TOOL_VERIFIED!=EFFECT_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
   }
 }

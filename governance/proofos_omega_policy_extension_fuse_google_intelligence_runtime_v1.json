@@ -1,0 +1,68 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "config/fuse-google-intelligence-runtime-v1.json",
+        "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "tests/test_fuse_google_intelligence_runtime_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v1.json"
+      ],
+      "reason": "FUSE_GOOGLE_MULTI_INTELLIGENCE_ROUTING_BOOTSTRAP_AUTHORITY_PRIVACY_AND_PROVIDER_PROOF_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V1",
+      "patterns": [
+        "config/fuse-google-intelligence-runtime-v1.json",
+        "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "tests/test_fuse_google_intelligence_runtime_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v1.json"
+      ],
+      "depends_on": [
+        "SOVARA",
+        "RESPAWN",
+        "FUSE_OUTPUT_MIRROR_RUNTIME",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_google_intelligence_runtime_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_google_intelligence_runtime_v1.py",
+      "patterns": [
+        "config/fuse-google-intelligence-runtime-v1.json",
+        "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "tests/test_fuse_google_intelligence_runtime_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V1",
+        "SOVARA",
+        "RESPAWN",
+        "FUSE_OUTPUT_MIRROR_RUNTIME"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
