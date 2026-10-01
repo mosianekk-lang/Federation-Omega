@@ -191,6 +191,75 @@ class SurfaceFormationPlan:
         return asdict(self)
 
 
+PROVIDER_CELL_TO_SURFACE_ID: Mapping[str, str] = {
+    "google-cloud-cloud-run": "GOOGLE-CLOUD",
+    "google-apps-script": "GOOGLE-APPS-SCRIPT",
+    "openai-private-runtime": "OPENAI-GPT6-ASTRA",
+    "openrouter-private-runtime": "OPENROUTER",
+    "gemini-private-runtime": "GOOGLE-AI-STUDIO-GEMINI",
+}
+
+
+def runtime_states_from_provider_projection(
+    projection: object,
+    *,
+    authority_by_cell: Mapping[str, bool],
+    privacy_by_cell: Mapping[str, bool],
+    currentness_by_cell: Mapping[str, bool],
+    quota_by_cell: Mapping[str, bool],
+    correlation_domains_by_cell: Mapping[str, Iterable[str]] | None = None,
+) -> tuple[SurfaceRuntimeState, ...]:
+    """Translate existing Bubbles/SOVARA provider health into Formation state.
+
+    Provider health never mints authority, privacy approval, freshness or quota.
+    Those four gates must be supplied independently by the caller.  Quality and
+    reliability remain neutral rather than being fabricated from liveness.
+    """
+    specs = {getattr(row, "cell_id"): row for row in getattr(projection, "specs", ())}
+    health = {getattr(row, "cell_id"): row for row in getattr(projection, "health", ())}
+    domains = dict(correlation_domains_by_cell or {})
+    rows: list[SurfaceRuntimeState] = []
+
+    for cell_id, surface_id in PROVIDER_CELL_TO_SURFACE_ID.items():
+        spec = specs.get(cell_id)
+        status = health.get(cell_id)
+        if spec is None or status is None:
+            continue
+        semantic_ready = bool(getattr(status, "semantic_readback_ready", False))
+        provider_native = bool(getattr(status, "provider_native", False))
+        provider_live = bool(getattr(status, "provider_live", False))
+        credential_bound = bool(getattr(status, "credential_bound", False))
+        latency = getattr(status, "latency_ms", None)
+        cost_microunits = getattr(status, "estimated_cost_microunits", None)
+        proof_refs = tuple(getattr(status, "proof_refs", ()) or ())
+        priority = float(getattr(spec, "priority", 50.0))
+
+        rows.append(
+            SurfaceRuntimeState(
+                surface_id=surface_id,
+                authority_pass=bool(authority_by_cell.get(cell_id, False)) and credential_bound,
+                privacy_pass=bool(privacy_by_cell.get(cell_id, False)),
+                currentness_pass=bool(currentness_by_cell.get(cell_id, False)),
+                proof_pass=provider_native and semantic_ready,
+                health_pass=provider_live,
+                quota_pass=bool(quota_by_cell.get(cell_id, False)),
+                circuit_open=not provider_live,
+                quality=0.5,
+                reliability=0.5,
+                proof_strength=1.0 if (provider_native and semantic_ready) else 0.0,
+                latency_ms=float(latency or 0.0),
+                estimated_cost=float(cost_microunits or 0) / 1_000_000.0,
+                owner_burden=0.0,
+                privacy_cost=0.0,
+                maintenance_cost=0.0,
+                strategic_value=max(0.0, min(1.0, priority / 100.0)),
+                correlation_domains=_clean(domains.get(cell_id, (getattr(spec, "provider", cell_id),))),
+                proof_refs=_clean(proof_refs),
+            ).validate()
+        )
+    return tuple(rows)
+
+
 class FormationSurfaceLoadBalancer:
     """Compile minimum-sufficient cross-surface portfolios for FUSE work."""
 
@@ -558,4 +627,6 @@ __all__ = [
     "HeldSurface",
     "SurfaceFormationPlan",
     "FormationSurfaceLoadBalancer",
+    "PROVIDER_CELL_TO_SURFACE_ID",
+    "runtime_states_from_provider_projection",
 ]
