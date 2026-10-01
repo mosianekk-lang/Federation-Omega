@@ -8,7 +8,7 @@
   "region": "africa-south1",
   "provider_location": "global",
   "service": "sovara-gemini-gateway",
-  "runtime_service_account": "sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
   "deployer_service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
   "credential_mode": "CLOUD_RUN_SERVICE_ACCOUNT_ADC",
   "service_account_keys_allowed": false,
@@ -27,5 +27,15 @@
     "receipt_sha256"
   ],
   "source_or_ci_substitutes_for_provider_proof": false,
-  "rollback_required": true
+  "rollback_required": true,
+  "current_g3_runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "legacy_manual_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
+  "legacy_manual_deployment_runtime_service_account": "sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "legacy_manual_deployment_path_status": "PRESERVED_UNCHANGED_NOT_CANONICAL_G3_RUNTIME",
+  "deployment_trust_split": {
+    "github_wif_role": "BOUNDED_DEPLOYMENT_TRANSPORT_ONLY",
+    "runtime_adc_role": "GOOGLE_MODEL_EXECUTION_AUTHORITY",
+    "shared_wif_hardening": "SEPARATE_DEBT_WHEN_NOT_VERIFIED",
+    "model_authority_inheritance_from_deployer": false
+  }
 }

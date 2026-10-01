@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "FUSE-GOOGLE-INTELLIGENCE-V2-G3-INTERACTIONS-CANARY-20261001-001",
+  "request_id": "FUSE-GOOGLE-INTELLIGENCE-V2-G3-TWO-LAYER-TRUST-CANARY-20261001-002",
   "mode": "G3_PRIVATE_GATEWAY_CANARY",
   "execute": true,
   "promote": false,
@@ -21,6 +21,11 @@
     "sovara/gemini/private_gateway_canary.sh"
   ],
   "required_provider_proofs": [
+    "GITHUB_WIF_EXCHANGE_OBSERVED",
+    "G3_BOUNDED_REPOSITORY_DEPLOYMENT_TRANSPORT",
+    "WIF_HARDENING_DEBT_PRESERVED_WHEN_OPEN",
+    "RUNTIME_ADC_VERIFIED",
+    "RUNTIME_AIPLATFORM_USER",
     "V1_GENERATECONTENT_EXACT_NONCE",
     "V2_INTERACTIONS_38_EXACT_NONCE",
     "INTERACTION_ID",
@@ -31,6 +36,6 @@
     "ZERO_NORMAL_TRAFFIC",
     "IMMUTABLE_IMAGE_DIGEST"
   ],
-  "purpose": "Deploy the exact admitted FUSE Google Intelligence Runtime V2 gateway source as a private zero-traffic Cloud Run canary under the existing superior-logic-runtime service account and prove both the V1 rollback semantic path and the V2 Gemini 3.8 Interactions stateless semantic path. No production traffic promotion is requested.",
-  "truth_boundary": "This request authorizes only the existing G3 private zero-traffic canary mechanism after source admission and ADC/WIF verification. It does not authorize production promotion, public ingress, new IAM roles, service-account keys, case data, external communication, unrelated provider effects, or proof inheritance to Live, Deep Research, Search, File Search, MCP, cross-provider fusion, owner value or COMPLETE."
+  "purpose": "Use the existing repository-scoped GitHub WIF only as bounded deployment transport, deploy the exact admitted FUSE Google Intelligence Runtime V2 gateway source as a private zero-traffic Cloud Run canary under superior-logic-runtime, and prove model authority independently through runtime ADC. Preserve any shared-WIF hardening gap as separate debt; do not grant Gemini model authority to the GitHub deployer.",
+  "truth_boundary": "G3 may proceed when either hardened WIF is verified or the current repository-scoped WIF exchange is proven sufficient only for bounded zero-traffic deployment, but runtime Gemini authority must independently pass ADC/service-account readback. A transport exception never promotes shared WIF hardening, never grants the deployer aiplatform.user, and does not authorize production promotion, public ingress, new IAM roles, service-account keys, case data, external communication, unrelated effects, or proof inheritance to other Google capability cells."
 }
