@@ -10,6 +10,7 @@ from pathlib import Path
 
 from fuse_genesis.currentness import SourceEpoch
 from fuse_genesis.resident_host import HostState, ResidentHost
+from services.sol62_client_runtime.interrupt_resume import enqueue_after_interruption_resolution
 from services.sol62_client_runtime.browser_carrier_resilience import (
     BrowserCarrierSupervisor,
     CarrierRegistration,
@@ -124,6 +125,158 @@ class Sol62SovereignAttachmentCanaryContractTests(unittest.TestCase):
                 stale.close()
                 current.state.release(current.instance_id, current.fence, 1005)
                 current.close()
+            finally:
+                runtime.close()
+
+    def test_external_interruption_resolution_auto_enqueues_cross_process_wake(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            runtime_root = base / "sol"
+            resident_root = base / "genesis"
+
+            runtime = self._runtime(runtime_root)
+            client = Sol62CompleteClientRuntime(
+                runtime,
+                sovereign_plane=Sol62SovereignPlaneBinding(),
+            )
+            runtime.register_mission(
+                MissionSpec(
+                    "mission-event-resume",
+                    "resume automatically after a durable external event",
+                    {"state": "OPEN"},
+                    {"state": "DONE"},
+                )
+            )
+            client.bind_mission("mission-event-resume", owner_subject="owner")
+            opened = client.interrupt_mission(
+                "mission-event-resume",
+                interruption_id="ext-event-1",
+                kind="EXTERNAL_INPUT",
+                reason="wait for provider event",
+                now_epoch=3000,
+            )
+            self.assertEqual(opened["value"]["state"], "OPEN")
+            checkpoint_before_restart = client.durability_status(
+                "mission-event-resume"
+            )["latest_checkpoint"]["checkpoint_key"]
+            runtime.close()
+
+            reloaded_runtime = self._runtime(runtime_root)
+            try:
+                reloaded_client = Sol62CompleteClientRuntime(
+                    reloaded_runtime,
+                    sovereign_plane=Sol62SovereignPlaneBinding(),
+                )
+                self.assertEqual(
+                    [x["interruption_id"] for x in reloaded_client.open_interruptions("mission-event-resume")],
+                    ["ext-event-1"],
+                )
+                resolved = reloaded_client.resolve_interruption(
+                    "mission-event-resume",
+                    interruption_id="ext-event-1",
+                    decision="RESUME",
+                    actor="provider-event-resolver",
+                    proof_refs=("provider-event-receipt",),
+                    now_epoch=3001,
+                )
+                self.assertEqual(resolved["value"]["state"], "RESOLVED")
+                self.assertFalse(resolved["value"]["effect_authorized_by_decision"])
+
+                bridge = Sol62GenesisWakeBridge(resident_root)
+                handoff = enqueue_after_interruption_resolution(
+                    client=reloaded_client,
+                    bridge=bridge,
+                    mission_id="mission-event-resume",
+                    decision="RESUME",
+                    now_epoch=3002,
+                )
+                self.assertTrue(handoff["queued"])
+                self.assertTrue(handoff["replay_guard_verified"])
+                self.assertNotEqual(
+                    handoff["resume_packet_checkpoint"],
+                    checkpoint_before_restart,
+                )
+                self.assertFalse(handoff["effect_authorized"])
+
+                epoch = SourceEpoch(
+                    "b" * 40,
+                    "F351",
+                    351,
+                    "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+                )
+                host = ResidentHost(resident_root, epoch, interval=0)
+                receipt = host.run(
+                    handler=lambda payload: {
+                        "mission_id": payload["mission_id"],
+                        "reason": payload["reason"],
+                        "replay_guard_verified": payload["replay_guard_verified"],
+                        "effect_authorized": False,
+                    },
+                    max_ticks=1,
+                    now_fn=lambda: 3003,
+                    sleep_fn=lambda _: None,
+                )
+                host.close()
+                self.assertEqual(receipt["processed"], 1)
+
+                state = HostState(resident_root)
+                try:
+                    task = state.task(handoff["wake_receipt"]["task_id"])
+                    self.assertEqual(task["state"], "COMPLETE")
+                    result = json.loads(task["result_json"])
+                    self.assertEqual(result["mission_id"], "mission-event-resume")
+                    self.assertIn("AUTO_RESUME", result["reason"])
+                    self.assertTrue(result["replay_guard_verified"])
+                    self.assertFalse(result["effect_authorized"])
+                finally:
+                    state.close()
+            finally:
+                reloaded_runtime.close()
+
+    def test_reject_resolution_does_not_auto_enqueue_wake(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            runtime = self._runtime(base / "sol")
+            try:
+                client = Sol62CompleteClientRuntime(
+                    runtime,
+                    sovereign_plane=Sol62SovereignPlaneBinding(),
+                )
+                runtime.register_mission(
+                    MissionSpec(
+                        "mission-reject",
+                        "reject an external event without automatic continuation",
+                        {"state": "OPEN"},
+                        {"state": "DONE"},
+                    )
+                )
+                client.bind_mission("mission-reject", owner_subject="owner")
+                client.interrupt_mission(
+                    "mission-reject",
+                    interruption_id="ext-reject-1",
+                    kind="EXTERNAL_INPUT",
+                    reason="wait for provider event",
+                    now_epoch=4000,
+                )
+                client.resolve_interruption(
+                    "mission-reject",
+                    interruption_id="ext-reject-1",
+                    decision="REJECT",
+                    actor="provider-event-resolver",
+                    now_epoch=4001,
+                )
+                handoff = enqueue_after_interruption_resolution(
+                    client=client,
+                    bridge=Sol62GenesisWakeBridge(base / "genesis"),
+                    mission_id="mission-reject",
+                    decision="REJECT",
+                    now_epoch=4002,
+                )
+                self.assertFalse(handoff["queued"])
+                self.assertEqual(
+                    handoff["reason"],
+                    "TERMINAL_OR_NONRESUME_DECISION",
+                )
             finally:
                 runtime.close()
 
