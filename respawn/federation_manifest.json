@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5",
+  "schema_version": "1.6",
   "owner_alias": "federation-owner",
   "control_plane": {
     "drive_folder_id": "env:FEDERATION_DRIVE_FOLDER_ID",
@@ -86,6 +86,8 @@
     "compile_five_minute_scientia",
     "compile_applicable_ultimate_programming",
     "compile_applicable_alpha_omega",
+    "load_cognitive_surface_fabric_contract",
+    "compile_cognitive_surface_plan",
     "load_formation_surface_load_balancer_contract",
     "compile_surface_formation",
     "load_terminal_debt_finality_contract",
@@ -159,7 +161,13 @@
     "EXTERNAL_WAIT_IS_NOT_FALSELY_GUARANTEED_AS_FIVE_MINUTE_COMPLETION",
     "PROGRAMMING_WORK_INHERITS_FORMATION_ULTIMATE_PROGRAMMING",
     "BUILD_AND_RESIDUAL_WORK_INHERITS_ALPHA_OMEGA_COMPILER",
-    "FORMATION_ACCELERATION_CANNOT_MINT_AUTHORITY"
+    "FORMATION_ACCELERATION_CANNOT_MINT_AUTHORITY",
+    "ALL_MATERIAL_COGNITIVE_WORK_GETS_SURFACE_INTELLIGENCE_BINDING",
+    "COGNITIVE_SURFACE_FABRIC_CANNOT_MINT_AUTHORITY",
+    "MISSING_SURFACE_CAPABILITY_TRIGGERS_ALPHA_OMEGA_MINIMUM_RESIDUAL",
+    "PROVIDER_MODEL_OUTPUT_IS_CANDIDATE_EVIDENCE_NOT_COMPLETION",
+    "CANVA_CREATIVE_OUTPUT_CANNOT_SELF_CERTIFY",
+    "APPS_SCRIPT_BOUNDED_QUEUE_IS_NOT_PROVIDER_EFFECT_AUTHORITY"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -480,5 +488,33 @@
     "authority_expansion": false,
     "provider_execution_proven": false,
     "truth_boundary": "ACCELERATION_BOUND!=DEADLINE_FORECAST!=WORKFLOW_EXECUTED!=OBSERVED_5M_SLO!=PROGRAMMING_VERIFIED!=ALPHA_OMEGA_PLAN_EXECUTED!=COMPLETE"
+  },
+  "cognitive_surface_fabric": {
+    "contract_id": "FUSE-COGNITIVE-SURFACE-FABRIC-001",
+    "schema": "FUSE_COGNITIVE_SURFACE_FABRIC_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-cognitive-surface-fabric-v1.json",
+    "compiler_path": "federation/cognitive_surface_fabric_v1.py",
+    "apps_script_bridge_path": "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+    "parent_plane": "FUSE_SOVEREIGN_PLANE_R59",
+    "surfaces": [
+      "GOOGLE-APPS-SCRIPT",
+      "GOOGLE-AI-STUDIO-GEMINI",
+      "CANVA",
+      "OPENROUTER",
+      "HYPERCUBE"
+    ],
+    "formation_contract": "FUSE-FORMATION-SURFACE-LB-001",
+    "hypercube_contract": "FUSE-HYPERCUBE-HBR-001",
+    "alpha_omega_profile": "FORMATION_ALPHA_OMEGA_COMPILER_V1",
+    "minimum_sufficient_surface_portfolio": true,
+    "auto_build_minimum_residual": true,
+    "provider_output_candidate_evidence_only": true,
+    "canva_output_self_certification": false,
+    "apps_script_external_effect_authority": false,
+    "authority_expansion": false,
+    "provider_execution_proven": false,
+    "truth_boundary": "COGNITIVE_SURFACE_FABRIC_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=ALPHA_OMEGA_BUILD_EXECUTED!=OWNER_VALUE!=COMPLETE"
   }
 }

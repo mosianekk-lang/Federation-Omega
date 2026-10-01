@@ -6,14 +6,18 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from .core import (
+    ExecutionBudget,
+    RunBudgetExhausted,
     ProofCache,
     ProofRunner,
     ProofSelector,
     changed_paths_from_git,
     load_manifest,
+    run_court_process,
 )
 from .policy import ProofPolicy
 from .impact import ImpactCompiler
@@ -36,7 +40,16 @@ _SECRET_ASSIGNMENT_RE = re.compile(
 def _write_json(path: str | Path, payload: dict) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=target.parent, prefix=target.name + ".", suffix=".tmp", delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(json.dumps(payload, sort_keys=True, indent=2) + "\n")
+            stream.flush()
+        os.replace(temporary, target)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def _redact_diagnostic(text: str) -> str:
@@ -75,14 +88,17 @@ def _diagnostic_argv(spec) -> list[str] | None:
     return None
 
 
-def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | Path) -> None:
+def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | Path,
+                              budget: ExecutionBudget | None = None,
+                              captured_output: dict[str, str] | None = None,
+                              progress=None) -> None:
     """Emit failure-only diagnostics without changing authoritative ProofOS evidence.
 
     The authoritative court has already executed and its hashes remain unchanged in
-    the immutable admission report. This observability pass reruns only failed,
-    policy-registered deterministic courts and writes a bounded/redacted excerpt to
-    stderr. Diagnostic failure can never turn an admission failure into success or
-    change its failure class.
+    the immutable admission report. Prefer captured court output; an existing
+    repeatability probe must never cause a third execution. For legacy callers
+    without captured output or a previous probe, a diagnostic rerun consumes only
+    the remaining shared budget. Excerpts are redacted before leaving memory.
     """
     root = Path(repo_root)
     for result in report.results:
@@ -95,19 +111,37 @@ def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | P
         diagnostic = ""
         diagnostic_status = "RERUN_COMPLETED"
         try:
-            process = subprocess.run(
-                argv,
-                cwd=root,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=spec.timeout_seconds,
-                check=False,
-                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-            )
-            diagnostic = _redact_diagnostic(
-                (process.stdout or "") + (process.stderr or "")
-            )
+            if captured_output is not None and result.test_id in captured_output:
+                diagnostic_status = "CAPTURED_COURT_OUTPUT"
+                diagnostic = _redact_diagnostic(captured_output[result.test_id])
+            elif getattr(result, "diagnostic_returncode", None) is not None:
+                diagnostic_status = "REPEATABILITY_ALREADY_PROBED"
+            elif result.status == "FAIL_BUDGET_EXHAUSTED" or getattr(result, "repeatability", None) == "BUDGET_EXHAUSTED":
+                diagnostic_status = "BUDGET_EXHAUSTED"
+            elif result.status == "FAIL_NOT_PRESENT":
+                diagnostic_status = "PROOF_TARGET_NOT_PRESENT"
+            else:
+                if progress is not None:
+                    progress({"event": "DIAGNOSTIC_START", "test_id": result.test_id,
+                              "status": "DIAGNOSTIC_ONLY", "remaining_seconds": budget.remaining() if budget is not None else None})
+                timeout = budget.timeout(spec.timeout_seconds) if budget is not None else spec.timeout_seconds
+                process = run_court_process(
+                    argv,
+                    budgeted=budget is not None,
+                    cwd=root,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=timeout,
+                    check=False,
+                    env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+                )
+                diagnostic = _redact_diagnostic((process.stdout or "") + (process.stderr or ""))
+        except RunBudgetExhausted:
+            diagnostic_status = "BUDGET_EXHAUSTED"
+            if progress is not None:
+                progress({"event": "BUDGET_EXHAUSTED", "test_id": result.test_id, "phase": "DIAGNOSTIC",
+                          "status": "DIAGNOSTIC_ONLY", "remaining_seconds": 0.0})
         except subprocess.TimeoutExpired as exc:
             stdout = (
                 exc.stdout.decode(errors="replace")
@@ -167,7 +201,21 @@ def run_command(args: argparse.Namespace) -> int:
     policy = ProofPolicy.from_path(args.policy)
     manifest = load_manifest(args.manifest)
     cache = ProofCache(args.cache_dir) if args.cache_dir else None
-    report = ProofRunner(policy=policy, repo_root=args.repo_root, cache=cache).run(manifest)
+    budget_seconds = getattr(args, "budget_seconds", None)
+    budget = ExecutionBudget(budget_seconds) if budget_seconds is not None else None
+    progress_path = getattr(args, "progress_output", None) or Path(args.output).with_suffix(".progress.json")
+    if Path(progress_path).resolve() == Path(args.output).resolve():
+        raise ValueError("progress output must differ from the authoritative report")
+
+    def publish_progress(event):
+        payload = {"schema": "FEDERATION-PROOFOS-RUN-PROGRESS-V1", "manifest_sha256": manifest.manifest_sha256, **event}
+        _write_json(progress_path, payload)
+        print("PROOFOS_PROGRESS" + f" event={event['event']} test_id={event.get('test_id') or '-'}"
+              + f" completed={event.get('completed_count', '-')} selected={event.get('selected_count', '-')}"
+              + f" remaining_seconds={event.get('remaining_seconds')}", flush=True)
+
+    runner = ProofRunner(policy=policy, repo_root=args.repo_root, cache=cache)
+    report = runner.run(manifest, budget=budget, progress=publish_progress)
     _write_json(args.output, report.to_dict())
     print(
         "PROOFOS_ADMISSION"
@@ -178,7 +226,8 @@ def run_command(args: argparse.Namespace) -> int:
         f" failures={len(report.blocking_failures)}"
     )
     if report.status != "PASS":
-        _emit_failure_diagnostics(policy=policy, report=report, repo_root=args.repo_root)
+        _emit_failure_diagnostics(policy=policy, report=report, repo_root=args.repo_root,
+                                  budget=budget, captured_output=runner.failure_outputs, progress=publish_progress)
         return 1
     return 0
 
@@ -219,6 +268,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--repo-root", default=".")
     run_parser.add_argument("--cache-dir")
     run_parser.add_argument("--output", required=True)
+    run_parser.add_argument("--budget-seconds", type=float, help="shared court/repeatability/diagnostic budget; reserve hosted upload headroom")
+    run_parser.add_argument("--progress-output", help="atomic progress checkpoint (defaults beside the admission report)")
     run_parser.set_defaults(func=run_command)
 
     verify_parser = sub.add_parser("verify", help="verify manifest integrity and proof completeness")

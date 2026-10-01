@@ -1,0 +1,145 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "config/fuse-cognitive-surface-fabric-v1.json",
+        "federation/cognitive_surface_fabric_v1.py",
+        "respawn/bootstrap_service.py",
+        "respawn/federation_manifest.json",
+        "tests/test_cognitive_surface_apps_script_bridge_v1.py",
+        "tests/test_cognitive_surface_bootstrap_v1.py",
+        "tests/test_cognitive_surface_fabric_v1.py",
+        "tests/test_proofos_cognitive_surface_mapping.py",
+        "governance/proofos_omega_policy_extension_cognitive_surface_fabric_v1.json"
+      ],
+      "reason": "COGNITIVE_SURFACE_ROUTING_BOOTSTRAP_AUTHORITY_PRIVACY_COST_AND_PROOF_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_COGNITIVE_SURFACE_FABRIC_V1",
+      "patterns": [
+        "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "config/fuse-cognitive-surface-fabric-v1.json",
+        "federation/cognitive_surface_fabric_v1.py",
+        "respawn/bootstrap_service.py",
+        "respawn/federation_manifest.json",
+        "tests/test_cognitive_surface_apps_script_bridge_v1.py",
+        "tests/test_cognitive_surface_bootstrap_v1.py",
+        "tests/test_cognitive_surface_fabric_v1.py",
+        "tests/test_proofos_cognitive_surface_mapping.py",
+        "governance/proofos_omega_policy_extension_cognitive_surface_fabric_v1.json"
+      ],
+      "depends_on": [
+        "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+        "FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1",
+        "RESPAWN"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "cognitive_surface_fabric_v1",
+      "kind": "unittest_glob",
+      "target": "test_cognitive_surface_fabric_v1.py",
+      "patterns": [
+        "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "config/fuse-cognitive-surface-fabric-v1.json",
+        "federation/cognitive_surface_fabric_v1.py",
+        "respawn/bootstrap_service.py",
+        "respawn/federation_manifest.json",
+        "tests/test_cognitive_surface_apps_script_bridge_v1.py",
+        "tests/test_cognitive_surface_bootstrap_v1.py",
+        "tests/test_cognitive_surface_fabric_v1.py",
+        "tests/test_proofos_cognitive_surface_mapping.py",
+        "governance/proofos_omega_policy_extension_cognitive_surface_fabric_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_COGNITIVE_SURFACE_FABRIC_V1"
+      ],
+      "failure_class": "AUTHORITY_EXPANSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "cognitive_surface_bootstrap_v1",
+      "kind": "unittest_glob",
+      "target": "test_cognitive_surface_bootstrap_v1.py",
+      "patterns": [
+        "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "config/fuse-cognitive-surface-fabric-v1.json",
+        "federation/cognitive_surface_fabric_v1.py",
+        "respawn/bootstrap_service.py",
+        "respawn/federation_manifest.json",
+        "tests/test_cognitive_surface_apps_script_bridge_v1.py",
+        "tests/test_cognitive_surface_bootstrap_v1.py",
+        "tests/test_cognitive_surface_fabric_v1.py",
+        "tests/test_proofos_cognitive_surface_mapping.py",
+        "governance/proofos_omega_policy_extension_cognitive_surface_fabric_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_COGNITIVE_SURFACE_FABRIC_V1"
+      ],
+      "failure_class": "AUTHORITY_EXPANSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "cognitive_surface_apps_script_bridge_v1",
+      "kind": "unittest_glob",
+      "target": "test_cognitive_surface_apps_script_bridge_v1.py",
+      "patterns": [
+        "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "config/fuse-cognitive-surface-fabric-v1.json",
+        "federation/cognitive_surface_fabric_v1.py",
+        "respawn/bootstrap_service.py",
+        "respawn/federation_manifest.json",
+        "tests/test_cognitive_surface_apps_script_bridge_v1.py",
+        "tests/test_cognitive_surface_bootstrap_v1.py",
+        "tests/test_cognitive_surface_fabric_v1.py",
+        "tests/test_proofos_cognitive_surface_mapping.py",
+        "governance/proofos_omega_policy_extension_cognitive_surface_fabric_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_COGNITIVE_SURFACE_FABRIC_V1"
+      ],
+      "failure_class": "AUTHORITY_EXPANSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "proofos_cognitive_surface_mapping",
+      "kind": "unittest_glob",
+      "target": "test_proofos_cognitive_surface_mapping.py",
+      "patterns": [
+        "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "config/fuse-cognitive-surface-fabric-v1.json",
+        "federation/cognitive_surface_fabric_v1.py",
+        "respawn/bootstrap_service.py",
+        "respawn/federation_manifest.json",
+        "tests/test_cognitive_surface_apps_script_bridge_v1.py",
+        "tests/test_cognitive_surface_bootstrap_v1.py",
+        "tests/test_cognitive_surface_fabric_v1.py",
+        "tests/test_proofos_cognitive_surface_mapping.py",
+        "governance/proofos_omega_policy_extension_cognitive_surface_fabric_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_COGNITIVE_SURFACE_FABRIC_V1"
+      ],
+      "failure_class": "SOURCE_INTEGRITY_FAILURE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    }
+  ]
+}

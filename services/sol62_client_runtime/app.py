@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import os
 import secrets
+import sqlite3
 import time
 from pathlib import Path
 from typing import Annotated, Any, Mapping
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -14,6 +15,7 @@ from pydantic import BaseModel, Field
 from services.fuse_mobile_gateway.bindings import runtime_from_environment as gateway_from_environment
 from services.fuse_mobile_gateway.runtime import GatewayRuntime, RuntimeBindingError, bearer_token
 from services.sol62_client_runtime import VERSION
+from sol_61_runtime.sol_62_frontier_primitives import ConstraintError
 from services.sol62_client_runtime.gateway_adapter import GatewayChatAdapter
 from services.sol62_client_runtime.interrupt_resume import enqueue_after_interruption_resolution
 from services.sol62_client_runtime.sovereign_meta_intelligence import SovereignMetaIntelligence
@@ -24,6 +26,7 @@ from federation.formation_omega_acceleration_binding_v1 import (
     FIVE_MINUTE_SLO_SECONDS,
     VERIFY_DELIVERY_RESERVE_SECONDS,
 )
+from federation.fuse_unified_service_catalog_v1 import build_unified_service_catalog
 from services.sol62_client_runtime.alpha_omega_formation_binding import (
     Sol62AlphaOmegaFormationBinding,
     receipt_to_dict as alpha_omega_formation_receipt_to_dict,
@@ -347,6 +350,25 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             ],
         }
 
+    @app.get("/v1/os/catalog")
+    async def os_catalog(
+        response: Response,
+        authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+    ) -> dict[str, Any]:
+        # Reuse the same owner-session boundary as all existing private reads.
+        await identity(authorization, x_fuse_authorization)
+        response.headers["Cache-Control"] = "no-store"
+        try:
+            return build_unified_service_catalog()
+        except (OSError, ValueError, TypeError, KeyError):
+            # A damaged source contract must not become a fabricated empty or
+            # healthy catalogue. Do not expose server paths or config content.
+            raise HTTPException(
+                status_code=503,
+                detail={"status": "HELD", "reason": "FUSE_OS_CATALOG_INVALID"},
+            ) from None
+
     @app.post("/v1/missions/{mission_id}/strategy")
     async def compile_mission_strategy(
         mission_id: str,
@@ -589,17 +611,14 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
     ) -> dict[str, Any]:
         owner = await identity(authorization, x_fuse_authorization)
         mission_id = body.mission_id or ("sol62-" + secrets.token_hex(12))
-        ctx.sol.register_mission(
-            MissionSpec(
-                mission_id,
-                body.objective,
-                dict(body.initial_state),
-                dict(body.target_state),
-                success_proofs=tuple(body.success_proofs),
-                constraints=tuple(body.constraints),
-            )
+        spec = MissionSpec(
+            mission_id,
+            body.objective,
+            dict(body.initial_state),
+            dict(body.target_state),
+            success_proofs=tuple(body.success_proofs),
+            constraints=tuple(body.constraints),
         )
-        ctx.client.bind_mission(mission_id, owner_subject=owner.subject)
         owner_intent = ctx.meta_intelligence.build_owner_intent(
             owner_subject=owner.subject,
             mission_id=mission_id,
@@ -610,19 +629,25 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             },
             constraints=tuple(body.constraints),
         )
-        ctx.client._put("sol62.owner.intent", mission_id, owner_intent)
-        ctx.sol.control.append_event(
-            mission_id,
-            "SOL62_OWNER_INTENT_BOUND",
-            {
-                "owner_subject": owner.subject,
-                "owner_label": owner_intent["owner_label"],
-                "intent_sha256": owner_intent["intent_sha256"],
-                "authority_ceiling": owner_intent["delegated_authority_ceiling"],
-                "external_effect": False,
-            },
-        )
-        return ctx.client.mission_status(mission_id)
+        try:
+            return ctx.client.create_owned_mission(
+                spec, owner_subject=owner.subject, owner_intent=owner_intent
+            )
+        except ConstraintError as error:
+            reason = str(error)
+            if reason in {"MISSION_ID_UNAVAILABLE", "MISSION_ID_CONFLICT"}:
+                raise HTTPException(status_code=409, detail={"status": "HELD", "reason": reason}) from error
+            raise
+        except sqlite3.OperationalError as error:
+            # Busy is a recoverable local hold. No ownership check is moved out
+            # of the transaction and no unconfirmed request is retried here.
+            code = getattr(error, "sqlite_errorcode", 0) & 0xFF
+            if code in {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED}:
+                raise HTTPException(
+                    status_code=503,
+                    detail={"status": "HELD", "reason": "MISSION_STORE_BUSY"},
+                ) from error
+            raise
 
     @app.post("/v1/missions/{mission_id}/transitions")
     async def create_transition(

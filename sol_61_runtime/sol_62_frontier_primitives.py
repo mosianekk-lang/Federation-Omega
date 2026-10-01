@@ -218,6 +218,8 @@ class SQLiteControlPlane:
         self.path = str(path)
         self.db = sqlite3.connect(self.path, timeout=10.0, isolation_level=None)
         self.db.row_factory = sqlite3.Row
+        self._tx_depth = 0
+        self._tx_serial = 0
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA synchronous=FULL")
         self.db.execute("PRAGMA foreign_keys=ON")
@@ -324,14 +326,30 @@ class SQLiteControlPlane:
 
     @contextlib.contextmanager
     def tx(self):
-        self.db.execute("BEGIN IMMEDIATE")
+        """Compose local writes without releasing the outer SQLite writer lock.
+
+        Only transactions opened by this control instance may nest. Savepoint
+        release remains provisional until the outer BEGIN IMMEDIATE commits.
+        The connection's default same-thread check is deliberately unchanged.
+        """
+        nested = self._tx_depth > 0
+        self._tx_serial += 1
+        savepoint = f"sol_tx_{self._tx_serial}"
+        self.db.execute(f"SAVEPOINT {savepoint}" if nested else "BEGIN IMMEDIATE")
+        self._tx_depth += 1
         try:
             yield self.db
-        except Exception:
-            self.db.execute("ROLLBACK")
+            self.db.execute(f"RELEASE SAVEPOINT {savepoint}" if nested else "COMMIT")
+        except BaseException:
+            if self.db.in_transaction:
+                if nested:
+                    self.db.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+                    self.db.execute(f"RELEASE SAVEPOINT {savepoint}")
+                else:
+                    self.db.execute("ROLLBACK")
             raise
-        else:
-            self.db.execute("COMMIT")
+        finally:
+            self._tx_depth -= 1
 
     def append_event(self, aggregate: str, kind: str, payload: Mapping[str, Any]) -> dict[str, Any]:
         with self.tx() as db:

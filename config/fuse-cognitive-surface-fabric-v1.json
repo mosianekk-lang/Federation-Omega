@@ -1,0 +1,81 @@
+{
+  "schema": "FUSE_COGNITIVE_SURFACE_FABRIC_V1",
+  "version": "1.0.0",
+  "contract_id": "FUSE-COGNITIVE-SURFACE-FABRIC-001",
+  "enabled": true,
+  "authority": "START:FUSE_ONE",
+  "parent_plane": "FUSE_SOVEREIGN_PLANE_R59",
+  "mission_reuse": "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+  "integration_mission": "MISSION-FUSE-COGNITIVE-SURFACE-INTEGRATION-001",
+  "compiler_path": "federation/cognitive_surface_fabric_v1.py",
+  "apps_script_bridge_path": "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+  "surface_load_balancer_path": "federation/formation_surface_load_balancer_v1.py",
+  "hypercube_path": "superior_logic/hypercube_bottleneck_resolver.py",
+  "alpha_omega_profile": "FORMATION_ALPHA_OMEGA_COMPILER_V1",
+  "creates_new_controller": false,
+  "creates_new_scheduler": false,
+  "creates_new_mission_bus": false,
+  "creates_new_authority_root": false,
+  "creates_new_truth_memory_proof_root": false,
+  "external_effect_authority": false,
+  "provider_execution_authority": false,
+  "minimum_sufficient_surface_portfolio": true,
+  "forced_provider_fanout": false,
+  "surface_roles": {
+    "GOOGLE-APPS-SCRIPT": ["workspace_automation", "queue_heartbeat", "event_wakeup", "deterministic_transform"],
+    "GOOGLE-AI-STUDIO-GEMINI": ["reasoning", "multimodal", "structured_output", "candidate_research"],
+    "CANVA": ["design", "presentation", "visual_mission_genome", "customer_artifact"],
+    "OPENROUTER": ["challenger", "provider_marketplace", "benchmarking", "model_diversity"],
+    "HYPERCUBE": ["bottleneck_detection", "mechanism_harvest", "failure_learning", "residual_invention"]
+  },
+  "auto_build": {
+    "enabled": true,
+    "rule": "MINIMUM_TRUE_RESIDUAL_ONLY",
+    "ladder": ["REUSE", "REBIND", "REPAIR", "EXTEND", "COMPOSE", "HARVEST", "BUILD_MINIMUM"],
+    "alpha_omega_required_for_build": true
+  },
+  "auto_research": {
+    "enabled": true,
+    "rule": "VALUE_OF_INFORMATION_GATED",
+    "provider_output_is_candidate_evidence": true
+  },
+  "auto_harvest": {
+    "enabled": true,
+    "sources": ["OWNER_CONTROLLED", "OPEN_SOURCE", "PUBLIC_DOCUMENTATION", "LICENSED_OR_AUTHORISED", "CLEAN_ROOM_BEHAVIOURAL_OR_METADATA"],
+    "proprietary_source_copy_forbidden": true,
+    "access_control_bypass_forbidden": true
+  },
+  "auto_deploy": {
+    "enabled": true,
+    "requires_existing_exact_authority": true,
+    "requires_canary": true,
+    "requires_semantic_readback": true,
+    "requires_rollback_or_safe_forward_recovery": true,
+    "automatic_public_exposure": false,
+    "automatic_iam_widening": false
+  },
+  "auto_learn": {
+    "enabled": true,
+    "causal_credit_assignment": true,
+    "route_memory": true,
+    "failure_genome": true,
+    "mission_genome_on_reusable_verified_win": true,
+    "authority_learning_forbidden": true
+  },
+  "common_packet_fields": [
+    "mission_id",
+    "objective",
+    "acceptance_predicates",
+    "authority_ceiling",
+    "privacy_class",
+    "cost_ceiling",
+    "required_capabilities",
+    "evidence_refs",
+    "uncertainty",
+    "falsifiers",
+    "deadline_seconds",
+    "proof_floor",
+    "idempotency_key"
+  ],
+  "truth_boundary": "COGNITIVE_SURFACE_FABRIC_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=ALPHA_OMEGA_BUILD_EXECUTED!=OWNER_VALUE!=COMPLETE"
+}
