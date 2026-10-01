@@ -7,7 +7,10 @@ from federation.formation_surface_load_balancer_v1 import (
     FormationWorkPackage,
     SurfaceRuntimeState,
     WorkKind,
+    runtime_states_from_provider_projection,
 )
+from bubbles.provider_cell_mesh import ProviderCellHealth, ProviderCellSpec
+from bubbles.provider_cell_registry import RegistryProjection
 from federation.omnisurface_fabric_v2 import EffectClass, build_default_registry
 
 
@@ -256,6 +259,101 @@ class FormationSurfaceLoadBalancerTests(unittest.TestCase):
         held = [x for x in plan.held_surfaces if x.surface_id == "OPENROUTER"]
         self.assertTrue(held)
         self.assertIn("EFFECT_CEILING_TOO_LOW", held[0].reasons)
+
+
+    def test_provider_projection_bridge_requires_explicit_non_health_gates(self) -> None:
+        projection = RegistryProjection(
+            schema="BUBBLES-OMEGA-PROVIDER-CELL-REGISTRY-V1",
+            specs=(
+                ProviderCellSpec(
+                    cell_id="openrouter-private-runtime",
+                    provider="OpenRouter",
+                    connector="sovara.openrouter.private_runtime",
+                    capabilities=("OPENROUTER_INFERENCE",),
+                    priority=70.0,
+                ),
+            ),
+            health=(
+                ProviderCellHealth(
+                    cell_id="openrouter-private-runtime",
+                    provider_native=True,
+                    provider_live=True,
+                    semantic_readback_ready=True,
+                    credential_bound=True,
+                    latency_ms=120.0,
+                    estimated_cost_microunits=25000,
+                    proof_refs=("provider:openrouter:semantic",),
+                    observed_at="2026-10-01T04:00:00Z",
+                ),
+            ),
+            unmatched_bindings=(),
+            unmatched_sovara_cells=(),
+        )
+        held = runtime_states_from_provider_projection(
+            projection,
+            authority_by_cell={},
+            privacy_by_cell={},
+            currentness_by_cell={},
+            quota_by_cell={},
+        )
+        self.assertEqual(len(held), 1)
+        self.assertFalse(held[0].hard_gates_pass)
+        self.assertFalse(held[0].authority_pass)
+        self.assertFalse(held[0].privacy_pass)
+        self.assertFalse(held[0].currentness_pass)
+        self.assertFalse(held[0].quota_pass)
+        self.assertTrue(held[0].proof_pass)
+        self.assertTrue(held[0].health_pass)
+
+        admitted = runtime_states_from_provider_projection(
+            projection,
+            authority_by_cell={"openrouter-private-runtime": True},
+            privacy_by_cell={"openrouter-private-runtime": True},
+            currentness_by_cell={"openrouter-private-runtime": True},
+            quota_by_cell={"openrouter-private-runtime": True},
+            correlation_domains_by_cell={"openrouter-private-runtime": ("openrouter", "independent-market")},
+        )
+        self.assertTrue(admitted[0].hard_gates_pass)
+        self.assertEqual(admitted[0].surface_id, "OPENROUTER")
+        self.assertEqual(admitted[0].estimated_cost, 0.025)
+        self.assertIn("provider:openrouter:semantic", admitted[0].proof_refs)
+        self.assertIn("independent-market", admitted[0].correlation_domains)
+
+    def test_provider_projection_bridge_does_not_invent_quality_from_liveness(self) -> None:
+        projection = RegistryProjection(
+            schema="BUBBLES-OMEGA-PROVIDER-CELL-REGISTRY-V1",
+            specs=(
+                ProviderCellSpec(
+                    cell_id="gemini-private-runtime",
+                    provider="Gemini",
+                    connector="sovara.gemini.private_runtime",
+                    capabilities=("GEMINI_INFERENCE",),
+                    priority=99.0,
+                ),
+            ),
+            health=(
+                ProviderCellHealth(
+                    cell_id="gemini-private-runtime",
+                    provider_native=True,
+                    provider_live=True,
+                    semantic_readback_ready=True,
+                    credential_bound=True,
+                ),
+            ),
+            unmatched_bindings=(),
+            unmatched_sovara_cells=(),
+        )
+        rows = runtime_states_from_provider_projection(
+            projection,
+            authority_by_cell={"gemini-private-runtime": True},
+            privacy_by_cell={"gemini-private-runtime": True},
+            currentness_by_cell={"gemini-private-runtime": True},
+            quota_by_cell={"gemini-private-runtime": True},
+        )
+        self.assertEqual(rows[0].quality, 0.5)
+        self.assertEqual(rows[0].reliability, 0.5)
+        self.assertEqual(rows[0].proof_strength, 1.0)
+        self.assertAlmostEqual(rows[0].strategic_value, 0.99)
 
 
 if __name__ == "__main__":
