@@ -69,6 +69,25 @@ class SovaraGeminiPrivateGatewayCanaryTests(unittest.TestCase):
         self.assertIn("interactions_store", self.script)
         self.assertIn("both V1 generateContent rollback proof and V2 Gemini 3.8 Interactions semantic proof", self.readme)
 
+    def test_cold_start_uses_ephemeral_service_and_verified_delete(self) -> None:
+        self.assertIn("EPHEMERAL_SERVICE_COLD_START", self.script)
+        self.assertIn("EPHEMERAL_SERVICE_NAME", self.script)
+        self.assertIn("run.services.delete", self.script)
+        self.assertIn("G3_DEPLOYER_PERMISSION_PREFLIGHT.json", self.script)
+        self.assertIn("G3_CLEANUP_VERIFICATION.json", self.script)
+        self.assertIn("ephemeral_service_deleted", self.script)
+        self.assertIn("cleanup_verified", self.script)
+        self.assertIn("production_service_mutated", self.script)
+        self.assertLess(
+            self.script.index("/v2/interactions-handshake"),
+            self.script.index("gcloud run services delete"),
+        )
+
+    def test_existing_service_keeps_zero_traffic_revision_path(self) -> None:
+        self.assertIn("EXISTING_SERVICE_ZERO_TRAFFIC", self.script)
+        self.assertIn("--no-traffic", self.script)
+        self.assertIn("--tag \"$CANARY_TAG\"", self.script)
+
     def test_canary_does_not_promote_production_traffic(self) -> None:
         self.assertIn("production_promotion_performed':False", self.script)
         self.assertNotIn("update-traffic", self.script)
