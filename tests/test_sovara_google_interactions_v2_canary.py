@@ -51,5 +51,14 @@ class SovaraGoogleInteractionsV2CanaryTests(unittest.TestCase):
         self.assertIn("retention-days: 90", self.workflow)
 
 
+    def test_v2_job_is_independent_of_legacy_performance_court(self) -> None:
+        self.assertIn("  v2-interactions-canary:", self.workflow)
+        v2 = self.workflow.split("  v2-interactions-canary:", 1)[1]
+        self.assertIn("Run V2 Gemini 3.8 Interactions semantic canary", v2)
+        self.assertNotIn("needs: semantic-canary", v2)
+        self.assertIn("google-github-actions/auth@", v2)
+        self.assertIn("Upload immutable redacted V2 Interactions receipt", v2)
+
+
 if __name__ == "__main__":
     unittest.main()
