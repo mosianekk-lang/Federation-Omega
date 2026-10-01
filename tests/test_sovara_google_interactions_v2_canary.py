@@ -45,6 +45,11 @@ class SovaraGoogleInteractionsV2CanaryTests(unittest.TestCase):
         ):
             self.assertIn(marker, self.runner)
 
+    def test_v2_semantic_canary_runs_before_legacy_performance_court(self) -> None:
+        v2_index = self.workflow.index("Run V2 Gemini 3.8 Interactions semantic canary")
+        legacy_index = self.workflow.index("Run bounded portable reasoning role matrix")
+        self.assertLess(v2_index, legacy_index)
+
     def test_interactions_receipt_upload_is_immutable_artifact(self) -> None:
         self.assertIn("Upload immutable redacted V2 Interactions receipt", self.workflow)
         self.assertIn("INTERACTIONS_V2_SEMANTIC_RECEIPT.json", self.workflow)

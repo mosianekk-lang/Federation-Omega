@@ -156,19 +156,19 @@ jobs:
           if not exact: raise SystemExit('Provider structured semantic proof not verified; redacted receipt retained')
           PY
 
-      - name: Run bounded portable reasoning role matrix
-        shell: bash
-        run: |
-          set -euo pipefail
-          set +x
-          python3 scripts/run_gemini_role_matrix.py
-
       - name: Run V2 Gemini 3.8 Interactions semantic canary
         shell: bash
         run: |
           set -euo pipefail
           set +x
           python3 scripts/run_google_interactions_v2_canary.py
+
+      - name: Run bounded portable reasoning role matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 scripts/run_gemini_role_matrix.py
 
       - name: Upload immutable redacted semantic receipt
         if: always()
