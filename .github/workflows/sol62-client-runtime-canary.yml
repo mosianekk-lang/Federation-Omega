@@ -141,6 +141,14 @@ jobs:
           assert integrity.get('inflight_effects') == [], integrity
           assert d.get('chatgpt_ui_required') is False, d
           assert d.get('provider_specific_limits_are_mission_terminal') is False, d
+          omega=d.get('formation_omega_runtime') or {}
+          assert omega.get('direct_active_deadline_bound') is True, omega
+          assert float(omega.get('active_execution_budget_seconds')) == 240.0, omega
+          assert float(omega.get('total_slo_seconds')) == 300.0, omega
+          assert float(omega.get('verification_delivery_reserve_seconds')) == 60.0, omega
+          assert omega.get('automatic_interruption_resume_enqueue') is True, omega
+          assert omega.get('universal_external_wait_guarantee') is False, omega
+          assert omega.get('effect_authority_created') is False, omega
           meta=d.get('sovereign_meta_intelligence') or {}
           assert meta.get('owner_label') == 'Kim Kagiso Mosiane', meta
           assert meta.get('auto_repair_control') is True, meta
@@ -226,6 +234,14 @@ jobs:
           assert integrity.get('event_chain_valid') is True, integrity
           assert integrity.get('inflight_effects') == [], integrity
           assert d.get('chatgpt_ui_required') is False, d
+          omega=d.get('formation_omega_runtime') or {}
+          assert omega.get('direct_active_deadline_bound') is True, omega
+          assert float(omega.get('active_execution_budget_seconds')) == 240.0, omega
+          assert float(omega.get('total_slo_seconds')) == 300.0, omega
+          assert float(omega.get('verification_delivery_reserve_seconds')) == 60.0, omega
+          assert omega.get('automatic_interruption_resume_enqueue') is True, omega
+          assert omega.get('universal_external_wait_guarantee') is False, omega
+          assert omega.get('effect_authority_created') is False, omega
           meta=d.get('sovereign_meta_intelligence') or {}
           assert meta.get('owner_label') == 'Kim Kagiso Mosiane', meta
           assert meta.get('auto_repair_control') is True, meta
