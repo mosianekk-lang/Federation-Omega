@@ -26,7 +26,7 @@ GOOGLE_INTELLIGENCE_RUNTIME_PATH = CONFIG_ROOT / "fuse-google-intelligence-runti
 GOOGLE_INTELLIGENCE_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md"
 GOOGLE_INTELLIGENCE_V1_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v1.json"
 GOOGLE_INTELLIGENCE_V1_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
-FORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-surface-load-balancer-v1.json"
+FORMATION_POWER_INHERITANCE_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-power-inheritance-v2.json"\nFORMATION_POWER_INHERITANCE_MODULE_PATH = ROOT.parent / "federation" / "formation_power_inheritance_v2.py"\nFORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-surface-load-balancer-v1.json"
 FORMATION_SURFACE_LOAD_BALANCER_MODULE_PATH = ROOT.parent / "federation" / "formation_surface_load_balancer_v1.py"
 OMNISURFACE_REGISTRY_MODULE_PATH = ROOT.parent / "federation" / "omnisurface_fabric_v2.py"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
@@ -629,10 +629,10 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     google_guard = google_intelligence_runtime_bootstrap_guard(source_manifest)
     formation_guard = formation_surface_load_balancer_bootstrap_guard(source_manifest)
     debt_guard = terminal_debt_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_power_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_power_inheritance_guard": formation_power_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
         )
     s = state()
     solved = search_state(
