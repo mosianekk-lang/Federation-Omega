@@ -8,13 +8,11 @@
         "federation/formation_surface_load_balancer_v1.py",
         "federation/omnisurface_fabric_v2.py",
         "config/fuse-formation-surface-load-balancer-v1.json",
-        "governance/federation_omnisurface_fabric_v2.json",
         "config/fuse-bootstrap-inheritance-v3.json",
         "respawn/federation_manifest.json",
         "respawn/bootstrap_service.py",
         "tests/test_formation_surface_load_balancer_v1.py",
         "tests/test_fuse_formation_surface_bootstrap_v1.py",
-        "tests/test_omnisurface_fabric_v2.py",
         "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json",
         "tests/test_omnisurface_formation_bridge_v1.py"
       ],
@@ -28,13 +26,11 @@
         "federation/formation_surface_load_balancer_v1.py",
         "federation/omnisurface_fabric_v2.py",
         "config/fuse-formation-surface-load-balancer-v1.json",
-        "governance/federation_omnisurface_fabric_v2.json",
         "config/fuse-bootstrap-inheritance-v3.json",
         "respawn/federation_manifest.json",
         "respawn/bootstrap_service.py",
         "tests/test_formation_surface_load_balancer_v1.py",
         "tests/test_fuse_formation_surface_bootstrap_v1.py",
-        "tests/test_omnisurface_fabric_v2.py",
         "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json",
         "tests/test_omnisurface_formation_bridge_v1.py"
       ],
@@ -91,7 +87,7 @@
       "target": "test_omnisurface_formation_bridge_v1.py",
       "patterns": [
         "federation/omnisurface_fabric_v2.py",
-        "governance/federation_omnisurface_fabric_v2.json",
+        "config/fuse-formation-surface-load-balancer-v1.json",
         "tests/test_omnisurface_formation_bridge_v1.py"
       ],
       "subsystems": [
