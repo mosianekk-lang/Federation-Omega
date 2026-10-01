@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-REPOSITORY-COORDINATION-V3",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "owner": "Kim Kagiso Mosiane",
   "purpose": "Replace long-lived repository-wide serialization with a short-CAS scoped lease registry: disjoint write sets may execute concurrently while overlapping or repository-global writes remain fail-closed and serialized.",
   "mode": "DUAL_COMPATIBILITY",
@@ -10,7 +10,7 @@
   "lease_schema": "FEDERATION_SCOPED_LEASE_V3",
   "claim_schema": "FEDERATION_COORDINATION_V2",
   "legacy_unscoped_compatibility": true,
-  "activation_rule": "ACTIVE legacy V2 lease remains absolute; when V2 is explicit terminal, V3 scoped registry controls overlap admission. Legacy unscoped PRs are tolerated only when they overlap no active V3 lease during migration and receive no scoped-authority promotion.",
+  "activation_rule": "Before verified cutover, an ACTIVE legacy V2 lease remains absolute and terminal V2 enables compatibility admission. New canonical acquisitions are frozen until the terminal V2 MIGRATED_TO_V3 barrier and its exact matching V3 activation are independently read back. After cutover, every new scoped or repository-global lease uses the existing V3 registry and every PR requires its current V3 claim; reappearing ACTIVE legacy V2 state blocks all admission as migration drift.",
   "registry_transaction_model": {
     "provider": "GIT_REF_FAST_FORWARD_CAS",
     "critical_section_duration": "ACQUIRE_OR_RELEASE_TRANSACTION_ONLY",
@@ -22,8 +22,17 @@
     "expiry_semantics": "EXPIRY_NEVER_RELEASES; EXPLICIT_REGISTRY_RELEASE_OR_ABORT_REQUIRED"
   },
   "recovery_lifecycle": {
-    "nonterminal_states": ["ACTIVE", "SUSPECT", "ORPHANED", "RECLAIMABLE"],
-    "transition_order": ["ACTIVE->SUSPECT", "SUSPECT->ORPHANED", "ORPHANED->RECLAIMABLE"],
+    "nonterminal_states": [
+      "ACTIVE",
+      "SUSPECT",
+      "ORPHANED",
+      "RECLAIMABLE"
+    ],
+    "transition_order": [
+      "ACTIVE->SUSPECT",
+      "SUSPECT->ORPHANED",
+      "ORPHANED->RECLAIMABLE"
+    ],
     "expiry_rule": "EXPIRY_ONLY_MAKES_ACTIVE_ELIGIBLE_FOR_EXPLICIT_SUSPECT_TRANSITION; IT NEVER RELEASES OR RECLAIMS",
     "orphan_recovery_rule": "ORPHANED->RECLAIMABLE REQUIRES AN INDEPENDENT RECOVERY ACTOR DIFFERENT FROM THE ORIGINAL WRITER",
     "generic_acquire_rule": "ACTIVE,SUSPECT,ORPHANED,RECLAIMABLE ALL RETAIN WRITE-SET EXCLUSIVITY UNTIL EXPLICIT RECLAIM OR TERMINAL RELEASE/ABORT",
@@ -39,9 +48,49 @@
     "conflict": "exact equality OR directory-prefix containment OR repository:*",
     "disjoint": "no conflict relation between any pair of scopes"
   },
-  "required_scoped_lease_fields": ["schema","lease_id","state","fencing_token","writer_node","system","workstream","transaction_id","idempotency_key","source_head","source_tree","write_set","write_set_digest","acquired_at","expires_at","turn_capture_id","effect","authority"],
-  "required_scoped_claim_fields": ["schema","lease_id","writer_node","system","workstream","transaction_id","idempotency_key","source_head","turn_capture_id","registry_ref","fencing_token","write_set_digest"],
-  "repository_global_paths": ["proofos_omega/repository_coordination.py","proofos_omega/repository_coordination_v3.py","governance/federation_repository_coordination_v2.json","governance/federation_repository_coordination_v3.json",".github/workflows/github-airlock.yml","governance/proofos_omega_registry.json"],
+  "required_scoped_lease_fields": [
+    "schema",
+    "lease_id",
+    "state",
+    "fencing_token",
+    "writer_node",
+    "system",
+    "workstream",
+    "transaction_id",
+    "idempotency_key",
+    "source_head",
+    "source_tree",
+    "write_set",
+    "write_set_digest",
+    "acquired_at",
+    "expires_at",
+    "turn_capture_id",
+    "effect",
+    "authority"
+  ],
+  "required_scoped_claim_fields": [
+    "schema",
+    "lease_id",
+    "writer_node",
+    "system",
+    "workstream",
+    "transaction_id",
+    "idempotency_key",
+    "source_head",
+    "turn_capture_id",
+    "registry_ref",
+    "fencing_token",
+    "write_set_digest"
+  ],
+  "repository_global_paths": [
+    "proofos_omega/repository_coordination.py",
+    "proofos_omega/repository_coordination_v3.py",
+    "governance/federation_repository_coordination_v2.json",
+    "governance/federation_repository_coordination_v3.json",
+    ".github/workflows/github-airlock.yml",
+    "governance/proofos_omega_registry.json",
+    "proofos_omega/repository_lease_issuer.py"
+  ],
   "admission_rules": {
     "active_v2_global_lease": "V2_EXACT_CLAIM_REQUIRED_GLOBAL_SERIALIZATION",
     "v2_explicit_terminal": "EVALUATE_V3_REGISTRY",
@@ -54,7 +103,10 @@
     "registry_contains_overlapping_active_leases": "FAIL_REGISTRY_CORRUPTION",
     "legacy_unscoped_pr_no_conflict": "PASS_COMPATIBILITY_WITHOUT_SCOPED_AUTHORITY_PROMOTION",
     "recovery_nonterminal_conflict": "SUSPECT_ORPHANED_RECLAIMABLE_RETAIN_SCOPE_EXCLUSIVITY",
-    "stale_fencing_token": "FAIL_PERMANENTLY"
+    "stale_fencing_token": "FAIL_PERMANENTLY",
+    "post_cutover_unscoped_pr": "FAIL_V3_CLAIM_REQUIRED",
+    "post_cutover_active_v2": "FAIL_MIGRATION_DRIFT_FOR_ALL_CLAIMANTS",
+    "cutover_linkage_missing_or_mismatched": "FAIL_CLOSED"
   },
   "merge_time_revalidation": {
     "required": true,
@@ -84,5 +136,34 @@
     "registry_is_not_provider_effect_authority": true,
     "unknown_spend_fails_closed": true
   },
-  "truth_boundary": "V3 does not weaken source safety. It moves serialization from the entire work duration to the short registry CAS used for acquire/release/recovery transitions. Concurrent work is allowed only for provider-visible ACTIVE leases whose declared write sets are pairwise disjoint. SUSPECT, ORPHANED and RECLAIMABLE leases remain scope-blocking until an explicit reclaim creates a newer ACTIVE fence. Overlap, repository-global paths, malformed state, expired-but-still-active leases, stale claims, stale fencing tokens, write-set escape, registry races, or uncertain authority fail closed. Legacy V2 remains absolute while ACTIVE during migration."
+  "truth_boundary": "V3 does not weaken source safety. It moves serialization from the entire work duration to the short registry CAS used for acquire/release/recovery transitions. Concurrent work is allowed only for provider-visible ACTIVE leases whose declared write sets are pairwise disjoint. SUSPECT, ORPHANED and RECLAIMABLE leases remain scope-blocking until an explicit reclaim creates a newer ACTIVE fence. Overlap, repository-global paths, malformed state, expired-but-still-active leases, stale claims, stale fencing tokens, write-set escape, registry races, or uncertain authority fail closed. Legacy V2 remains absolute while ACTIVE during migration. The canonical issuer freezes new V2 issuance. Migration first CAS-writes an intentionally old-issuer-incompatible tombstone onto the exact terminal V2 head, then activates the bound empty V3 registry with the same immutable cutover identity. A precompiled V2 acquisition and tombstone compete for one parent; only one can advance that ref. An interrupted gap issues nothing. After verified cutover, all new lease acquisition and owner-bound release uses one V3 ref, including repository:* scope. Direct unauthorized ref writes remain outside repository-local prevention and fail closed when detected.",
+  "lease_issuer_contract": {
+    "canonical_issuer": "proofos_omega.repository_lease_issuer.build_lease_commit_spec",
+    "migration_freeze_issuer": "proofos_omega.repository_lease_issuer.build_migration_freeze_commit_spec",
+    "migration_activation_issuer": "proofos_omega.repository_lease_issuer.build_registry_cutover_commit_spec",
+    "release_issuer": "proofos_omega.repository_lease_issuer.build_release_commit_spec",
+    "issuer_default": "V3_REGISTRY_ONLY",
+    "v2_new_acquisition": "DENIED",
+    "migration_barrier": "MIGRATED_TO_V3",
+    "migration_schema": "FEDERATION_FDOF_MIGRATION_V1",
+    "migration_metadata_key": "migration",
+    "migration_order": [
+      "FREEZE_EXACT_TERMINAL_LEGACY_REF",
+      "READ_BACK_TOMBSTONE",
+      "ACTIVATE_EXACT_EMPTY_REGISTRY_PARENT",
+      "READ_BACK_MATCHING_ACTIVATION",
+      "ISSUE_ONLY_THROUGH_V3"
+    ],
+    "interrupted_migration": "NO_ISSUANCE_RESUME_SAME_CUTOVER",
+    "commit_parent_source": "EXACT_CURRENT_REGISTRY_HEAD",
+    "commit_tree_source": "EXACT_DECLARED_SOURCE_HEAD_TREE",
+    "write_ahead_capture": "PROVIDER_READBACK_VERIFIED_EXACT_ID",
+    "post_cutover_claim": "MANDATORY_V3",
+    "post_cutover_legacy_drift": "FAIL_CLOSED",
+    "owner_release": "EXACT_LEASE_ID_WRITER_AND_FENCING_TOKEN",
+    "race_behavior": "NON_FAST_FORWARD_REJECT_THEN_REREAD_AND_RECOMPILE",
+    "migration_metadata_preserved": true,
+    "provider_effect_authorized": false,
+    "cross_ref_atomicity_claimed": false
+  }
 }

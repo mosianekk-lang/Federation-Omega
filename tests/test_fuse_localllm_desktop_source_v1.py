@@ -1,10 +1,14 @@
 from __future__ import annotations
 import hashlib, json, pathlib, unittest
+import importlib.util
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 SRC=ROOT/"products"/"fuse_localllm_desktop"/"v0.2.2"/"upstream"
 CONTRACT=ROOT/"governance"/"fuse_localllm_desktop_v1.json"
 CUSTODY=ROOT/"products"/"fuse_localllm_desktop"/"v0.2.2"/"DRIVE_CUSTODY.json"
-WORKFLOW=ROOT/".github"/"workflows"/"fuse-localllm-desktop-windows-build-v1.yml"
+_profile_spec = importlib.util.spec_from_file_location("phoenix_core_test_profile", ROOT / "tests/phoenix_core_test_profile.py")
+_profile = importlib.util.module_from_spec(_profile_spec)
+_profile_spec.loader.exec_module(_profile)
+_profile.attach_source_case(globals(), ROOT, "DesktopWorkflowSourceContracts")
 class FuseLocalLLMDesktopSourceTests(unittest.TestCase):
     def test_drive_source_manifest_exact_bytes(self):
         b=(SRC/"SOURCE_MANIFEST.json").read_bytes()
@@ -35,12 +39,8 @@ class FuseLocalLLMDesktopSourceTests(unittest.TestCase):
         self.assertNotIn(workflow,policy["oidc_workflow_allowlist"])
         self.assertNotIn(workflow,policy["provider_mutation_workflow_allowlist"])
 
-    def test_windows_workflow_packaging_regression_guard(self):
-        wf=WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("if($line -notmatch '^[0-9a-f]{64}  .+$'){ throw \"MALFORMED_SHA256SUMS_LINE:$line\" }",wf)
-        self.assertEqual(wf.count("uses: actions/upload-artifact@"),1)
-        self.assertEqual(wf.count("Compress-Archive -Path"),1)
-        self.assertEqual(wf.count("schema='FUSE-LOCALLLM-DESKTOP-WINDOWS-BUILD-PROOF-V1'"),1)
+    def test_declared_archive_or_source_collection_profile(self):
+        self.assertIn(_profile.collection_profile(ROOT), {"SOURCE", "PORTABLE_CORE"})
 
     def test_product_source_court(self):
         ui=(SRC/"ui"/"index.html").read_text(encoding="utf-8"); app=(SRC/"ui"/"app.js").read_text(encoding="utf-8")

@@ -99,6 +99,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         seb_provider = credential_policy["seb_deployment_workflow"]
         fuse_windows_h1_provider_relay = ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
         work_plane_private_gcp = ".github/workflows/work-plane-private-gcp-canary-v1.yml"
+        sol62_client_runtime = ".github/workflows/sol62-client-runtime-canary.yml"
         self.assertEqual(
             {
                 sol62_wif,
@@ -111,6 +112,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
                 seb_provider,
                 fuse_windows_h1_provider_relay,
                 work_plane_private_gcp,
+                sol62_client_runtime,
             },
             provider_mutators,
         )
@@ -126,6 +128,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
                 seb_provider: "MACHINE_DISPATCH_ONLY__NO_ISSUE_TRIGGER",
                 fuse_windows_h1_provider_relay: "MACHINE_DISPATCH_ONLY__NO_ISSUE_TRIGGER",
                 work_plane_private_gcp: "[FO-DISPATCH] WORK_PLANE_PRIVATE_GCP_CANARY_V1",
+                sol62_client_runtime: "[FO-DISPATCH] SOL62_CLIENT_RUNTIME_CANARY_V1",
             },
             self.policy["provider_mutation_exact_issue_titles"],
         )

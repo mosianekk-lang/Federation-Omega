@@ -1,0 +1,77 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "phoenix/build_exports.py",
+        "phoenix/export_policy.json",
+        "tests/test_phoenix_exports.py",
+        "tests/phoenix_core_test_profile.py",
+        "tests/test_phoenix_core_workflow_source_contracts.py",
+        "tests/test_fuse_localllm_desktop_source_v1.py",
+        "tests/test_fuse_localllm_gemini_provider_v1.py",
+        "tests/test_sovara_google_interactions_v2_canary.py",
+        ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "governance/proofos_omega_policy_extension_phoenix_core_portability_v1.json"
+      ],
+      "reason": "PORTABLE_CORE_SOURCE_CUSTODY_AND_EXPLICIT_PROVIDER_EFFECT_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "PHOENIX_CORE_PORTABILITY",
+      "patterns": [
+        "phoenix/build_exports.py",
+        "phoenix/export_policy.json",
+        "tests/test_phoenix_exports.py",
+        "tests/phoenix_core_test_profile.py",
+        "tests/test_phoenix_core_workflow_source_contracts.py",
+        "tests/test_fuse_localllm_desktop_source_v1.py",
+        "tests/test_fuse_localllm_gemini_provider_v1.py",
+        "tests/test_sovara_google_interactions_v2_canary.py",
+        ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "governance/proofos_omega_policy_extension_phoenix_core_portability_v1.json"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "FUSE_LOCALLLM_DESKTOP",
+        "FUSE_LOCALLLM_GEMINI_PROVIDER",
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "phoenix_core_workflow_source_contracts",
+      "kind": "unittest_glob",
+      "target": "test_phoenix_core_workflow_source_contracts.py",
+      "patterns": [
+        "phoenix/build_exports.py",
+        "phoenix/export_policy.json",
+        "tests/test_phoenix_exports.py",
+        "tests/phoenix_core_test_profile.py",
+        "tests/test_phoenix_core_workflow_source_contracts.py",
+        "tests/test_fuse_localllm_desktop_source_v1.py",
+        "tests/test_fuse_localllm_gemini_provider_v1.py",
+        "tests/test_sovara_google_interactions_v2_canary.py",
+        ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "governance/proofos_omega_policy_extension_phoenix_core_portability_v1.json"
+      ],
+      "subsystems": [
+        "PHOENIX_CORE_PORTABILITY",
+        "FUSE_LOCALLLM_DESKTOP",
+        "FUSE_LOCALLLM_GEMINI_PROVIDER",
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2"
+      ],
+      "failure_class": "AUTHORITY_EXPANSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    }
+  ]
+}
