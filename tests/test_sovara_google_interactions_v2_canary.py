@@ -3,7 +3,10 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from scripts.run_google_interactions_v2_canary import _normalize_interaction_response
+from scripts.run_google_interactions_v2_canary import (
+    _extract_provider_error,
+    _normalize_interaction_response,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -98,6 +101,30 @@ class SovaraGoogleInteractionsV2CanaryTests(unittest.TestCase):
         )
         self.assertEqual(normalized["id"], "int_done")
         self.assertEqual(meta["wrapper"], "list_completed_interaction")
+
+
+    def test_permission_preflight_is_exact_and_read_only(self) -> None:
+        self.assertIn('"aiplatform.interactions.create"', self.runner)
+        self.assertIn('"aiplatform.endpoints.predict"', self.runner)
+        self.assertIn(":testIamPermissions", self.runner)
+        self.assertIn('"provider_call_attempted": False', self.runner)
+        self.assertIn('"interaction_permission_verified": False', self.runner)
+
+    def test_provider_error_extraction_preserves_only_safe_diagnostics(self) -> None:
+        error = _extract_provider_error(
+            [{
+                "error": {
+                    "code": 403,
+                    "status": "PERMISSION_DENIED",
+                    "message": "Permission 'aiplatform.interactions.create' denied on resource.",
+                }
+            }]
+        )
+        self.assertEqual(error["code"], 403)
+        self.assertEqual(error["status"], "PERMISSION_DENIED")
+        self.assertEqual(error["permission_refs"], ["aiplatform.interactions.create"])
+        self.assertIsNotNone(error["message_sha256"])
+        self.assertNotIn("message", error)
 
 
 if __name__ == "__main__":
