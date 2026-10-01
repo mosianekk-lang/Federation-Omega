@@ -23,7 +23,7 @@ class FakeIdentity:
         return {
             "project_id": CANONICAL_PROJECT_ID,
             "project_number": "257649435135",
-            "service_account": "sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+            "service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
             "authority_mode": "CLOUD_RUN_SERVICE_ACCOUNT_ADC",
         }
 
