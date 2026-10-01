@@ -1,7 +1,28 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.21",
+  "version": "1.0.23",
   "core": {
+    "include_source_paths": [
+      "benchmarks/hyper_intelligence_performance_court_v1.mjs",
+      "benchmarks/output_mirror_v2_developer1000_court.mjs",
+      "benchmarks/output_mirror_v3_developer1000_regression.mjs",
+      "benchmarks/output_mirror_v3_power_diary_court.mjs",
+      "fuse_runtime/autonomous_improvement_loop_v1.mjs",
+      "fuse_runtime/hyper_intelligence_performance_v1.mjs",
+      "fuse_runtime/output_mirror_v1.mjs",
+      "fuse_runtime/output_mirror_v2.mjs",
+      "fuse_runtime/output_mirror_v3.mjs",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/BUILD_INSTALL_LAUNCH_WINDOWS.cmd",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/include/fuse_core.hpp",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/include/ui_embedded.hpp",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/src/desktop_launcher.cpp",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/src/fuse_core.cpp",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/src/main.cpp",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/tests/ggml-backend.h",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/tests/llama.h",
+      "products/fuse_localllm_desktop/v0.2.2/upstream/tests/test_core.cpp",
+      "services/sol62_client_runtime/Dockerfile"
+    ],
     "include_extensions": [
       ".css",
       ".csv",
@@ -61,8 +82,12 @@
       "tests/test_federation_autopilot_suites_v1.py",
       "tests/test_federation_autopilot_suites_proofos_bridge_v1.py",
       "tests/test_fuse_mobile_mdtaf_semantic_ui_v1.py",
-      "tests/test_secretless_candidate.py"
+      "tests/test_secretless_candidate.py",
+      "tests/test_fuse_one_os_browser_admission.py"
     ],
+    "excluded_test_rationales": {
+      "tests/test_fuse_one_os_browser_admission.py": "The full-source browser court requires the .mjs runner and pinned Playwright/Chromium toolchain outside the portable Core dependency contract. It remains a required GLOBAL source admission court (fuse_one_os_browser_runtime); this package exclusion grants no admission waiver."
+    },
     "excluded_segments": [
       "__pycache__",
       "credentials",
