@@ -1,12 +1,18 @@
 {
   "schema": "FEDERATION-OMNISURFACE-FABRIC-V2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "mission": "Unify current and future Federation surfaces under capability-based routing without vendor sovereignty or authority inheritance.",
   "protocol_spine": {
     "mcp": "2026-07-28",
     "a2a": "1.0",
     "event_envelope": "CloudEvents-compatible provider event envelope",
-    "direct_adapters": ["RESPONSES_API", "REST", "WEBSOCKET", "CONNECTED_PLUGIN", "FEDERATION_NATIVE"]
+    "direct_adapters": [
+      "RESPONSES_API",
+      "REST",
+      "WEBSOCKET",
+      "CONNECTED_PLUGIN",
+      "FEDERATION_NATIVE"
+    ]
   },
   "routing_order": [
     "MISSION_IR",
@@ -22,10 +28,23 @@
     "CHECKPOINT_AND_LEARN"
   ],
   "event_fabric": {
-    "google_cloud": ["Eventarc", "Pub/Sub", "Workflows", "Cloud Run"],
-    "google_workspace": ["Workspace Events API where supported", "provider-specific watches/change notifications"],
-    "github": ["webhooks", "Actions"],
-    "market_observation": ["Luno WebSocket feed read-only"]
+    "google_cloud": [
+      "Eventarc",
+      "Pub/Sub",
+      "Workflows",
+      "Cloud Run"
+    ],
+    "google_workspace": [
+      "Workspace Events API where supported",
+      "provider-specific watches/change notifications"
+    ],
+    "github": [
+      "webhooks",
+      "Actions"
+    ],
+    "market_observation": [
+      "Luno WebSocket feed read-only"
+    ]
   },
   "effect_policy": {
     "observe": "automatic when authenticated/authorized and privacy rules permit",
@@ -37,8 +56,20 @@
   },
   "future_surface_admission": {
     "no_core_code_edit_required": true,
-    "accepted_discovery_families": ["MCP/2026-07-28", "A2A/1.0", "FEDERATION_NATIVE", "REST"],
-    "requires": ["provider identity", "endpoint fingerprint", "capability advertisement", "proof refs", "authority ceiling", "readback contract"],
+    "accepted_discovery_families": [
+      "MCP/2026-07-28",
+      "A2A/1.0",
+      "FEDERATION_NATIVE",
+      "REST"
+    ],
+    "requires": [
+      "provider identity",
+      "endpoint fingerprint",
+      "capability advertisement",
+      "proof refs",
+      "authority ceiling",
+      "readback contract"
+    ],
     "authority_inheritance": false,
     "maturity_inheritance": false
   },
@@ -48,5 +79,36 @@
     "source_admission_proves_provider_execution": false,
     "http_success_proves_semantic_success": false,
     "model_consensus_proves_truth": false
+  },
+  "formation_load_balancing": {
+    "contract_id": "FUSE-FORMATION-SURFACE-LB-001",
+    "contract_path": "config/fuse-formation-surface-load-balancer-v1.json",
+    "planner_path": "federation/formation_surface_load_balancer_v1.py",
+    "applies_to": "ALL_MATERIAL_MISSIONS",
+    "formation_engine": "ao_harmonic_v3.science_and_routes.FormationEngine",
+    "intelligence_formation_compiler": "frontier_convergence.intelligence_formation_v2.IntelligenceFormationCompiler",
+    "selection_law": [
+      "DISCOVER_ALL_AVAILABLE_SURFACES",
+      "FILTER_BY_AUTHORITY_PRIVACY_CURRENTNESS_PROOF_HEALTH_QUOTA_EFFECT_AND_BUDGET",
+      "DECOMPOSE_MISSION_INTO_FORMATION_WORK_PACKAGES",
+      "SELECT_MINIMUM_SUFFICIENT_PROVEN_SURFACE_PORTFOLIO",
+      "USE_PARALLEL_SPECIALIST_LANES_WHEN_INDEPENDENT_AND_VALUE_ADDING",
+      "SERIALIZE_OR_GATE_EFFECTFUL_LANES",
+      "READ_BACK_EACH_PROVIDER_INDEPENDENTLY",
+      "JUDGE_AND_LEARN_WITHOUT_AUTHORITY_INHERITANCE"
+    ],
+    "requested_core_surfaces": [
+      "GOOGLE-APPS-SCRIPT",
+      "GOOGLE-CLOUD",
+      "GOOGLE-AI-STUDIO-GEMINI",
+      "CANVA",
+      "OPENROUTER"
+    ],
+    "all_surfaces_every_task": false,
+    "provider_diversity_is_not_independence": true,
+    "independent_formation_requires_distinct_provider_and_correlation_domain": true,
+    "single_surface_failure_global_stall": false,
+    "effect_authority_remains": "FDOF_SICF",
+    "truth_boundary": "FORMATION_PLAN_IS_NOT_PROVIDER_EXECUTION_OR_EFFECT_PROOF"
   }
 }

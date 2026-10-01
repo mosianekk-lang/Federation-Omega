@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "boot_kernel": "5.10.1",
   "authority": "START:FUSE_ONE",
   "enabled": true,
@@ -52,6 +52,7 @@
     "HYPER_INTELLIGENCE_PERFORMANCE_BINDING",
     "HIPB_PRE_COMPILE",
     "GOOGLE_INTELLIGENCE_RUNTIME_BINDING",
+    "FORMATION_SURFACE_LOAD_BALANCER",
     "ROUTE_COMPILE",
     "HIPB_PRE_EFFECT",
     "EXECUTE",
@@ -194,5 +195,18 @@
     "rollback_v1_preserved": true,
     "ai_studio_role": "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME",
     "truth_boundary": "V2_PROMPT_BOUND!=V2_SOURCE_ADMITTED!=INTERACTIONS_CALLABLE!=GEMINI_3_8_SEMANTIC_VERIFIED!=CHAMPION_PROMOTED!=LIVE_VERIFIED!=RESEARCH_VERIFIED!=MCP_EFFECT_VERIFIED!=CROSS_PROVIDER_FUSION_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
+  },
+  "formation_surface_load_balancer": {
+    "contract_id": "FUSE-FORMATION-SURFACE-LB-001",
+    "schema": "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-formation-surface-load-balancer-v1.json",
+    "planner_path": "federation/formation_surface_load_balancer_v1.py",
+    "registry_path": "federation/omnisurface_fabric_v2.py",
+    "authority_expansion": false,
+    "required_before_route_compilation": true,
+    "applies_to": "ALL_MATERIAL_MISSIONS",
+    "truth_boundary": "SURFACE_FORMATION_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=EFFECT_VERIFIED!=OWNER_VALUE!=COMPLETE"
   }
 }
