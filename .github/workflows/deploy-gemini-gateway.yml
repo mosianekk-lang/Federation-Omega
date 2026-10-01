@@ -37,7 +37,7 @@ env:
   SERVICE: sovara-gemini-gateway
   REPOSITORY: federation-omega
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
-  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/sovara-gemini-gateway:${{ github.sha }}
   MODEL: gemini-2.5-flash
@@ -198,7 +198,7 @@ jobs:
           ident = ready['provider_identity']
           assert ident['project_id'] == 'sov-hybrid-suite', ready
           assert ident['project_number'] == '257649435135', ready
-          assert ident['service_account'] == 'superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com', ready
+          assert ident['service_account'] == 'sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com', ready
           assert hs['schema'] == 'SOVARA_GEMINI_HANDSHAKE_RECEIPT_V1', hs
           assert hs['status'] == 'VERIFIED', hs
           assert hs['semantic_nonce'] == nonce, hs
