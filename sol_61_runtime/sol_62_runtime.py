@@ -400,6 +400,134 @@ class Sol62ControlPlane(SQLiteControlPlane):
                 "event_hash": event_hash,
             }
 
+    def requeue_transition_after_cancelled_effect(
+        self,
+        *,
+        effect_id: str,
+        transition_id: str,
+        mission_id: str,
+        worker: str,
+        lease_epoch: int,
+        fencing_token: int,
+        now_epoch: int,
+    ) -> dict[str, Any]:
+        """Atomically requeue only a provably pre-dispatch cancelled attempt.
+
+        The same live transition fence must still be held. The cancelled effect
+        must be bound to this transition, must have no provider reference, and
+        the transition must still be RUNNING with no supersession. DISPATCHED,
+        FAILED_UNCERTAIN, stale-fence and concurrent-status cases fail closed.
+        """
+        with self.tx() as db:
+            resource_id = f"transition:{transition_id}"
+            fence = db.execute(
+                "SELECT * FROM leases WHERE resource_id=?", (resource_id,)
+            ).fetchone()
+            if (
+                not fence
+                or fence["owner"] != worker
+                or int(fence["epoch"]) != int(lease_epoch)
+                or int(fence["fencing_token"]) != int(fencing_token)
+                or int(fence["expires_at_epoch"]) <= int(now_epoch)
+            ):
+                raise FenceError("STALE_FENCE")
+
+            effect = db.execute(
+                "SELECT state,provider_ref FROM effects WHERE effect_id=?", (effect_id,)
+            ).fetchone()
+            if not effect:
+                raise KeyError(effect_id)
+            if effect["state"] != "CANCELLED":
+                raise FenceError("ROUTE_LOCAL_REQUEUE_REQUIRES_CANCELLED_EFFECT")
+            if effect["provider_ref"] not in (None, ""):
+                raise FenceError("ROUTE_LOCAL_REQUEUE_PROVIDER_DISPATCH_NOT_ABSENT")
+
+            intent = db.execute(
+                "SELECT value_json FROM state WHERE namespace='sol62.effect_intent' AND item_key=?",
+                (effect_id,),
+            ).fetchone()
+            if not intent:
+                raise ConstraintError("EFFECT_INTENT_MISSING")
+            intent_body = json.loads(intent["value_json"])
+            if intent_body.get("transition_id") != transition_id:
+                raise FenceError("ROUTE_LOCAL_REQUEUE_TRANSITION_MISMATCH")
+
+            transition = db.execute(
+                "SELECT value_json FROM state WHERE namespace='sol62.transition' AND item_key=?",
+                (transition_id,),
+            ).fetchone()
+            if not transition:
+                raise ConstraintError("TRANSITION_NOT_REGISTERED")
+            transition_body = json.loads(transition["value_json"])
+            if transition_body.get("mission_id") != mission_id:
+                raise FenceError("ROUTE_LOCAL_REQUEUE_MISSION_MISMATCH")
+
+            status = db.execute(
+                "SELECT version,value_json FROM state WHERE namespace='sol62.transition_status' AND item_key=?",
+                (transition_id,),
+            ).fetchone()
+            if not status:
+                raise ConstraintError("TRANSITION_STATUS_MISSING")
+            status_body = json.loads(status["value_json"])
+            if status_body.get("status") != "RUNNING":
+                raise FenceError("ROUTE_LOCAL_REQUEUE_REQUIRES_RUNNING_TRANSITION")
+            if status_body.get("superseded_by") not in (None, ""):
+                raise FenceError("ROUTE_LOCAL_REQUEUE_SUPERSEDED")
+
+            created_at = utc_now()
+            db.execute(
+                "UPDATE state SET value_json=?,version=?,updated_at=? "
+                "WHERE namespace='sol62.transition_status' AND item_key=?",
+                (
+                    stable_json({"status": "QUEUED", "superseded_by": None}),
+                    int(status["version"]) + 1,
+                    created_at,
+                    transition_id,
+                ),
+            )
+
+            previous = db.execute(
+                "SELECT event_hash FROM events ORDER BY seq DESC LIMIT 1"
+            ).fetchone()
+            previous_hash = previous["event_hash"] if previous else "GENESIS"
+            next_seq = int(
+                db.execute("SELECT COALESCE(MAX(seq),0)+1 AS n FROM events").fetchone()["n"]
+            )
+            event_body = {
+                "event_id": f"evt-{next_seq:012d}",
+                "aggregate": mission_id,
+                "kind": "SOL62_ROUTE_LOCAL_PRE_DISPATCH_REQUEUED",
+                "payload": {
+                    "effect_id": effect_id,
+                    "transition_id": transition_id,
+                    "fencing_token": int(fencing_token),
+                    "reason": "PROVIDER_CONSTRAINT_CONFIRMED_PRE_DISPATCH_CANCELLED",
+                },
+                "previous_hash": previous_hash,
+                "created_at": created_at,
+            }
+            event_hash = digest(event_body)
+            db.execute(
+                "INSERT INTO events(event_id,aggregate,kind,payload_json,previous_hash,event_hash,created_at) "
+                "VALUES(?,?,?,?,?,?,?)",
+                (
+                    event_body["event_id"],
+                    mission_id,
+                    event_body["kind"],
+                    stable_json(event_body["payload"]),
+                    previous_hash,
+                    event_hash,
+                    created_at,
+                ),
+            )
+            return {
+                "transition_id": transition_id,
+                "effect_id": effect_id,
+                "state": "QUEUED",
+                "event_hash": event_hash,
+                "fencing_token": int(fencing_token),
+            }
+
     def commit_verified_transition(
         self,
         *,
@@ -787,6 +915,27 @@ class Sol62Runtime:
     ) -> dict[str, Any]:
         return self.control.acquire_lease(
             f"transition:{transition_id}", worker, ttl_seconds=ttl_seconds, now_epoch=now_epoch
+        )
+
+    def requeue_after_pre_dispatch_cancel(
+        self,
+        *,
+        effect_id: str,
+        transition_id: str,
+        mission_id: str,
+        worker: str,
+        lease_epoch: int,
+        fencing_token: int,
+        now_epoch: int,
+    ) -> dict[str, Any]:
+        return self.control.requeue_transition_after_cancelled_effect(
+            effect_id=effect_id,
+            transition_id=transition_id,
+            mission_id=mission_id,
+            worker=worker,
+            lease_epoch=lease_epoch,
+            fencing_token=fencing_token,
+            now_epoch=now_epoch,
         )
 
     def prepare_execution(

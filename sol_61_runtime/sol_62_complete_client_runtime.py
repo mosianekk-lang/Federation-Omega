@@ -1316,6 +1316,15 @@ class Sol62CompleteClientRuntime:
                     now_epoch=now_epoch,
                 )
                 if constraint.disposition == ConstraintDisposition.ROUTE_LOCAL and self.policy.auto_reroute:
+                    self.runtime.requeue_after_pre_dispatch_cancel(
+                        effect_id=effect_id,
+                        transition_id=transition_id,
+                        mission_id=mission_id,
+                        worker=worker,
+                        lease_epoch=fence["epoch"],
+                        fencing_token=fence["fencing_token"],
+                        now_epoch=now_epoch,
+                    )
                     self._negative_cache(
                         mission_id,
                         transition_id,
