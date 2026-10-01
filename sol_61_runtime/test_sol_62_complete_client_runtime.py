@@ -36,6 +36,18 @@ class FakeAdapter:
         return value
 
 
+class SlowAdapter:
+    def __init__(self, delay_seconds, response):
+        self.delay_seconds = float(delay_seconds)
+        self.response = response
+        self.routes = []
+
+    async def execute(self, request):
+        self.routes.append(request.route.route_id)
+        await asyncio.sleep(self.delay_seconds)
+        return self.response
+
+
 class FakeHarvester:
     def __init__(self, outcome):
         self.outcome = outcome
@@ -193,6 +205,12 @@ class Sol62CompleteClientRuntimeTests(unittest.TestCase):
         self.assertEqual(packet["orchestration_plane"], "FUSE_SOVEREIGN_PLANE_R59")
         self.assertEqual(packet["truth_root"], "SOL_6_2")
         self.assertEqual(packet["resident_executor"], "FUSE_GENESIS_RESIDENT_EXECUTOR_V2")
+        self.assertEqual(packet["five_minute_contract"]["total_slo_seconds"], 300.0)
+        self.assertEqual(
+            packet["five_minute_contract"]["active_execution_budget_seconds"],
+            240.0,
+        )
+        self.assertFalse(packet["five_minute_contract"]["external_wait_guaranteed"])
 
     def test_provider_capacity_is_route_local_and_never_mutates_goal(self):
         result = classify_provider_constraint("MAX_WEIGHTED_TOKENS")
@@ -214,7 +232,73 @@ class Sol62CompleteClientRuntimeTests(unittest.TestCase):
             )
         )
         self.assertEqual(result["state"], "VERIFIED_REALITY")
+        self.assertEqual(
+            result["five_minute_slo"]["state"],
+            "FIVE_MINUTE_SLO_VERIFIED",
+        )
+        self.assertTrue(result["five_minute_slo"]["within_slo"])
+        self.assertTrue(result["five_minute_slo"]["acceptance_complete"])
+        self.assertTrue(result["five_minute_slo"]["proof_complete"])
         self.assertEqual(self.client.mission_status("m1", now_epoch=self.now)["closure"]["state"], "VERIFIED_REALITY")
+
+    def test_omega_scientia_active_deadline_times_out_to_readback(self):
+        self.client = Sol62CompleteClientRuntime(
+            self.rt,
+            policy=ClientRuntimePolicy(
+                max_attempts_per_wake=8,
+                max_total_attempts=32,
+                negative_cache_seconds=300,
+                retry_delay_seconds=30,
+                max_active_wake_seconds=0.02,
+            ),
+        )
+        self.register()
+        result = asyncio.run(
+            self.client.wake_until_terminal(
+                "m1",
+                adapter=SlowAdapter(0.05, self.success()),
+                gateway_request=self.gateway,
+                identity_claims=self.claims,
+                worker="worker-deadline",
+                now_epoch=self.now,
+            )
+        )
+        self.assertEqual(result["state"], "WAITING_READBACK")
+        self.assertEqual(
+            result["reason"],
+            "OMEGA_SCIENTIA_ACTIVE_DEADLINE_EFFECT_STATE_UNKNOWN",
+        )
+        self.assertTrue(result["active_deadline_timeout"])
+        inflight = self.rt.recover_inflight_effects()
+        self.assertEqual(len(inflight), 1)
+        self.assertIn(
+            inflight[0]["action"],
+            {"SAFE_RETRY_WITH_SAME_IDEMPOTENCY_KEY", "PROBE_PROVIDER_BEFORE_RETRY", "PROBE_THEN_RETRY_IF_ABSENT"},
+        )
+
+    def test_five_minute_receipt_includes_full_mission_elapsed_not_only_current_wake(self):
+        self.register()
+        self.client._update_client_mission(
+            "m1",
+            mission_started_epoch=time.time() - 301.0,
+        )
+        result = asyncio.run(
+            self.client.wake_until_terminal(
+                "m1",
+                adapter=FakeAdapter([self.success()]),
+                gateway_request=self.gateway,
+                identity_claims=self.claims,
+                worker="worker-old-mission",
+                now_epoch=self.now,
+            )
+        )
+        self.assertEqual(result["state"], "VERIFIED_REALITY")
+        slo = result["five_minute_slo"]
+        self.assertEqual(slo["state"], "FIVE_MINUTE_SLO_VIOLATED")
+        self.assertFalse(slo["within_slo"])
+        self.assertGreater(slo["observed_wall_seconds"], 300.0)
+        self.assertTrue(slo["acceptance_complete"])
+        self.assertTrue(slo["proof_complete"])
 
     def test_context_limit_auto_reroutes_without_goal_mutation(self):
         self.register(route=False)
