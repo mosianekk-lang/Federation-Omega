@@ -1,0 +1,85 @@
+{
+  "schema": "FUSE_ULTIMATE_ADAPTIVE_MULTISURFACE_INTELLIGENCE_V1",
+  "version": "1.0.0",
+  "enabled": true,
+  "authority": "START:FUSE_ONE",
+  "mission_reuse": "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+  "prompt_path": "prompts/FUSE_ULTIMATE_ADAPTIVE_MULTISURFACE_INTELLIGENCE_V1_MASTER.md",
+  "prompt_sha256": "4c41d1108024b8ec3061715af9f5353b65d19995004aba8b4304162957e3c201",
+  "base_main_sha": "a7231d4b18d20995e98ce050fb378005747f3315",
+  "composition": {
+    "startup_currentness": "START:FUSE_ONE",
+    "mission_authority": "FUSE_SOVEREIGN_PLANE",
+    "adaptive_cognition": "FUSE-HIPB-001",
+    "formation": "INTELLIGENCE_FORMATION_V2",
+    "google_runtime": "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-002",
+    "provider_registry": "BUBBLES-OMEGA-PROVIDER-CELL-REGISTRY-V1",
+    "surface_router": "FIO-SOVARA-DERIVED-SURFACE-ROUTER",
+    "source_effect_authority": "FDOF/SICF",
+    "proof": "PROOFOS/REALITY_JUDGE",
+    "delivery": "OUTPUT_MIRROR_V3",
+    "learning": "FEDERATION_LEARNING"
+  },
+  "eligible_surface_families": [
+    "CHATGPT_OPENAI",
+    "GOOGLE_APPS_SCRIPT_WORKSPACE",
+    "GOOGLE_CLOUD",
+    "GEMINI_VERTEX_AI_STUDIO",
+    "OPENROUTER",
+    "GITHUB_COPILOT",
+    "MICROSOFT_WINDOWS",
+    "CANVA_ADOBE",
+    "LOCAL_OLLAMA_LM_STUDIO",
+    "WEB_RESEARCH",
+    "FUTURE_QUALIFIED_SURFACES"
+  ],
+  "hard_gates": [
+    "AUTHORITY",
+    "PRIVACY",
+    "CURRENTNESS",
+    "CAPABILITY",
+    "DATA_RESIDENCY",
+    "BUDGET",
+    "PROOF_FLOOR",
+    "RECOVERY_FLOOR",
+    "OBSERVABILITY"
+  ],
+  "formation_modes": [
+    "FAST",
+    "FUSION",
+    "ADVERSARIAL",
+    "FORMATION",
+    "DEEP",
+    "LIVE",
+    "CHAMPION_TOURNAMENT"
+  ],
+  "load_balancing": {
+    "bounded_concurrency": true,
+    "backpressure": true,
+    "collision_safe_ready_set": true,
+    "work_stealing_equivalent_authorized_only": true,
+    "route_local_failure": true,
+    "selective_reroute": true,
+    "provider_lock_in_forbidden": true,
+    "optional_probe_forbidden_when_adequate_route_proven": true
+  },
+  "learning": {
+    "smarter_every_cycle": true,
+    "negative_knowledge_preserved": true,
+    "stale_evidence_decay": true,
+    "bounded_safe_exploration": true,
+    "authority_learning_forbidden": true
+  },
+  "windows_endpoint_safety": {
+    "typed_native_preferred": true,
+    "encoded_command_normal_path_forbidden": true,
+    "broad_execution_policy_bypass_normal_path_forbidden": true,
+    "edr_detection_requires_changed_mechanism": true
+  },
+  "creates_new_controller": false,
+  "creates_new_scheduler": false,
+  "creates_new_mission_bus": false,
+  "creates_new_authority_root": false,
+  "creates_new_truth_memory_proof_root": false,
+  "truth_boundary": "PROMPT_BOUND!=RECEIVER_LOADED!=ROUTE_COMPILED!=PROVIDER_EXECUTED!=EFFECT_READBACK!=JUDGE_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
+}
