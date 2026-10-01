@@ -62,6 +62,18 @@ class SovaraGeminiG3WorkflowBindingTests(unittest.TestCase):
         self.assertIn("private_gateway_canary.sh", g3_block)
         self.assertNotIn("gemini_architecture_challenge.py", g3_block)
 
+    def test_g3_requires_cleanup_finality_for_ephemeral_cold_start(self) -> None:
+        for needle in (
+            "gemini_private_canary_cleanup_verified",
+            "gemini_private_canary_ephemeral_service",
+            "gemini_private_canary_ephemeral_service_deleted",
+            "gemini_private_canary_production_service_mutated",
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.workflow)
+        self.assertIn(".gemini_private_canary_cleanup_verified == true", self.workflow)
+        self.assertIn(".gemini_private_canary_ephemeral_service_deleted == true", self.workflow)
+
     def test_existing_modes_are_preserved(self) -> None:
         for mode in (
             "G0_READ_ONLY_VERIFY",
