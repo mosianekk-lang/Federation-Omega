@@ -9,6 +9,7 @@ SERVICE="${GEMINI_GATEWAY_SERVICE:-sovara-gemini-gateway}"
 RUNTIME_SA="${RUNTIME_SA:-superior-logic-runtime@${PROJECT_ID}.iam.gserviceaccount.com}"
 DEPLOYER_SA="${DEPLOYER_SA:-superior-logic-deployer@${PROJECT_ID}.iam.gserviceaccount.com}"
 MODEL="${GEMINI_MODEL:-gemini-2.5-flash}"
+INTERACTIONS_MODEL="${INTERACTIONS_MODEL:-gemini-3.8-flash}"
 SOURCE_SHA="${GITHUB_SHA:-${SOURCE_SHA:-}}"
 RUN_ID="${GITHUB_RUN_ID:-local}"
 RUN_ATTEMPT="${GITHUB_RUN_ATTEMPT:-1}"
@@ -133,7 +134,7 @@ gcloud run deploy "$SERVICE" \
   --tag "$CANARY_TAG" \
   --no-traffic \
   --no-allow-unauthenticated \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=${MODEL},EXPECTED_RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA}" \
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=${MODEL},INTERACTIONS_MODEL=${INTERACTIONS_MODEL},EXPECTED_RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA}" \
   --quiet
 
 gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json \
@@ -198,15 +199,23 @@ curl --fail --silent --show-error \
   -d "{\"semantic_nonce\":\"${NONCE}\"}" \
   "$CANARY_URL/v1/handshake" > "$RECEIPT_DIR/G3_HANDSHAKE.json"
 
-python3 - "$RECEIPT_DIR/G3_HEALTH.json" "$RECEIPT_DIR/G3_READY.json" "$RECEIPT_DIR/G3_HANDSHAKE.json" "$RECEIPT_DIR/G3_CANARY_TARGET.json" "$NONCE" "$PROJECT_ID" "$PROJECT_NUMBER" "$RUNTIME_SA" "$SOURCE_SHA" "$SERVICE_PREEXISTED" "$PREVIOUS_READY" <<'PY' > "$RECEIPT_DIR/G3_PRIVATE_CANARY_RECEIPT.json"
+INTERACTIONS_NONCE="G3I-${RUN_ID}-${RUN_ATTEMPT}-${SOURCE_SHA:0:12}"
+curl --fail --silent --show-error \
+  -H "Authorization: Bearer $ID_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"semantic_nonce\":\"${INTERACTIONS_NONCE}\"}" \
+  "$CANARY_URL/v2/interactions-handshake" > "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json"
+
+python3 - "$RECEIPT_DIR/G3_HEALTH.json" "$RECEIPT_DIR/G3_READY.json" "$RECEIPT_DIR/G3_HANDSHAKE.json" "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json" "$RECEIPT_DIR/G3_CANARY_TARGET.json" "$NONCE" "$INTERACTIONS_NONCE" "$PROJECT_ID" "$PROJECT_NUMBER" "$RUNTIME_SA" "$SOURCE_SHA" "$SERVICE_PREEXISTED" "$PREVIOUS_READY" <<'PY' > "$RECEIPT_DIR/G3_PRIVATE_CANARY_RECEIPT.json"
 import hashlib,json,sys
 health=json.load(open(sys.argv[1],encoding='utf-8'))
 ready=json.load(open(sys.argv[2],encoding='utf-8'))
 hs=json.load(open(sys.argv[3],encoding='utf-8'))
-target=json.load(open(sys.argv[4],encoding='utf-8'))
-nonce,project,number,runtime,source=sys.argv[5:10]
-service_preexisted=(sys.argv[10].lower()=='true')
-previous_ready=sys.argv[11]
+ihs=json.load(open(sys.argv[4],encoding='utf-8'))
+target=json.load(open(sys.argv[5],encoding='utf-8'))
+nonce,interactions_nonce,project,number,runtime,source=sys.argv[6:12]
+service_preexisted=(sys.argv[12].lower()=='true')
+previous_ready=sys.argv[13]
 assert health.get('status')=='HEALTHY', health
 assert health.get('provider_execution_verified') is False, health
 assert ready.get('status')=='READY_IDENTITY_VERIFIED', ready
@@ -222,6 +231,16 @@ assert hs.get('model_identity'), hs
 assert hs.get('finish_state'), hs
 assert isinstance(hs.get('usage'),dict), hs
 assert len(str(hs.get('receipt_sha256') or ''))==64, hs
+assert ihs.get('schema')=='SOVARA_GEMINI_INTERACTIONS_HANDSHAKE_RECEIPT_V2', ihs
+assert ihs.get('status')=='VERIFIED' and ihs.get('semantic_verified') is True, ihs
+assert ihs.get('semantic_nonce')==interactions_nonce, ihs
+assert ihs.get('protocol')=='VERTEX_AI_INTERACTIONS_REST', ihs
+assert ihs.get('configured_model')=='gemini-3.8-flash', ihs
+assert ihs.get('interaction_id') and ihs.get('provider_request_id'), ihs
+assert ihs.get('interaction_status')=='completed', ihs
+assert ihs.get('store') is False, ihs
+assert isinstance(ihs.get('usage'),dict), ihs
+assert len(str(ihs.get('receipt_sha256') or ''))==64, ihs
 assert target.get('normal_traffic_percent')==0, target
 r={
   'receipt':'FEDOMEGA-GEMINI-GATEWAY-CANARY-VERIFIED',
@@ -239,6 +258,12 @@ r={
   'model_identity':hs['model_identity'],
   'semantic_nonce_sha256':hs['semantic_nonce_sha256'],
   'handshake_receipt_sha256':hs['receipt_sha256'],
+  'interactions_provider_request_id':ihs['provider_request_id'],
+  'interactions_interaction_id':ihs['interaction_id'],
+  'interactions_model_identity':ihs['model_identity'],
+  'interactions_semantic_nonce_sha256':ihs['semantic_nonce_sha256'],
+  'interactions_handshake_receipt_sha256':ihs['receipt_sha256'],
+  'interactions_store':ihs['store'],
   'service_preexisted':service_preexisted,
   'previous_ready_revision':previous_ready,
   'production_promotion_performed':False,
