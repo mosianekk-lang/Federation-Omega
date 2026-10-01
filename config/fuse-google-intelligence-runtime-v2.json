@@ -106,5 +106,11 @@
   "secret_payload_to_model": false,
   "unknown_effect_requires_readback": true,
   "matched_champion_promotion_required": true,
-  "truth_boundary": "V2_PROMPT_BOUND!=V2_SOURCE_ADMITTED!=INTERACTIONS_CALLABLE!=GEMINI_3_8_SEMANTIC_VERIFIED!=CHAMPION_PROMOTED!=LIVE_VERIFIED!=RESEARCH_VERIFIED!=MCP_EFFECT_VERIFIED!=CROSS_PROVIDER_FUSION_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
+  "truth_boundary": "V2_PROMPT_BOUND!=V2_SOURCE_ADMITTED!=INTERACTIONS_CALLABLE!=GEMINI_3_8_SEMANTIC_VERIFIED!=CHAMPION_PROMOTED!=LIVE_VERIFIED!=RESEARCH_VERIFIED!=MCP_EFFECT_VERIFIED!=CROSS_PROVIDER_FUSION_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE",
+  "creates_new_controller": false,
+  "creates_new_scheduler": false,
+  "creates_new_mission_bus": false,
+  "creates_new_authority_root": false,
+  "creates_new_truth_memory_proof_root": false,
+  "ai_studio_role": "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME"
 }
