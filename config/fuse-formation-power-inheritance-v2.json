@@ -115,7 +115,13 @@
     "ROUTE_FAILURE_LOCAL_NOT_GLOBAL",
     "SECOND_SAME_SEMANTIC_FAILURE_REQUIRES_CHANGED_MECHANISM",
     "UNKNOWN_EFFECT_REQUIRES_READBACK",
-    "FORMATION_LEARNING_NEVER_EXPANDS_AUTHORITY"
+    "FORMATION_LEARNING_NEVER_EXPANDS_AUTHORITY",
+    "OMEGA_SCIENTIA_FIVE_MINUTE_PREFLIGHT_FOR_ALL_WORKFLOWS",
+    "NO_UNCHANGED_OVER_300_SECOND_FORECAST_MAY_ENTER_EXECUTION",
+    "FIVE_MINUTE_SUCCESS_REQUIRES_OBSERVED_WALL_CLOCK_ACCEPTANCE_AND_PROOF",
+    "PROGRAMMING_WORK_INHERITS_FORMATION_ULTIMATE_PROGRAMMING",
+    "BUILD_RESIDUAL_WORK_INHERITS_FORMATION_ALPHA_OMEGA_COMPILER",
+    "EXTERNAL_WAIT_SEPARATED_FROM_ACTIVE_COMPUTE_AND_NOT_FALSELY_GUARANTEED"
   ],
   "dynamic_replan_triggers": [
     "OWNER_INTENT_CHANGE",
@@ -135,8 +141,26 @@
     "preserve_negative_knowledge": true,
     "decay_stale_evidence": true,
     "bounded_exploration_default_fraction": 0.05,
-    "maximum_exploration_fraction": 0.20,
+    "maximum_exploration_fraction": 0.2,
     "authority_learning_forbidden": true
   },
-  "truth_boundary": "FORMATION_POWER_BOUND!=WORKFLOW_EXECUTED!=PROVIDER_EXECUTED!=EFFECT_READBACK!=INDEPENDENT_JUDGE!=OWNER_VALUE!=COMPLETE"
+  "truth_boundary": "FORMATION_POWER_BOUND!=WORKFLOW_EXECUTED!=PROVIDER_EXECUTED!=EFFECT_READBACK!=INDEPENDENT_JUDGE!=OWNER_VALUE!=COMPLETE",
+  "omega_acceleration_binding": {
+    "contract_id": "FUSE-FORMATION-OMEGA-ACCEL-001",
+    "schema": "FUSE_FORMATION_OMEGA_ACCELERATION_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-formation-omega-acceleration-v1.json",
+    "binding_path": "federation/formation_omega_acceleration_binding_v1.py",
+    "applies_to": "ALL_FUSE_WORKFLOWS",
+    "five_minute_slo_seconds": 300,
+    "active_execution_budget_seconds": 240,
+    "verification_delivery_reserve_seconds": 60,
+    "omega_scientia_required": true,
+    "formation_ultimate_programming_profile": "FORMATION_ULTIMATE_PROGRAMMING_V1",
+    "formation_alpha_omega_compiler_profile": "FORMATION_ALPHA_OMEGA_COMPILER_V1",
+    "over_budget_plan_must_recompile": true,
+    "external_wait_full_completion_not_guaranteed": true,
+    "authority_expansion": false
+  }
 }
