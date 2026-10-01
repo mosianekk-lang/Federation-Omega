@@ -36,17 +36,19 @@ class OmniSurfaceFormationBridgeV1Tests(unittest.TestCase):
         self.assertIn("provider_request_id", surface.readback_signals)
         self.assertIn("resolved_model", surface.readback_signals)
 
-    def test_governance_binds_minimum_sufficient_formation(self) -> None:
-        governance = json.loads(
-            (ROOT / "governance" / "federation_omnisurface_fabric_v2.json").read_text(encoding="utf-8")
+    def test_dedicated_contract_binds_minimum_sufficient_formation(self) -> None:
+        formation = json.loads(
+            (ROOT / "config" / "fuse-formation-surface-load-balancer-v1.json").read_text(encoding="utf-8")
         )
-        formation = governance["formation_load_balancing"]
         self.assertEqual(formation["contract_id"], "FUSE-FORMATION-SURFACE-LB-001")
         self.assertEqual(formation["applies_to"], "ALL_MATERIAL_MISSIONS")
-        self.assertIs(formation["all_surfaces_every_task"], False)
-        self.assertIs(formation["provider_diversity_is_not_independence"], True)
-        self.assertIs(formation["single_surface_failure_global_stall"], False)
-        self.assertEqual(formation["effect_authority_remains"], "FDOF_SICF")
+        self.assertIs(formation["all_surfaces_invoked_every_task"], False)
+        self.assertIs(formation["provider_diversity_is_not_truth"], True)
+        self.assertIs(formation["global_stall_on_single_surface_failure"], False)
+        self.assertEqual(
+            formation["effect_path"],
+            "FORMATION_PLAN->FDOF_LEASE->SICF_EFFECT_CONTRACT->PROVIDER->READBACK->PROOFOS_REALITY_JUDGE",
+        )
 
 
 if __name__ == "__main__":
