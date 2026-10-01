@@ -380,6 +380,16 @@ CURRENT_SURFACES = (
         native_ai=("Gemini",),
     ),
     _surface(
+        "OPENROUTER", "OpenRouter", "OpenRouter Model Router", SurfaceState.REPOSITORY_BRIDGE_ADMITTED,
+        (Protocol.REST, Protocol.FEDERATION_NATIVE),
+        ("reasoning", "model_diversity", "challenger", "structured_output", "multimodal", "provider_marketplace", "benchmarking"),
+        ("repo:sovara:creative:openrouter_adapter", "repo:sovara:creative:openrouter_processor_mesh", "repo:governance:sovara_openrouter_processor_mesh_v1"),
+        maximum_effect=EffectClass.INTERNAL,
+        readback_signals=("provider_request_id", "resolved_model", "usage", "semantic_receipt", "policy_state"),
+        native_ai=("OpenRouter routed models",),
+        auth_strategy="OPENROUTER_CREDENTIAL_REFERENCE_REVALIDATE_ON_USE",
+    ),
+    _surface(
         "GITHUB", "GitHub", "GitHub", SurfaceState.CONNECTED_TOOL_EXPOSED,
         (Protocol.CONNECTOR, Protocol.REST, MCP_2026),
         ("code", "repositories", "branches", "commits", "pull_requests", "issues", "ci", "actions", "provenance", "release_control"),
