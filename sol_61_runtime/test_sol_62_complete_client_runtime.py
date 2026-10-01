@@ -241,6 +241,179 @@ class Sol62CompleteClientRuntimeTests(unittest.TestCase):
         client = self.client._get("sol62.client.mission", "m1")["value"]
         self.assertTrue(client["goal_mutation_by_provider_forbidden"])
 
+    def test_route_local_requeue_rejects_non_cancelled_effect(self):
+        self.register(route=False)
+        transition = self.client._get("sol62.transition", "t1")["value"]
+        from sol_61_runtime.sol_62 import ExecutionIntent
+        from sol_61_runtime.sol_62_frontier_primitives import FenceError
+
+        effect_id = "manual-effect"
+        intent = ExecutionIntent(
+            effect_id,
+            "t1",
+            "OPENAI",
+            {"intent": "finish"},
+            "AT_MOST_ONCE",
+            "manual-idem",
+            "owner",
+            transition["source_version"],
+            {"status": "COMPLETE"},
+            False,
+        )
+        self.rt.prepare_execution(
+            intent,
+            gateway_request=self.gateway,
+            identity_claims=self.claims,
+            now_epoch=self.now,
+        )
+        fence = self.rt.acquire_execution_fence(
+            "t1", "worker-a", ttl_seconds=60, now_epoch=self.now
+        )
+        self.rt.authorize_dispatch(
+            effect_id,
+            authority_lease_id=None,
+            actor="owner",
+            source_version=transition["source_version"],
+            now_epoch=self.now,
+            worker="worker-a",
+            lease_epoch=fence["epoch"],
+            fencing_token=fence["fencing_token"],
+        )
+        self.rt.mark_dispatched(effect_id, provider_ref="provider-ref")
+        with self.assertRaisesRegex(
+            FenceError, "ROUTE_LOCAL_REQUEUE_REQUIRES_CANCELLED_EFFECT"
+        ):
+            self.rt.requeue_after_pre_dispatch_cancel(
+                effect_id=effect_id,
+                transition_id="t1",
+                mission_id="m1",
+                worker="worker-a",
+                lease_epoch=fence["epoch"],
+                fencing_token=fence["fencing_token"],
+                now_epoch=self.now,
+            )
+
+    def test_route_local_requeue_rejects_stale_fence(self):
+        self.register(route=False)
+        transition = self.client._get("sol62.transition", "t1")["value"]
+        from sol_61_runtime.sol_62 import ExecutionIntent
+        from sol_61_runtime.sol_62_frontier_primitives import FenceError
+
+        effect_id = "cancelled-effect"
+        intent = ExecutionIntent(
+            effect_id,
+            "t1",
+            "OPENAI",
+            {"intent": "finish"},
+            "AT_MOST_ONCE",
+            "cancelled-idem",
+            "owner",
+            transition["source_version"],
+            {"status": "COMPLETE"},
+            False,
+        )
+        self.rt.prepare_execution(
+            intent,
+            gateway_request=self.gateway,
+            identity_claims=self.claims,
+            now_epoch=self.now,
+        )
+        fence = self.rt.acquire_execution_fence(
+            "t1", "worker-a", ttl_seconds=60, now_epoch=self.now
+        )
+        self.rt.authorize_dispatch(
+            effect_id,
+            authority_lease_id=None,
+            actor="owner",
+            source_version=transition["source_version"],
+            now_epoch=self.now,
+            worker="worker-a",
+            lease_epoch=fence["epoch"],
+            fencing_token=fence["fencing_token"],
+        )
+        self.rt.control.transition_effect(
+            effect_id,
+            expected_state="DISPATCHING",
+            next_state="CANCELLED",
+        )
+        with self.assertRaisesRegex(FenceError, "STALE_FENCE"):
+            self.rt.requeue_after_pre_dispatch_cancel(
+                effect_id=effect_id,
+                transition_id="t1",
+                mission_id="m1",
+                worker="worker-a",
+                lease_epoch=fence["epoch"],
+                fencing_token=fence["fencing_token"] + 1,
+                now_epoch=self.now,
+            )
+
+    def test_route_local_requeue_changes_running_back_to_queued_once(self):
+        self.register(route=False)
+        transition = self.client._get("sol62.transition", "t1")["value"]
+        from sol_61_runtime.sol_62 import ExecutionIntent
+        from sol_61_runtime.sol_62_frontier_primitives import FenceError
+
+        effect_id = "cancelled-effect-ok"
+        intent = ExecutionIntent(
+            effect_id,
+            "t1",
+            "OPENAI",
+            {"intent": "finish"},
+            "AT_MOST_ONCE",
+            "cancelled-idem-ok",
+            "owner",
+            transition["source_version"],
+            {"status": "COMPLETE"},
+            False,
+        )
+        self.rt.prepare_execution(
+            intent,
+            gateway_request=self.gateway,
+            identity_claims=self.claims,
+            now_epoch=self.now,
+        )
+        fence = self.rt.acquire_execution_fence(
+            "t1", "worker-a", ttl_seconds=60, now_epoch=self.now
+        )
+        self.rt.authorize_dispatch(
+            effect_id,
+            authority_lease_id=None,
+            actor="owner",
+            source_version=transition["source_version"],
+            now_epoch=self.now,
+            worker="worker-a",
+            lease_epoch=fence["epoch"],
+            fencing_token=fence["fencing_token"],
+        )
+        self.rt.control.transition_effect(
+            effect_id,
+            expected_state="DISPATCHING",
+            next_state="CANCELLED",
+        )
+        receipt = self.rt.requeue_after_pre_dispatch_cancel(
+            effect_id=effect_id,
+            transition_id="t1",
+            mission_id="m1",
+            worker="worker-a",
+            lease_epoch=fence["epoch"],
+            fencing_token=fence["fencing_token"],
+            now_epoch=self.now,
+        )
+        self.assertEqual(receipt["state"], "QUEUED")
+        self.assertEqual(self.rt.transition_status("t1")["value"]["status"], "QUEUED")
+        with self.assertRaisesRegex(
+            FenceError, "ROUTE_LOCAL_REQUEUE_REQUIRES_RUNNING_TRANSITION"
+        ):
+            self.rt.requeue_after_pre_dispatch_cancel(
+                effect_id=effect_id,
+                transition_id="t1",
+                mission_id="m1",
+                worker="worker-a",
+                lease_epoch=fence["epoch"],
+                fencing_token=fence["fencing_token"],
+                now_epoch=self.now,
+            )
+
     def test_safety_or_authority_gate_does_not_get_bypassed(self):
         self.register(route=False)
         self.client.register_route(RouteCandidate("provider-a", "A", operations=("chat",), priority=100))
