@@ -78,10 +78,12 @@ class SovaraGeminiPrivateGatewayCanaryTests(unittest.TestCase):
         self.assertIn("ephemeral_service_deleted", self.script)
         self.assertIn("cleanup_verified", self.script)
         self.assertIn("production_service_mutated", self.script)
-        self.assertLess(
-            self.script.index("/v2/interactions-handshake"),
-            self.script.index("gcloud run services delete"),
+        interaction_index = self.script.index("/v2/interactions-handshake")
+        verified_delete_index = self.script.index(
+            'gcloud run services delete "$TARGET_SERVICE"',
+            interaction_index,
         )
+        self.assertLess(interaction_index, verified_delete_index)
 
     def test_existing_service_keeps_zero_traffic_revision_path(self) -> None:
         self.assertIn("EXISTING_SERVICE_ZERO_TRAFFIC", self.script)
