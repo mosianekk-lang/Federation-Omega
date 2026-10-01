@@ -26,6 +26,10 @@ GOOGLE_INTELLIGENCE_RUNTIME_PATH = CONFIG_ROOT / "fuse-google-intelligence-runti
 GOOGLE_INTELLIGENCE_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md"
 GOOGLE_INTELLIGENCE_V1_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v1.json"
 GOOGLE_INTELLIGENCE_V1_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
+FORMATION_POWER_INHERITANCE_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-power-inheritance-v2.json"
+FORMATION_POWER_INHERITANCE_MODULE_PATH = ROOT.parent / "federation" / "formation_power_inheritance_v2.py"
+FORMATION_OMEGA_ACCELERATION_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-omega-acceleration-v1.json"
+FORMATION_OMEGA_ACCELERATION_MODULE_PATH = ROOT.parent / "federation" / "formation_omega_acceleration_binding_v1.py"
 FORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-surface-load-balancer-v1.json"
 FORMATION_SURFACE_LOAD_BALANCER_MODULE_PATH = ROOT.parent / "federation" / "formation_surface_load_balancer_v1.py"
 OMNISURFACE_REGISTRY_MODULE_PATH = ROOT.parent / "federation" / "omnisurface_fabric_v2.py"
@@ -302,6 +306,150 @@ def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]
         "rollback_v1_preserved": contract.get("predecessor", {}).get("rollback_preserved"),
         "provider_live_proven": False,
         "live_provider_state": contract.get("live_provider_state"),
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
+
+def formation_power_inheritance_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("formation_power_inheritance", {})
+    contract = load_json(FORMATION_POWER_INHERITANCE_CONFIG_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("FORMATION_POWER_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-FORMATION-POWER-002":
+        issues.append("FORMATION_POWER_MANIFEST_ID_MISMATCH")
+    if contract.get("contract_id") != "FUSE-FORMATION-POWER-002":
+        issues.append("FORMATION_POWER_CONFIG_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_FORMATION_POWER_INHERITANCE_V2" or contract.get("version") != "2.0.0":
+        issues.append("FORMATION_POWER_SCHEMA_OR_VERSION_MISMATCH")
+    if contract.get("applies_to") != "ALL_FUSE_WORKFLOWS":
+        issues.append("FORMATION_POWER_NOT_GLOBAL")
+    if contract.get("agentic_frontier_gene_pool") != 53:
+        issues.append("FORMATION_POWER_FRONTIER_GENE_POOL_MISMATCH")
+    if contract.get("max_mutating_lanes") != 1:
+        issues.append("FORMATION_POWER_MUTATING_LANE_POLICY_MISMATCH")
+    if contract.get("builder_self_certification") is not False:
+        issues.append("FORMATION_POWER_SELF_CERTIFICATION_NOT_BLOCKED")
+    for key in (
+        "creates_new_controller",
+        "creates_new_scheduler",
+        "creates_new_mission_bus",
+        "creates_new_authority_root",
+        "creates_new_truth_memory_proof_root",
+    ):
+        if contract.get(key) is not False:
+            issues.append(f"FORMATION_POWER_DUPLICATION:{key}")
+    if not FORMATION_POWER_INHERITANCE_MODULE_PATH.exists():
+        issues.append("FORMATION_POWER_MODULE_MISSING")
+    for step in ("load_formation_power_inheritance_contract", "compile_workflow_formation_power"):
+        if step not in order:
+            issues.append(f"FORMATION_POWER_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"FORMATION_POWER_STEP_AFTER_EXECUTE:{step}")
+    if "compile_surface_formation" in order and "compile_workflow_formation_power" in order:
+        if order.index("compile_workflow_formation_power") > order.index("compile_surface_formation"):
+            issues.append("FORMATION_POWER_AFTER_SURFACE_FORMATION")
+    required = {
+        "ALL_FUSE_WORKFLOWS_REQUIRE_FORMATION_POWER_COMPILE",
+        "FORMATION_POWER_USES_EXISTING_ORGANS_NO_DUPLICATE_CONTROL_PLANE",
+        "FORMATION_POWER_MAX_ONE_MUTATING_LANE",
+        "FORMATION_POWER_BUILDER_CANNOT_SELF_CERTIFY",
+        "FORMATION_POWER_PARALLELIZES_ONLY_DISJOINT_READY_WORK",
+        "FORMATION_POWER_DYNAMIC_REPLAN_ON_CURRENTNESS_HEALTH_PROOF_OR_EPOCH_CHANGE",
+        "FORMATION_POWER_LEARNING_CANNOT_EXPAND_AUTHORITY",
+    }
+    for item in sorted(required - invariants):
+        issues.append(f"FORMATION_POWER_INVARIANT_MISSING:{item}")
+    return {
+        "schema": "FUSE_FORMATION_POWER_BOOTSTRAP_GUARD_V2",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "applies_to": contract.get("applies_to"),
+        "agentic_frontier_gene_pool": contract.get("agentic_frontier_gene_pool"),
+        "max_mutating_lanes": contract.get("max_mutating_lanes"),
+        "provider_execution_proven": False,
+        "external_effect_authorized": False,
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
+def formation_omega_acceleration_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("formation_omega_acceleration", {})
+    contract = load_json(FORMATION_OMEGA_ACCELERATION_CONFIG_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("FORMATION_ACCELERATION_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-FORMATION-OMEGA-ACCEL-001":
+        issues.append("FORMATION_ACCELERATION_MANIFEST_ID_MISMATCH")
+    if contract.get("contract_id") != "FUSE-FORMATION-OMEGA-ACCEL-001":
+        issues.append("FORMATION_ACCELERATION_CONFIG_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_FORMATION_OMEGA_ACCELERATION_BINDING_V1":
+        issues.append("FORMATION_ACCELERATION_SCHEMA_MISMATCH")
+    five = contract.get("five_minute_completion", {})
+    if five.get("target_total_seconds") != 300 or five.get("active_execution_budget_seconds") != 240:
+        issues.append("FORMATION_ACCELERATION_FIVE_MINUTE_BUDGET_MISMATCH")
+    if five.get("omega_scientia_falsification_required") is not True:
+        issues.append("FORMATION_ACCELERATION_SCIENTIA_MISSING")
+    if contract.get("formation_ultimate_programming", {}).get("profile") != "FORMATION_ULTIMATE_PROGRAMMING_V1":
+        issues.append("FORMATION_ACCELERATION_ULTIMATE_PROGRAMMING_MISSING")
+    if contract.get("formation_alpha_omega_compiler", {}).get("underlying_engine") != "AlphaOmegaEngine":
+        issues.append("FORMATION_ACCELERATION_ALPHA_OMEGA_MISSING")
+    for key in (
+        "creates_new_controller",
+        "creates_new_scheduler",
+        "creates_new_mission_bus",
+        "creates_new_authority_root",
+        "creates_new_truth_memory_proof_root",
+    ):
+        if contract.get(key) is not False:
+            issues.append(f"FORMATION_ACCELERATION_DUPLICATION:{key}")
+    if not FORMATION_OMEGA_ACCELERATION_MODULE_PATH.exists():
+        issues.append("FORMATION_ACCELERATION_MODULE_MISSING")
+    for step in (
+        "load_formation_omega_acceleration_contract",
+        "compile_five_minute_scientia",
+        "compile_applicable_ultimate_programming",
+        "compile_applicable_alpha_omega",
+    ):
+        if step not in order:
+            issues.append(f"FORMATION_ACCELERATION_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"FORMATION_ACCELERATION_STEP_AFTER_EXECUTE:{step}")
+    if "compile_surface_formation" in order and "compile_applicable_alpha_omega" in order:
+        if order.index("compile_applicable_alpha_omega") > order.index("compile_surface_formation"):
+            issues.append("FORMATION_ACCELERATION_AFTER_SURFACE_FORMATION")
+    required = {
+        "ALL_FUSE_WORKFLOWS_GET_FIVE_MINUTE_SCIENTIA_PREFLIGHT",
+        "OVER_BUDGET_FORMATION_MUST_RECOMPILE_BEFORE_EXECUTION",
+        "FIVE_MINUTE_SUCCESS_REQUIRES_OBSERVED_WALL_CLOCK_ACCEPTANCE_AND_PROOF",
+        "EXTERNAL_WAIT_IS_NOT_FALSELY_GUARANTEED_AS_FIVE_MINUTE_COMPLETION",
+        "PROGRAMMING_WORK_INHERITS_FORMATION_ULTIMATE_PROGRAMMING",
+        "BUILD_AND_RESIDUAL_WORK_INHERITS_ALPHA_OMEGA_COMPILER",
+        "FORMATION_ACCELERATION_CANNOT_MINT_AUTHORITY",
+    }
+    for item in sorted(required - invariants):
+        issues.append(f"FORMATION_ACCELERATION_INVARIANT_MISSING:{item}")
+    return {
+        "schema": "FUSE_FORMATION_OMEGA_ACCELERATION_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "five_minute_slo_seconds": five.get("target_total_seconds"),
+        "active_execution_budget_seconds": five.get("active_execution_budget_seconds"),
+        "provider_execution_proven": False,
+        "external_effect_authorized": False,
         "truth_boundary": contract.get("truth_boundary"),
     }
 
@@ -627,12 +775,14 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     autonomy_guard = autonomous_improvement_bootstrap_guard(source_manifest)
     hipb_guard = hyper_intelligence_performance_bootstrap_guard(source_manifest)
     google_guard = google_intelligence_runtime_bootstrap_guard(source_manifest)
+    formation_power_guard = formation_power_inheritance_bootstrap_guard(source_manifest)
+    formation_acceleration_guard = formation_omega_acceleration_bootstrap_guard(source_manifest)
     formation_guard = formation_surface_load_balancer_bootstrap_guard(source_manifest)
     debt_guard = terminal_debt_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_power_guard["ok"] or not formation_acceleration_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_power_inheritance_guard": formation_power_guard, "formation_omega_acceleration_guard": formation_acceleration_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
         )
     s = state()
     solved = search_state(
@@ -670,6 +820,10 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "hyper_intelligence_performance_guard": hipb_guard,
         "google_intelligence_runtime": source_manifest.get("google_intelligence_runtime", {}),
         "google_intelligence_runtime_guard": google_guard,
+        "formation_power_inheritance": source_manifest.get("formation_power_inheritance", {}),
+        "formation_power_inheritance_guard": formation_power_guard,
+        "formation_omega_acceleration": source_manifest.get("formation_omega_acceleration", {}),
+        "formation_omega_acceleration_guard": formation_acceleration_guard,
         "formation_surface_load_balancer": source_manifest.get("formation_surface_load_balancer", {}),
         "formation_surface_load_balancer_guard": formation_guard,
         "terminal_debt_finality": source_manifest.get("terminal_debt_finality", {}),

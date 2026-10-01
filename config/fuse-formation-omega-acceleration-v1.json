@@ -1,0 +1,97 @@
+{
+  "schema": "FUSE_FORMATION_OMEGA_ACCELERATION_BINDING_V1",
+  "version": "1.0.0",
+  "contract_id": "FUSE-FORMATION-OMEGA-ACCEL-001",
+  "enabled": true,
+  "authority": "START:FUSE_ONE",
+  "mission_reuse": "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+  "applies_to": "ALL_FUSE_WORKFLOWS",
+  "binding_path": "federation/formation_omega_acceleration_binding_v1.py",
+  "five_minute_completion": {
+    "target_total_seconds": 300,
+    "active_execution_budget_seconds": 240,
+    "verification_delivery_reserve_seconds": 60,
+    "pre_execution_forecast_required": true,
+    "omega_scientia_falsification_required": true,
+    "observed_wall_clock_proof_required": true,
+    "acceptance_complete_required": true,
+    "proof_complete_required": true,
+    "external_wait_is_not_five_minute_guaranteed": true,
+    "external_wait_split_to_durable_resume": true,
+    "unchanged_over_budget_plan_execution_forbidden": true,
+    "max_parallel_lanes_default": 8
+  },
+  "formation_ultimate_programming": {
+    "profile": "FORMATION_ULTIMATE_PROGRAMMING_V1",
+    "underlying_runtime": "SLOS_FINALIZATION_KERNEL",
+    "invoke_for": [
+      "ENGINEERING",
+      "CODE_EXECUTION",
+      "BUILD",
+      "REFACTOR",
+      "SYSTEM_INTEGRATION",
+      "CAPABILITY_RESIDUAL"
+    ],
+    "mechanisms": [
+      "REPOGRAPH_IMPACT_ANALYSIS",
+      "ARCHITECTURE_GENOME",
+      "CONTEXT_TOURNAMENT",
+      "HARNESS_TOURNAMENT",
+      "PREPARED_WORKSPACE_FORGE",
+      "CONFLICT_SAFE_CODING_FLEET",
+      "VERIFICATION_SUPERCOURT",
+      "AUTONOMOUS_CAPABILITY_CLOSURE",
+      "EVOLUTION_LAB",
+      "ACCEPTANCE_INTEGRITY",
+      "SKILLFORGE_V2"
+    ],
+    "provider_effect_authority": false,
+    "builder_self_certification": false
+  },
+  "formation_alpha_omega_compiler": {
+    "profile": "FORMATION_ALPHA_OMEGA_COMPILER_V1",
+    "underlying_engine": "AlphaOmegaEngine",
+    "canonical_source": "systems/alpha-omega-turnkey/src/alpha_omega/engine.py",
+    "invoke_when": [
+      "SYSTEM_BUILD",
+      "NEW_CAPABILITY",
+      "MULTI_COMPONENT_CHANGE",
+      "DEPLOYMENT_PLAN",
+      "COMPLEX_INTEGRATION",
+      "TRUE_RESIDUAL_BUILD"
+    ],
+    "compiler_stages": [
+      "DISCOVERY",
+      "DECOMPOSITION",
+      "ARCHITECTURE",
+      "BUILD",
+      "TEST",
+      "DEPLOY",
+      "VERIFY",
+      "OPERATE",
+      "MAINTAIN"
+    ],
+    "plan_is_execution_proof": false,
+    "authority_expansion": false
+  },
+  "global_laws": [
+    "EVERY_WORKFLOW_GETS_FIVE_MINUTE_SCIENTIA_PREFLIGHT",
+    "OVER_BUDGET_PLAN_MUST_RECOMPILE_BEFORE_EXECUTION",
+    "EXTERNAL_WAIT_CANNOT_BE_FALSELY_CLAIMED_AS_FIVE_MINUTE_TERMINALITY",
+    "PROGRAMMING_WORK_USES_FORMATION_ULTIMATE_PROGRAMMING_PROFILE",
+    "BUILD_AND_RESIDUAL_WORK_GETS_ALPHA_OMEGA_COMPILER_POWER",
+    "CRITICAL_PATH_FIRST",
+    "PARALLELIZE_ONLY_DISJOINT_SAFE_LANES",
+    "MAX_ONE_MUTATING_LANE",
+    "PROOF_BEFORE_FIVE_MINUTE_SUCCESS_CLAIM",
+    "NO_NEW_CONTROL_PLANE"
+  ],
+  "creates_new_controller": false,
+  "creates_new_scheduler": false,
+  "creates_new_mission_bus": false,
+  "creates_new_authority_root": false,
+  "creates_new_truth_memory_proof_root": false,
+  "external_effect_authority": false,
+  "provider_execution_authority": false,
+  "truth_boundary": "ACCELERATION_BOUND!=DEADLINE_FORECAST!=WORKFLOW_EXECUTED!=OBSERVED_5M_SLO!=PROGRAMMING_VERIFIED!=ALPHA_OMEGA_PLAN_EXECUTED!=COMPLETE"
+}
