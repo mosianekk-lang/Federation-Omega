@@ -9,6 +9,11 @@ on:
       - "governance/fuse_gemini_role_matrix_request_v1.json"
       - "scripts/run_gemini_role_matrix.py"
       - "scripts/run_gemini_role_holdout_benchmark.py"
+      - "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
+      - "config/fuse-google-intelligence-runtime-v1.json"
+      - "config/fuse-bootstrap-inheritance-v3.json"
+      - "respawn/federation_manifest.json"
+      - "respawn/bootstrap_service.py"
   workflow_dispatch:
 
 permissions:
