@@ -1,0 +1,189 @@
+{
+  "schema": "FUSE_24X7_AUTONOMY_V1",
+  "version": "1.1.0",
+  "parent": [
+    "FUSE_SOVEREIGN_PLANE_R59",
+    "SOL_6_2",
+    "FOREST_V2",
+    "FUSE_UNIFIED_CAPABILITY_FABRIC_V1",
+    "OUTPUT_MIRROR_V3"
+  ],
+  "creates_new_controller": false,
+  "objective": "Keep governed nonterminal FUSE work advancing without waiting for owner presence.",
+  "operating_mode": "EVENT_DRIVEN_CONTINUOUS_WITH_HOURLY_FALLBACK_SWEEP",
+  "self_prompt_loop": [
+    "FRESH_CURRENTNESS",
+    "RECALL_DURABLE_MISSION_STATE",
+    "SCAN_FOREST",
+    "RANK_READY_WORK",
+    "SELECT_HIGHEST_VALUE_SAFE_ACTION",
+    "EXECUTE_OR_PREPARE",
+    "READBACK",
+    "VERIFY",
+    "OUTPUT_MIRROR",
+    "CHECKPOINT",
+    "CONTINUE_OR_QUIET_IDLE"
+  ],
+  "wake_signals": [
+    "NONTERMINAL_READY_WORK",
+    "DEPENDENCY_RESOLVED",
+    "PROOF_OR_CURRENTNESS_EXPIRY_RISK",
+    "PROVIDER_HEALTH_CHANGE",
+    "REPEATED_FAILURE",
+    "CAPABILITY_GAP",
+    "NEW_ARTIFACT_OR_SOURCE",
+    "OWNER_INTENT_UPDATE",
+    "SCHEDULED_SWEEP"
+  ],
+  "autonomy": {
+    "read_only": "AUTO",
+    "reversible_internal": "AUTO",
+    "bounded_private_canary": "AUTO_WHEN_ALREADY_AUTHORIZED",
+    "consequential_external": "PREPARE_AND_EXECUTE_ONLY_UNDER_EXISTING_ACTION_SPECIFIC_AUTHORITY",
+    "irreversible_or_high_impact": "PREPARE_ONLY_UNTIL_REQUIRED_AUTHORITY_EXISTS"
+  },
+  "parallelism": {
+    "read_only_max": 4,
+    "reversible_internal_max": 2,
+    "effectful_max": 1,
+    "local_blocker_global_stall": false
+  },
+  "auto_harvest": {
+    "enabled": true,
+    "triggers": [
+      "CAPABILITY_GAP",
+      "REPEATED_FAILURE",
+      "BENCHMARK_LOSS",
+      "PROVIDER_DRIFT",
+      "OWNER_FRICTION",
+      "NEW_QUALIFIED_PUBLIC_MECHANISM"
+    ],
+    "method": [
+      "DISCOVER",
+      "EXTRACT_MECHANISM",
+      "WHY_IT_WORKS",
+      "REMOVE_VENDOR_NOISE",
+      "OVERLAP_COLLAPSE",
+      "BUILD_TRUE_RESIDUAL",
+      "BENCHMARK",
+      "JUDGE",
+      "REGISTER"
+    ],
+    "no_catalog_only_stop": true,
+    "iterations": 10,
+    "inhouse_after_harvest": true,
+    "public_mechanism_sources": [
+      "LOOP_ENGINEERING",
+      "RELIABLE_CODING_AGENT_HARNESS",
+      "SWE_ATLAS",
+      "VALIDATION_SELF_AWARENESS",
+      "REPOREASON",
+      "LIVE_CONTAMINATION_RESISTANT_TASKS",
+      "ISSUE_REQUIREMENT_TRACE",
+      "SELF_EVOLVING_AGENTS",
+      "REPRODUCIBLE_AGENT_BENCHMARK",
+      "NONCOMPENSATING_AUTONOMY_FLOORS"
+    ]
+  },
+  "auto_build": {
+    "enabled": true,
+    "rule": "BUILD_ONLY_TRUE_RESIDUALS_AFTER_REUSE_REPAIR_EXTEND_COMPOSE",
+    "outputs": [
+      "SOURCE_CANDIDATE",
+      "TESTS",
+      "ROLLBACK",
+      "PROOF_PACKET",
+      "FAMILY_REGISTRATION"
+    ],
+    "no_duplicate_controller": true,
+    "build_to_completion": true,
+    "finality_ladder": [
+      "DESIGN",
+      "SOURCE",
+      "BUILD",
+      "TEST",
+      "DEPLOY",
+      "RUNTIME",
+      "SEMANTIC",
+      "BEHAVIOUR",
+      "SECURITY",
+      "RECOVERY",
+      "OWNER_VALUE",
+      "COMPLETE"
+    ]
+  },
+  "owner_surface": {
+    "healthy": "NO_NOTIFICATION",
+    "material_result": "DELIVER",
+    "genuine_owner_only_decision": "DELIVER_PREPARED_DECISION_PACKET",
+    "recoverable_failure": "REPAIR_REROUTE_CONTINUE"
+  },
+  "truth_boundary": "24x7 progress requires at least one live executor/scheduler and powered/available provider surfaces; source contract alone is not continuous execution proof.",
+  "auto_repeat": {
+    "enabled": true,
+    "iterations": 10,
+    "scope": "EACH_SELF_IMPROVEMENT_CYCLE",
+    "changed_mechanism_after_failure": true
+  },
+  "historical_chat_backfill": {
+    "enabled": true,
+    "iterations_per_recovered_chat": 10,
+    "current_exact_recoverable_chat_records": 37,
+    "current_completed_chat_iterations": 370,
+    "current_backfill_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+    "recoverable_corpus_sha256": "27356353cab01e2f09017b38d617a84c235f11ea8f92ac4067a087bb7f1c865e",
+    "future_capture_auto_enroll": true,
+    "sources": [
+      "CHATBRIDGE",
+      "TURN_CAPTURE",
+      "MASTER_AND_SPECIALIST_BIBLES",
+      "DRIVE_CHAT_ARCHIVES",
+      "GMAIL_CHATGPT_BACKUPS",
+      "OFFICIAL_OPENAI_EXPORT_IF_LATER_AVAILABLE"
+    ],
+    "native_totality": "UNVERIFIED",
+    "inaccessible_native_state": "NATIVE_TRANSCRIPT_UNAVAILABLE",
+    "no_false_totality_claim": true,
+    "evidence_classes": {
+      "exact_chat_records": {
+        "records": 37,
+        "iterations": 370,
+        "receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+        "counts_as_exact_native_chat": true
+      },
+      "chatbridge_registry_identities": {
+        "records": 10,
+        "iterations": 100,
+        "receipt_sha256": "111549ca8c9f413fc476035b6d337d98c5d0ea105e5ac3ba5c65f855ef47cfdf",
+        "counts_as_exact_native_chat": false
+      },
+      "gmail_chatgpt_backup_artifacts": {
+        "records": 62,
+        "iterations": 620,
+        "receipt_sha256": "074eaea99329c669721db94ab422ee42aa41708fb24162424ed1651ed4f1e528",
+        "counts_as_exact_native_chat": false
+      },
+      "account_memory_incidents": {
+        "records": 20,
+        "iterations": 200,
+        "receipt_sha256": "02e698a9b6b9d43342d1da2fcb2afc405561b5e3b8ef8e9eb0d098edd8f38f13",
+        "counts_as_exact_native_chat": false
+      }
+    },
+    "recoverable_record_instances": 129,
+    "completed_record_iterations": 1290,
+    "uniqueness_boundary": "ONLY_37_ARE_EXACT_CHAT_RECORDS; OTHER_CLASSES_ARE_RECOVERABLE_EVIDENCE_AND_MAY_OVERLAP"
+  },
+  "live_proof": {
+    "boot_kernel": "5.10.1",
+    "guard_schema": "FUSE_BOOTSTRAP_GUARD_V4",
+    "guard_ok": true,
+    "exact_iterations": 10,
+    "current_estate_receipt_sha256": "de8fa79ea221a3a406ea126ac3aa4575da7415c1b074158c066c53e620675f17",
+    "historical_chat_summary_receipt_sha256": "f64707b798a8ab68120fcc524f42a998067695776780911eb81b453d574e9f66",
+    "historical_chat_iterations": 370,
+    "mission_canary_receipt_sha256": "88107c4a8ef7017b6976cfab93e8b2ed4512b86bd8fbc9223f7ac7fac36965bd",
+    "recoverable_record_instances": 129,
+    "completed_record_iterations": 1290
+  }
+}

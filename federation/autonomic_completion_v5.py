@@ -18,6 +18,7 @@ from .prompt_scientist_v2 import PromptGenome, PromptRunMetrics, PromptScientist
 from .run_store_v1 import Checkpoint, RunStore
 from .commercial_maturity_v1 import CommercialMaturityController, DEFAULT_STAGES
 from .finality_guard_v1 import FinalityPresentationGuard, TerminalAcceptance
+from .terminal_debt_v1 import TerminalDebtLedger, TerminalDebtSpec
 
 
 class RuntimeMode(StrEnum):
@@ -105,13 +106,31 @@ def _sha(v: object) -> str:
 
 
 class AutonomicCompletionKernel:
-    def __init__(self, store: RunStore, learning: FederationLearningLedger, scientist: PromptScientistV2 | None = None, *, prompt_evaluator: Callable[[PromptGenome, object], PromptRunMetrics] | None = None, prompt_fixtures: Sequence[object] = (), mission_recompiler: Callable[[ExecutionContext, tuple[str, ...]], ExecutionContext] | None = None, commercial_evidence_provider: Callable[[ExecutionContext], Mapping[str, bool]] | None = None, terminal_acceptance_provider: Callable[[ExecutionContext], TerminalAcceptance] | None = None, finality_guard: FinalityPresentationGuard | None = None):
+    def __init__(
+        self,
+        store: RunStore,
+        learning: FederationLearningLedger,
+        scientist: PromptScientistV2 | None = None,
+        *,
+        prompt_evaluator: Callable[[PromptGenome, object], PromptRunMetrics] | None = None,
+        prompt_fixtures: Sequence[object] = (),
+        mission_recompiler: Callable[[ExecutionContext, tuple[str, ...]], ExecutionContext] | None = None,
+        commercial_evidence_provider: Callable[[ExecutionContext], Mapping[str, bool]] | None = None,
+        terminal_acceptance_provider: Callable[[ExecutionContext], TerminalAcceptance] | None = None,
+        finality_guard: FinalityPresentationGuard | None = None,
+        terminal_debt_ledger: TerminalDebtLedger | None = None,
+        terminal_debt_spec_provider: Callable[[ExecutionContext], Sequence[TerminalDebtSpec]] | None = None,
+        terminal_debt_evidence_provider: Callable[[ExecutionContext], Mapping[str, object]] | None = None,
+    ):
         self.store=store; self.learning=learning; self.scientist=scientist or PromptScientistV2()
         self.prompt_evaluator=prompt_evaluator; self.prompt_fixtures=tuple(prompt_fixtures)
         self.mission_recompiler=mission_recompiler
         self.commercial_evidence_provider=commercial_evidence_provider
         self.terminal_acceptance_provider=terminal_acceptance_provider
         self.finality_guard=finality_guard or FinalityPresentationGuard()
+        self.terminal_debt_ledger=terminal_debt_ledger
+        self.terminal_debt_spec_provider=terminal_debt_spec_provider
+        self.terminal_debt_evidence_provider=terminal_debt_evidence_provider
 
     @staticmethod
     def _ready(ctx: ExecutionContext) -> list[WorkPacket]:
@@ -180,6 +199,18 @@ class AutonomicCompletionKernel:
                 new_ctx.mission_id,new_ctx.mission_class,new_ctx.target_state,new_ctx.runtime_mode,new_ctx.prompt_genome,new_ctx.packets,
                 new_ctx.current_maturity,new_ctx.owner_effect_authority,new_ctx.maximum_parallelism,refreshed,new_ctx.commercial_applicable_gates,
             )
+        terminal_debt_open: tuple[str, ...] = ()
+        if self.terminal_debt_ledger is not None and self.terminal_debt_spec_provider is not None:
+            debt_specs=tuple(self.terminal_debt_spec_provider(new_ctx))
+            debt_evidence=(
+                dict(self.terminal_debt_evidence_provider(new_ctx))
+                if self.terminal_debt_evidence_provider is not None else {}
+            )
+            self.terminal_debt_ledger.reconcile(new_ctx.mission_id,debt_specs,debt_evidence)
+            terminal_debt_open=tuple(
+                item.spec.predicate
+                for item in self.terminal_debt_ledger.open_items(new_ctx.mission_id)
+            )
         ready_after=self._ready(new_ctx)
         remaining=[p.packet_id for p in ready_after]
         all_done=all(p.done for p in new_ctx.packets)
@@ -189,7 +220,11 @@ class AutonomicCompletionKernel:
         )
         terminal_state=""; maturity_gaps=(); recompile_required=False; terminal_proof_ref=""
         commercial_court=self._commercial_court(new_ctx)
-        if all_done and commercial_court is not None:
+        if all_done and terminal_debt_open:
+            maturity_gaps=terminal_debt_open
+            recompile_required=True
+            out=OutputClass.PROGRESS_UPDATE
+        elif all_done and commercial_court is not None:
             if commercial_court.state == "COMMERCIAL_READY_VERIFIED":
                 new_ctx=ExecutionContext(
                     new_ctx.mission_id,new_ctx.mission_class,new_ctx.target_state,new_ctx.runtime_mode,new_ctx.prompt_genome,new_ctx.packets,
@@ -256,7 +291,7 @@ class AutonomicCompletionKernel:
                 promotion_state="PROMPT_CHALLENGERS_SHADOW_REQUIRED"
                 promotion_reason="MATCHED_EVALUATOR_UNAVAILABLE"
 
-        state={"mission_id":new_ctx.mission_id,"cycle":cycle,"target_state":new_ctx.target_state,"current_maturity":new_ctx.current_maturity,"prompt_version":new_ctx.prompt_genome.version,"packets":[asdict(p) for p in new_ctx.packets],"terminal_state":terminal_state,"terminal_proof_ref":terminal_proof_ref,"prompt_promotion_state":promotion_state,"commercial_evidence":dict(new_ctx.commercial_evidence),"maturity_gaps":maturity_gaps,"recompile_required":recompile_required}
+        state={"mission_id":new_ctx.mission_id,"cycle":cycle,"target_state":new_ctx.target_state,"current_maturity":new_ctx.current_maturity,"prompt_version":new_ctx.prompt_genome.version,"packets":[asdict(p) for p in new_ctx.packets],"terminal_state":terminal_state,"terminal_proof_ref":terminal_proof_ref,"prompt_promotion_state":promotion_state,"commercial_evidence":dict(new_ctx.commercial_evidence),"maturity_gaps":maturity_gaps,"recompile_required":recompile_required,"terminal_debt_open":terminal_debt_open,"terminal_debt_zero":not bool(terminal_debt_open)}
         prev=self.store.read(new_ctx.mission_id)
         checkpoint=self.store.put(new_ctx.mission_id,state,expected_version=None if prev is None else prev.version)
         event_id=f"LEARN-{new_ctx.mission_id}-{checkpoint.version}-{checkpoint.state_sha256[:10]}"
@@ -264,9 +299,9 @@ class AutonomicCompletionKernel:
         self.learning.append(event); self.store.append_learning(event_id,new_ctx.mission_id,event.body())
         reentry_id=""; capsule=None
         if not terminal_state and new_ctx.runtime_mode is RuntimeMode.PERSISTENT_RUNNER:
-            reentry_id=self.store.enqueue_reentry(new_ctx.mission_id,checkpoint,{"next_ready_packets":remaining,"prompt_version":new_ctx.prompt_genome.version,"maturity_gaps":maturity_gaps,"recompile_required":recompile_required})
+            reentry_id=self.store.enqueue_reentry(new_ctx.mission_id,checkpoint,{"next_ready_packets":remaining,"prompt_version":new_ctx.prompt_genome.version,"maturity_gaps":maturity_gaps,"recompile_required":recompile_required,"terminal_debt_open":terminal_debt_open})
         elif out is OutputClass.RESUME_CAPSULE:
-            capsule={"mission_id":new_ctx.mission_id,"checkpoint_version":checkpoint.version,"checkpoint_sha256":checkpoint.state_sha256,"verified_state":new_ctx.current_maturity,"next_ready_packets":remaining,"prompt_version":new_ctx.prompt_genome.version,"learning_event_ids":[event_id],"maturity_gaps":maturity_gaps,"recompile_required":recompile_required,"continuation_instruction":"RECOMPILE_MATURITY_GAPS_AND_EXECUTE" if recompile_required else "CONSUME_CHECKPOINT_AND_EXECUTE_NEXT_READY_WAVE"}
+            capsule={"mission_id":new_ctx.mission_id,"checkpoint_version":checkpoint.version,"checkpoint_sha256":checkpoint.state_sha256,"verified_state":new_ctx.current_maturity,"next_ready_packets":remaining,"prompt_version":new_ctx.prompt_genome.version,"learning_event_ids":[event_id],"maturity_gaps":maturity_gaps,"recompile_required":recompile_required,"terminal_debt_open":terminal_debt_open,"continuation_instruction":"RECOMPILE_MATURITY_GAPS_AND_EXECUTE" if recompile_required else "CONSUME_CHECKPOINT_AND_EXECUTE_NEXT_READY_WAVE"}
         presentation=self.finality_guard.classify(
             output_class=out.value,
             terminal_state=terminal_state,

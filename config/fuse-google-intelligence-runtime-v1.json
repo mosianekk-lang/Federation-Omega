@@ -1,0 +1,90 @@
+{
+  "schema": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V1",
+  "version": "1.0.0",
+  "contract_id": "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-001",
+  "enabled": true,
+  "authority": "START:FUSE_ONE",
+  "mission_reuse": "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+  "creates_new_controller": false,
+  "creates_new_scheduler": false,
+  "creates_new_mission_bus": false,
+  "creates_new_authority_root": false,
+  "creates_new_truth_memory_proof_root": false,
+  "prompt_path": "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md",
+  "prompt_sha256": "5622203476ab7d2952ed738a14242077199373973815794ad0fd8cf1d18b1e2b",
+  "ai_studio_role": "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME",
+  "runtime_authority": [
+    "SOVARA",
+    "SOL62",
+    "FDOF",
+    "SICF",
+    "PROOFOS_REALITY_JUDGE",
+    "OUTPUT_MIRROR_V3"
+  ],
+  "canonical_memory": [
+    "KDV",
+    "BIBLE_MEMORY_FABRIC",
+    "MISSION_BUS"
+  ],
+  "google_capability_cells": [
+    "GOOGLE_GEMINI_CORE",
+    "GOOGLE_GEMINI_INTERACTIONS",
+    "GOOGLE_VERTEX_GEMINI",
+    "GOOGLE_GEMINI_LIVE",
+    "GOOGLE_DEEP_RESEARCH",
+    "GOOGLE_SEARCH_GROUNDED",
+    "GOOGLE_CODE_EXECUTION",
+    "GOOGLE_FILE_SEARCH",
+    "GOOGLE_REMOTE_MCP",
+    "GOOGLE_MANAGED_AGENT",
+    "GOOGLE_AI_STUDIO_BUILD",
+    "GOOGLE_AI_STUDIO_GITHUB"
+  ],
+  "formation_modes": [
+    "FAST",
+    "FUSION",
+    "ADVERSARIAL",
+    "FORMATION",
+    "DEEP",
+    "LIVE"
+  ],
+  "route_hard_gates": [
+    "AUTHORITY",
+    "PRIVACY",
+    "CURRENTNESS",
+    "CAPABILITY",
+    "BUDGET",
+    "PROOF_FLOOR",
+    "RECOVERY_FLOOR"
+  ],
+  "required_google_readback": [
+    "provider_identity",
+    "model_or_agent_identity",
+    "transport_identity",
+    "provider_request_or_run_id_when_exposed",
+    "mission_run_correlation",
+    "semantic_nonce_or_equivalent",
+    "finish_state",
+    "usage_when_exposed",
+    "latency_ms",
+    "tool_calls_separate",
+    "grounding_metadata_when_applicable",
+    "retention_state_when_configurable",
+    "observed_at",
+    "response_digest",
+    "effect_readback_state"
+  ],
+  "sensitive_default_provider_storage": false,
+  "secret_payload_to_model": false,
+  "ai_studio_can_promote_canonical_truth": false,
+  "provider_output_can_expand_authority": false,
+  "provider_failure_is_route_local": true,
+  "unknown_effect_requires_readback": true,
+  "repeated_same_semantic_failure_requires_changed_mechanism": true,
+  "bootstrap_steps": [
+    "load_google_intelligence_runtime_contract",
+    "compile_google_intelligence_route"
+  ],
+  "live_provider_state": "REQUIRES_PROVIDER_SEMANTIC_READBACK",
+  "truth_boundary": "PROMPT_BOUND!=SOURCE_ADMITTED!=DEPLOYED!=PROVIDER_CALLABLE!=SEMANTICALLY_VERIFIED!=TOOL_VERIFIED!=EFFECT_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
+}

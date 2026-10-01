@@ -1,0 +1,247 @@
+{
+  "schema": "FUSE_CHATGPT_FAILURE_REPAIR_FABRIC_V1",
+  "version": "1.0.0",
+  "parent": "FUSE_UNIFIED_CAPABILITY_FABRIC_V1",
+  "creates_new_controller": false,
+  "purpose": "Convert proven ChatGPT/FUSE failure families into mandatory changed-mechanism repair laws and reopen affected missions at their smallest unfinished stage.",
+  "baseline": {
+    "weekly_mirror_audit": {
+      "audited": 148,
+      "fail_recompile": 57,
+      "hard_boundary": 16,
+      "pass": 75
+    },
+    "owner_intent_debt": "ACTIVE",
+    "failure_ledger": "CHATGPT_FAILURE_LEDGER_V1"
+  },
+  "global_laws": [
+    "OWNER_OBJECTIVE_IS_NOT_REWRITTEN_BY_RECOVERY",
+    "REPEATED_OWNER_CORRECTION_IS_FAILURE_SIGNAL_NOT_NEW_REQUEST",
+    "SAME_SEMANTIC_FAILURE_REQUIRES_CHANGED_MECHANISM",
+    "MACHINE_RESOLVABLE_FAILURE_MUST_NOT_TERMINATE_OWNER_OUTPUT",
+    "LOCAL_BLOCKER_MAY_NOT_CREATE_GLOBAL_STALL",
+    "SOURCE_CONTROL_PROOF_IS_CHECKPOINT_NOT_OUTCOME",
+    "UNKNOWN_EFFECT_REQUIRES_READBACK_BEFORE_RETRY",
+    "NO_DUPLICATE_MISSION_OR_CONTROLLER_DURING_REPAIR",
+    "COMPLETED_WORK_AND_VALID_PROOF_ARE_PRESERVED",
+    "REPAIR_MUST_END_IN_REGRESSION_OR_PREVENTION_BINDING_WHERE_PRACTICABLE"
+  ],
+  "mirror_failure_repairs": {
+    "NONTERMINAL_OUTPUT": {
+      "defect": "Owner-facing response stopped while mission remained nonterminal.",
+      "changed_mechanism": [
+        "DURABLE_CONTINUATION_LATCH",
+        "RESUME_SMALLEST_OPEN_PREDICATE",
+        "OUTPUT_MIRROR_TERMINALITY_GATE"
+      ],
+      "owner_action": "NONE_WHILE_SAFE_MACHINE_ROUTE_EXISTS"
+    },
+    "SOURCE_OR_CONTROL_PROOF_NOT_OUTCOME": {
+      "defect": "Source/control proof was allowed to terminate an outcome-oriented mission.",
+      "changed_mechanism": [
+        "SOURCE_TO_RUNTIME_CLOSURE_BRIDGE",
+        "DEPLOY_RUN_READBACK_JUDGE",
+        "OUTCOME_PREDICATE_GATE"
+      ],
+      "owner_action": "NONE_WHILE_SAFE_MACHINE_ROUTE_EXISTS"
+    },
+    "NONTERMINAL_STOP_WITH_MACHINE_ROUTE": {
+      "defect": "A known machine-safe continuation existed but execution stopped.",
+      "changed_mechanism": [
+        "KNOWN_NEXT_ACTION_AUTOCONTINUE",
+        "ROUTE_RECOMPILE",
+        "DURABLE_CHECKPOINT_ONLY_ON_REAL_BOUNDARY"
+      ],
+      "owner_action": "NONE"
+    },
+    "SOURCE_CONTROL_STOP_WITH_MACHINE_ROUTE": {
+      "defect": "Source/CI milestone became a stop despite downstream machine route.",
+      "changed_mechanism": [
+        "SOURCE_RUNTIME_HANDOFF",
+        "RUNTIME_CANARY",
+        "SEMANTIC_READBACK",
+        "VALUE_OR_OUTCOME_GATE"
+      ],
+      "owner_action": "NONE"
+    },
+    "REPORT_ONLY_OR_NEXT_ACTION_STOP": {
+      "defect": "Diagnosis/next action was reported instead of executed.",
+      "changed_mechanism": [
+        "SOLVE_BEFORE_REPORT",
+        "EXECUTE_KNOWN_NEXT_ACTION",
+        "REPORT_ONLY_ON_GENUINE_BOUNDARY"
+      ],
+      "owner_action": "NONE"
+    }
+  },
+  "systemic_failure_repairs": {
+    "OWNER_DIRECTIVE_MUTATION": {
+      "changed_mechanism": [
+        "CANONICAL_INTENT_HASH",
+        "EXECUTION_DELTA_SEPARATE_FROM_OBJECTIVE",
+        "OUTPUT_MIRROR_INTENT_FIDELITY"
+      ],
+      "prevention": "No silent narrowing/substitution/postponement of the requested outcome."
+    },
+    "OUTPUT_MIRROR_BYPASS": {
+      "changed_mechanism": [
+        "HOST_LEVEL_PREDELIVERY_GATE",
+        "MIRROR_RECEIPT_REQUIRED_WHERE_RUNTIME_SUPPORTS",
+        "BYPASS_EQUALS_FALSE_PASS"
+      ],
+      "prevention": "Control text alone never proves participation."
+    },
+    "AUTONOMY_STOP_OR_N_DEPENDENCE": {
+      "changed_mechanism": [
+        "PROMPT_ZERO_CONTINUATION",
+        "DURABLE_MISSION_LATCH",
+        "WATCHDOG_AND_AUTORESUME"
+      ],
+      "prevention": "Repeated n/continue is counted as owner-friction debt."
+    },
+    "PASSIVE_ERROR_REPORTING": {
+      "changed_mechanism": [
+        "ERROR_TO_REPAIR_PIPELINE",
+        "CHANGED_ROUTE_AFTER_FAILURE",
+        "OWNER_ATTENTION_FIREWALL"
+      ],
+      "prevention": "Machine-solvable failures remain internal."
+    },
+    "REUSE_DISCOVERY_FAILURE": {
+      "changed_mechanism": [
+        "HISTORICAL_RECALL_PREPASS",
+        "ALREADY_SOLVED_GATE",
+        "SEMANTIC_DUPLICATION_CHECK"
+      ],
+      "prevention": "Greenfield build prohibited until reuse census."
+    },
+    "BEST_FIRST_FAILURE": {
+      "changed_mechanism": [
+        "ROOT_ABSTRACTION_CHALLENGE",
+        "CAPABILITY_UTILIZATION_TEST",
+        "INDEPENDENT_ROUTE_CHALLENGER"
+      ],
+      "prevention": "If a materially stronger available route exists, release is held."
+    },
+    "CURRENTNESS_TARGET_IDENTITY": {
+      "changed_mechanism": [
+        "FRESH_METADATA_RESOLUTION",
+        "EPHEMERAL_TARGET_HANDLE",
+        "RAW_STALE_IDENTIFIER_DENY"
+      ],
+      "prevention": "Provider object identity must be resolved in the current epoch before use."
+    },
+    "SCHEMA_MUTATION_CONTROL": {
+      "changed_mechanism": [
+        "TYPED_REQUEST_TEMPLATE",
+        "JIT_PREIMAGE",
+        "SEMANTIC_POSTIMAGE",
+        "ATOMIC_ROW_OWNERSHIP"
+      ],
+      "prevention": "Transport success is not semantic success."
+    },
+    "RECEIVER_ACTIVATION_DRIFT": {
+      "changed_mechanism": [
+        "TRANSITIVE_RECEIVER_MANIFEST",
+        "EXACT_POSTREAD_ACK",
+        "DOWNSTREAM_TARGET_ACTIVATION_ACK"
+      ],
+      "prevention": "Canonical control promotion requires receiver activation proof at affected targets."
+    },
+    "PROOF_FALSE_GREEN": {
+      "changed_mechanism": [
+        "EFFECT_COUPLED_PROOF",
+        "INDEPENDENT_POSTEFFECT_ENUMERATION",
+        "FALSIFIER_COURT"
+      ],
+      "prevention": "Assertions cannot substitute for performed effects/readback."
+    },
+    "CAPABILITY_REGRESSION": {
+      "changed_mechanism": [
+        "LKG_CAPABILITY_PARITY_GATE",
+        "SOURCE_RUNTIME_PARITY_AUDIT",
+        "NO_SUCCESSOR_PROMOTION_ON_REQUIRED_CAPABILITY_LOSS"
+      ],
+      "prevention": "Newer version cannot become current by dropping mandatory capability."
+    },
+    "PROOF_ROUTE_IDENTITY": {
+      "changed_mechanism": [
+        "IMMUTABLE_PACKET_ID_HASH",
+        "ROW_POINTER_NONAUTHORITATIVE",
+        "LIVE_TARGET_POSTREAD"
+      ],
+      "prevention": "Mutable row positions cannot be proof identity."
+    },
+    "FOREGROUND_CAPTIVITY": {
+      "changed_mechanism": [
+        "FOREGROUND_BUDGET",
+        "DURABLE_FANOUT",
+        "CHECKPOINT_AND_DETACH",
+        "OFFCHAT_EXECUTOR_WHEN_AVAILABLE"
+      ],
+      "prevention": "Long-running work must not trap owner-facing turn."
+    },
+    "ROUTE_CAPACITY_ORCHESTRATION": {
+      "changed_mechanism": [
+        "PRELIMIT_AUTOHANDOFF",
+        "DETACH_REBIND",
+        "COMPACT_WORKING_SET",
+        "IDEMPOTENT_SUCCESSOR"
+      ],
+      "prevention": "Chat/client capacity is a route event, not a mission stop."
+    },
+    "OWNER_BOUNDARY_CURRENTNESS": {
+      "changed_mechanism": [
+        "OWNER_BOUNDARY_EPOCH_TOKEN",
+        "CURRENT_OWNER_MESSAGE_PRECOMMIT_CHECK",
+        "ATTEMPT_SCOPING"
+      ],
+      "prevention": "New owner intent invalidates stale pending continuation claims."
+    },
+    "FAILURE_LEDGER_REFERENTIAL_INTEGRITY": {
+      "changed_mechanism": [
+        "SOURCE_ELIGIBILITY_TOKEN",
+        "QUARANTINE_ON_ORPHAN_REF",
+        "DERIVATIVE_INVALIDATION"
+      ],
+      "prevention": "Unverified/orphan incidents cannot feed learning/Judge as verified evidence."
+    }
+  },
+  "repair_execution_path": [
+    "READ_CURRENT_MISSION_STATE",
+    "CLASSIFY_FAILURE_FAMILY",
+    "PRESERVE_VALID_COMPLETED_WORK",
+    "SELECT_CHANGED_MECHANISM",
+    "ROUTE_TO_SMALLEST_UNFINISHED_STAGE",
+    "EXECUTE_SAFE_REPAIR",
+    "READBACK",
+    "RUN_REGRESSION_OR_FALSIFIER",
+    "JUDGE",
+    "OUTPUT_MIRROR",
+    "RESUME_PARENT_MISSION"
+  ],
+  "owner_experience": {
+    "do_not_return": [
+      "routine_errors",
+      "retry_instructions",
+      "tool_selection",
+      "provider_selection",
+      "known_next_actions",
+      "repeated_context_requests"
+    ],
+    "return_only": [
+      "finished_result",
+      "material_proof",
+      "genuine_owner_only_decision",
+      "genuine_external_boundary"
+    ]
+  },
+  "affected_weekly_false_pass_policy": {
+    "count": 57,
+    "disposition": "REOPEN_SAME_MISSION",
+    "restart": false,
+    "duplicate_mission": false,
+    "repair_queue_required": true
+  },
+  "truth_boundary": "REPAIR_FABRIC_SOURCE_BOUND != ALL_57_MISSIONS_CLOSED; each repaired mission still requires its own current execution/readback/proof."
+}

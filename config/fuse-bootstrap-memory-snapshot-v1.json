@@ -1,0 +1,56 @@
+{
+  "schema": "FUSE_BOOTSTRAP_MEMORY_SNAPSHOT_V1",
+  "generation": 1,
+  "captured_date": "2026-09-25",
+  "baseline": {
+    "start_fuse_one": "v4.59",
+    "boot_kernel": "5.9.0",
+    "output_mirror": "3.0.0",
+    "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS",
+    "live_bootstrap_guard_ok": true
+  },
+  "settings": [
+    "INSTRUCTION_WITHOUT_ENFORCEMENT_IS_NOT_CONTROL",
+    "ONE_DIRECTIVE_ONE_DURABLE_MISSION",
+    "BEST_AVAILABLE_RESULT_FIRST",
+    "SOLVE_BEFORE_REPORT",
+    "RECALL_BEFORE_CREATE",
+    "REUSE_BEFORE_BUILD",
+    "PRESERVE_DIRECTIVE_VERB_FORCE",
+    "CONSTRAINTS_SEPARATE_FROM_OWNER_INTENT",
+    "PROMPT_ZERO_SAFE_CONTINUATION",
+    "SOURCE_TO_RUNTIME_TO_OUTCOME_CLOSURE",
+    "PROOF_BEFORE_CLAIM",
+    "OUTPUT_MIRROR_REQUIRED",
+    "FOREST_FIRST_ANTICIPATION",
+    "CONSTRAINT_ROUTING",
+    "SAFE_PARALLEL_WORKSTREAMS",
+    "FRONTEND_BACKEND_SEPARATION",
+    "AUTO_HARVEST_TRUE_GAPS",
+    "AUTO_BUILD_MINIMUM_RESIDUAL",
+    "PROVIDER_NEUTRAL_ROUTING",
+    "NO_DUPLICATE_CONTROLLER",
+    "NO_FALSE_COMPLETION"
+  ],
+  "contracts": [
+    "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
+    "FUSE-OWNER-EXPERIENCE-10X-CONTRACT-V1",
+    "FUSE_UNIFIED_CAPABILITY_FABRIC_V1",
+    "FUSE_CHATGPT_FAILURE_REPAIR_FABRIC_V1",
+    "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+    "FUSE_CONSTRAINT_ROUTING_V1",
+    "FUSE_DIRECTIVE_FIDELITY_V1",
+    "FUSE_24X7_AUTONOMY_V1",
+    "FUSE_PARALLEL_FRONTEND_CONTINUITY_V1"
+  ],
+  "volatile_revalidate": [
+    "source",
+    "fdof",
+    "provider_callability",
+    "runtime_health",
+    "authority",
+    "mission_effect_state",
+    "latest_owner_directive"
+  ],
+  "rollback": "PRESERVE_PREVIOUS_GENERATION"
+}

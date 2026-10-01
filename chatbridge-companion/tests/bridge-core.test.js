@@ -60,13 +60,13 @@ test("builds sequence-preserving bounded replay packets", () => {
 });
 
 test("pre-emption is deterministic", () => {
-  assert.equal(core.shouldPreempt({estimatedRenderedTokens: 65000, renderedMessageCount: 1}, {}), true);
-  assert.equal(core.shouldPreempt({estimatedRenderedTokens: 100, renderedMessageCount: 80}, {}), true);
+  assert.equal(core.shouldPreempt({estimatedRenderedTokens: 24000, renderedMessageCount: 1}, {}), true);
+  assert.equal(core.shouldPreempt({estimatedRenderedTokens: 100, renderedMessageCount: 32}, {}), true);
   assert.equal(core.shouldPreempt({estimatedRenderedTokens: 100, renderedMessageCount: 2}, {}), false);
 });
 
 test("automatic handoff is mandatory for pre-limit pressure or a terminal notice", () => {
-  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 65000, renderedMessageCount: 1}}, {}), true);
+  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 24000, renderedMessageCount: 1}}, {}), true);
   assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 100, renderedMessageCount: 2}, terminalNotice: "You've hit max weighted tokens for this chat"}, {}), true);
   assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 100, renderedMessageCount: 2}, terminalNotice: ""}, {}), false);
 });

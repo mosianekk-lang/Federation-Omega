@@ -33,5 +33,11 @@ from .core import (
     ValueReceipt,
 )
 from .gemini_adapter import GeminiAdapter, GeminiCallPlan
+from .intelligence_formation_v2 import (
+    FormationMode,
+    IntelligenceCandidate,
+    IntelligenceFormationCompiler,
+    IntelligenceFormationPlan,
+)
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"

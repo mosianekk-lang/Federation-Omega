@@ -1,0 +1,90 @@
+{
+  "schema": "FUSE_BOOTSTRAP_INHERITANCE_V2",
+  "version": "2.0.0",
+  "boot_kernel": "5.8.0",
+  "authority": "START:FUSE_ONE",
+  "enabled": true,
+  "hydrate_on": [
+    "START:FUSE_ONE",
+    "n",
+    "continue",
+    "proceed",
+    "restore",
+    "reroute",
+    "do all",
+    "audit",
+    "build",
+    "harvest",
+    "finish"
+  ],
+  "required_order": [
+    "FRESH_CANON",
+    "HISTORICAL_RECALL",
+    "ESTATE_CENSUS",
+    "CURRENTNESS_RECONCILE",
+    "AUTHORITY_EFFECT_PREFLIGHT",
+    "OUTPUT_MIRROR_V2",
+    "ROUTE_COMPILE",
+    "EXECUTE",
+    "READBACK",
+    "VERIFY",
+    "JUDGE",
+    "OUTPUT_MIRROR_V2_RELEASE",
+    "TERMINAL_DELIVERY"
+  ],
+  "output_mirror_required": true,
+  "output_mirror_min_version": "2.0.0",
+  "required_before_route_compilation": true,
+  "required_before_terminal_delivery": true,
+  "release_policy": "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS",
+  "required_dimensions": [
+    "intent_fidelity",
+    "execution_finality",
+    "proof_evidence",
+    "design_code_health",
+    "testing",
+    "security_privacy",
+    "reliability_recovery",
+    "performance_cost",
+    "currentness_reproducibility",
+    "owner_value"
+  ],
+  "developer1000": {
+    "count": 1000,
+    "sha256": "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e",
+    "role": "PUBLIC_SIGNAL_PROXY_NOT_SKILL_RANKING"
+  },
+  "benchmark_court": {
+    "cases": 1000,
+    "dataset_sha256": "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510",
+    "v1_1_false_passes": 500,
+    "v2_false_passes": 0
+  },
+  "external_benchmarks": {
+    "swe_bench_verified": 500,
+    "swe_bench_multilingual": 300,
+    "programbench": 200,
+    "aider_polyglot_shadow": 225,
+    "codeclash_shadow": true
+  },
+  "failure_behavior": "RETURN_SAME_MISSION_TO_SMALLEST_REQUIRED_STAGE",
+  "fail_closed": true,
+  "preserve_mission_identity": true,
+  "preserve_completed_effects": true,
+  "preserve_fences": true,
+  "unknown_effect_requires_readback": true,
+  "owner_burden_machine_route_first": true,
+  "currentness_precedence": "PROVIDER_SEMANTIC_READBACK>SIGNED_SOURCE_RELEASE>KDV_REDUCER>SYNC_WORKPLANE_EVENTS>HEARTBEAT>DASHBOARD>CHAT_MEMORY",
+  "live_proof": {
+    "server_sha256": "9dc0b97c439bb6038db0f6cb2f6fed5648e141eb4f4993c05c4e06690eadb1f4",
+    "boot_sha256": "fd622aa6974e557a31d644aa196b6200c63febbc37b98648adbcc3653d9c8486",
+    "mirror_module_sha256": "7a9a0f9943fb7dc4db1847b5d275fd227f5c34dbbbe28be71dcc4e687181ea13",
+    "bootstrap_canary_receipt": "be4789d5b1087fdad8e0e5764dadf715c8700fe5aa1b38f111f49e8479f8fa76",
+    "bootstrap_guard_ok": true
+  },
+  "rollback": {
+    "server_backup": "%LOCALAPPDATA%\\FUSE\\SovereignPlane\\server.mjs.pre-bootstrap-v5.8-20260925-023108.bak",
+    "boot_backup": "%LOCALAPPDATA%\\FUSE\\SovereignPlane\\bootstrap\\boot-kernel-v5.json.pre-bootstrap-v5.8-20260925-023108.bak"
+  },
+  "truth_boundary": "LIVE_OWNER_LOCAL_BOOTSTRAP_ENFORCEMENT_VERIFIED; UNIVERSAL_PROVIDER_OR_OPENAI_PLATFORM_ENFORCEMENT_NOT_CLAIMED"
+}

@@ -1,0 +1,218 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2E",
+  "version": "2.3.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "291-330",
+  "chapter_count": 40,
+  "objective": "Extend Forest-first from proactive work stealing into causal preemption: predict the next blocker, proof gap, stale assumption, capacity limit, ambiguous effect or owner-friction trigger and remove it before it enters the critical path.",
+  "chapters": [
+    {
+      "chapter": 291,
+      "id": "MISSION_HORIZON_FORECAST",
+      "prompt": "Project the next three likely mission states from current dependencies, proof debt, provider health and known owner intent. Pre-stage only reversible/read-only prerequisites for the most probable branches."
+    },
+    {
+      "chapter": 292,
+      "id": "NEXT3_EXECUTION_COMPILER",
+      "prompt": "Maintain a ranked NEXT3 queue for each active mission: the three highest-value dependency-ready or near-ready actions, with preconditions and fallback routes already compiled."
+    },
+    {
+      "chapter": 293,
+      "id": "HIDDEN_DEPENDENCY_INFERENCE",
+      "prompt": "Infer likely unstated dependencies from prior similar missions, current architecture and downstream acceptance tests. Verify them early before they become surprise blockers."
+    },
+    {
+      "chapter": 294,
+      "id": "DEPENDENCY_EDGE_RISK_SCORE",
+      "prompt": "Score dependency edges by probability of delay multiplied by downstream impact. Preempt the highest-risk edges with refresh, alternate route or evidence collection."
+    },
+    {
+      "chapter": 295,
+      "id": "PROOF_LAG_PREDICTOR",
+      "prompt": "Estimate which proof or readback stage is likely to lag behind implementation. Start safe proof preparation early so completion is not delayed by evidence debt."
+    },
+    {
+      "chapter": 296,
+      "id": "AMBIGUOUS_EFFECT_PREPLAN",
+      "prompt": "For any upcoming effect that could become ambiguous, predefine the exact semantic readback and no-blind-retry rule before dispatch."
+    },
+    {
+      "chapter": 297,
+      "id": "APPROVAL_PACKET_PRECOMPILER",
+      "prompt": "If a future owner-only decision is likely, prepare a concise decision packet in advance: exact choice, evidence, consequence, reversible options and default no-action state."
+    },
+    {
+      "chapter": 298,
+      "id": "OWNER_PREFERENCE_DRIFT_CHECK",
+      "prompt": "Before material design or strategy work, compare current owner intent with prior preferences and recent corrections so stale assumptions do not drive the next stage."
+    },
+    {
+      "chapter": 299,
+      "id": "CONTEXT_SATURATION_SENSOR",
+      "prompt": "Estimate when mission context, chat capacity or tool-result volume will approach unsafe size. Compact and checkpoint before degradation becomes visible."
+    },
+    {
+      "chapter": 300,
+      "id": "KNOWLEDGE_PREFETCH",
+      "prompt": "Identify high-probability evidence, files, provider metadata or documentation likely to be needed at the next gate and retrieve only the minimum relevant context early."
+    },
+    {
+      "chapter": 301,
+      "id": "SOURCE_FRESHNESS_TRIGGER",
+      "prompt": "For source-dependent work, define the exact event that invalidates the current source snapshot and refresh automatically on that event rather than by age alone."
+    },
+    {
+      "chapter": 302,
+      "id": "PERMISSION_STALENESS_DETECTOR",
+      "prompt": "Revalidate permissions, scopes and authority immediately before the stage that needs them; stage alternate non-effect routes when permission uncertainty appears."
+    },
+    {
+      "chapter": 303,
+      "id": "PROVIDER_COST_ANOMALY_PREEMPT",
+      "prompt": "Detect abnormal latency, token, compute or request cost trends before they exceed mission budgets; switch to qualified cached/local/batched routes where quality is preserved."
+    },
+    {
+      "chapter": 304,
+      "id": "BENCHMARK_DRIFT_SENTINEL",
+      "prompt": "Detect when a previously winning model, tool or algorithm may no longer be best for the active task class. Queue a bounded challenger court before degradation reaches production."
+    },
+    {
+      "chapter": 305,
+      "id": "FAILURE_PRECURSOR_CORRELATOR",
+      "prompt": "Correlate weak signals that historically precede failures—stale heartbeat, retries, queue age, schema drift, latency spikes, partial receipts—and act at the precursor stage."
+    },
+    {
+      "chapter": 306,
+      "id": "BACKPRESSURE_PREEMPTION",
+      "prompt": "Forecast queue or worker saturation and reduce pressure using batching, priority, spillover, checkpoint migration or qualified alternate carriers before throughput collapses."
+    },
+    {
+      "chapter": 307,
+      "id": "CAPACITY_RESERVATION_HINT",
+      "prompt": "For imminent high-value work, reserve or prewarm only the minimum lawful execution capacity needed so critical work does not wait behind low-value tasks."
+    },
+    {
+      "chapter": 308,
+      "id": "BATCH_COALESCING",
+      "prompt": "Detect similar upcoming reads, validations, provider calls or proof queries across missions and safely coalesce them into one shared operation with fanout."
+    },
+    {
+      "chapter": 309,
+      "id": "QUEUE_STARVATION_DETECTOR",
+      "prompt": "Detect READY work that is repeatedly bypassed despite high value or age. Rebalance scheduling before it becomes neglected mission debt."
+    },
+    {
+      "chapter": 310,
+      "id": "CROSS_MISSION_CONFLICT_PREEMPT",
+      "prompt": "Detect upcoming collisions over source paths, providers, credentials, devices, artifacts or exclusive effects before dispatch; serialize only the intersecting scope."
+    },
+    {
+      "chapter": 311,
+      "id": "DUPLICATE_EFFECT_RISK_PRECHECK",
+      "prompt": "Before retries, handoffs or parallel branches, search for prior or in-flight equivalent effects and require effect identity/readback to prevent duplication."
+    },
+    {
+      "chapter": 312,
+      "id": "ROLLBACK_REHEARSAL",
+      "prompt": "For high-impact changes, validate that rollback inputs, commands and verification steps are actually usable before the change window opens."
+    },
+    {
+      "chapter": 313,
+      "id": "DEGRADED_MODE_PREPARATION",
+      "prompt": "Define the minimum acceptable degraded operating mode for critical missions before failure occurs, including which capabilities can be shed without losing the core owner outcome."
+    },
+    {
+      "chapter": 314,
+      "id": "PARTIAL_RESULT_PACKAGER",
+      "prompt": "When a long mission may be interrupted, continuously maintain a compact usable partial package containing verified results, evidence, checkpoint and exact continuation state."
+    },
+    {
+      "chapter": 315,
+      "id": "DECISION_MEMO_AHEAD",
+      "prompt": "For complex missions, maintain a one-page current decision memo before the owner asks: objective, current truth, major change, unresolved risk, next decisive step."
+    },
+    {
+      "chapter": 316,
+      "id": "EVIDENCE_CHAIN_GAP_CLOSER",
+      "prompt": "Scan evidence/provenance chains for missing links likely to invalidate future claims and close those gaps while source context is still fresh."
+    },
+    {
+      "chapter": 317,
+      "id": "ALTERNATE_CARRIER_STAGING",
+      "prompt": "For each critical upcoming capability, keep at least one qualified alternate carrier contract and currentness probe ready when practical."
+    },
+    {
+      "chapter": 318,
+      "id": "LOCAL_SOVEREIGN_SNAPSHOT",
+      "prompt": "Before depending on a remote provider for strategically important state, preserve the minimum owner-controlled snapshot needed to resume or migrate the mission."
+    },
+    {
+      "chapter": 319,
+      "id": "TASK_AGING_SLA",
+      "prompt": "Assign age budgets to material nonterminal tasks. When a task approaches its budget, automatically diagnose why it has not advanced and change route or priority."
+    },
+    {
+      "chapter": 320,
+      "id": "SILENT_STALL_SENSOR",
+      "prompt": "Detect absence of meaningful state transition despite apparent activity. Distinguish busy work from causal progress and reroute before the owner notices stagnation."
+    },
+    {
+      "chapter": 321,
+      "id": "PROOF_CHAIN_REPAIR_AHEAD",
+      "prompt": "If proof lineage is incomplete, repair identity, hashes, source references or readback links before downstream Judge or release stages consume them."
+    },
+    {
+      "chapter": 322,
+      "id": "ARTIFACT_DEPENDENCY_WATCH",
+      "prompt": "Track artifacts required by downstream missions and detect missing, stale, incompatible or unfinalized artifacts before dependent work becomes blocked."
+    },
+    {
+      "chapter": 323,
+      "id": "CREATIVE_CONTINUITY_CACHE",
+      "prompt": "For ongoing creative missions, precompute and preserve canonical references, visual rules, asset identities and approved variants so future generations remain coherent."
+    },
+    {
+      "chapter": 324,
+      "id": "COMMERCIAL_LAUNCH_READINESS_PRECHECK",
+      "prompt": "Before technical completion, continuously score packaging, onboarding, support, pricing evidence, trust, telemetry and buyer-value proof so launch debt is visible early."
+    },
+    {
+      "chapter": 325,
+      "id": "SECURITY_PREFLIGHT_COMPILER",
+      "prompt": "Compile the exact least-privilege identity, secret, input-validation, isolation and audit requirements before execution reaches a consequential security boundary."
+    },
+    {
+      "chapter": 326,
+      "id": "PRIVACY_PREFLIGHT_COMPILER",
+      "prompt": "Determine minimum data needed, trust zone, provider exposure and retention before data-bearing execution; prepare redacted or local alternatives early."
+    },
+    {
+      "chapter": 327,
+      "id": "STALE_ASSUMPTION_EXPIRY",
+      "prompt": "Give material assumptions an explicit invalidation condition. Revalidate automatically when that condition occurs instead of letting assumptions silently persist."
+    },
+    {
+      "chapter": 328,
+      "id": "OPTION_VALUE_FORECAST",
+      "prompt": "Identify upcoming actions that could irreversibly narrow future choices. Prefer reversible sequencing and stage alternatives before option value is lost."
+    },
+    {
+      "chapter": 329,
+      "id": "PREEMPTIVE_OWNER_FRICTION_TEST",
+      "prompt": "Before each major checkpoint, simulate the next likely owner complaint or follow-up based on historical Owner Intent Debt and fix every machine-resolvable cause now."
+    },
+    {
+      "chapter": 330,
+      "id": "FOREST_CAUSAL_FIXED_POINT",
+      "prompt": "Continue forecast-refresh-prestage-execute-verify cycles until no foreseeable dependency, proof gap, capacity risk, stale assumption, repair-ready item or owner-friction trigger has a lawful machine action available. Then remain quiet until state changes."
+    }
+  ],
+  "activation": {
+    "scope": "ALL_GOVERNED_NONTERMINAL_FUSE_WORK",
+    "safe_prework": "AUTO",
+    "owner_interruption": "ONLY_GENUINELY_OWNER_ONLY",
+    "quiet_when_healthy": true,
+    "preserve_existing_mission_identity": true
+  },
+  "truth_boundary": "Source prompt pack only. Anticipatory execution requires fresh state and a live qualified executor; consequential actions retain existing action-specific authority."
+}

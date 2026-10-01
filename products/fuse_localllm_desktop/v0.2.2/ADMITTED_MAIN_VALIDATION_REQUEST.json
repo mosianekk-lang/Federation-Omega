@@ -1,0 +1,20 @@
+{
+  "schema": "FUSE_LOCALLLM_DESKTOP_ADMITTED_MAIN_VALIDATION_REQUEST_V1",
+  "version": "1.0.0",
+  "product_version": "0.2.2",
+  "admitted_main_parent": "d45efae2fb6bee8d30eb05599c2281829b0208f5",
+  "validation_targets": [
+    "EXACT_DRIVE_SOURCE_CUSTODY",
+    "NATIVE_WINDOWS_BUILD",
+    "NO_MODEL_RUNTIME_HEALTH",
+    "PORTABLE_PACKAGE",
+    "SHA256SUMS_SYNTAX_AND_RECOMPUTE",
+    "IMMUTABLE_WORKFLOW_ARTIFACT"
+  ],
+  "prior_failure_genes": [
+    "LOCALLLM-WINBUILD-001",
+    "LOCALLLM-WINPKG-001"
+  ],
+  "release_promotion_requested": false,
+  "truth_boundary": "VALIDATION_REQUEST != VALIDATION_PASS != OWNER_PC_RUNTIME != MODEL_INFERENCE != STABLE_RELEASE"
+}

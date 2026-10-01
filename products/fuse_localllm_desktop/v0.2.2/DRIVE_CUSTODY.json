@@ -1,0 +1,19 @@
+{
+  "schema": "FUSE-LOCALLLM-DESKTOP-DRIVE-CUSTODY-V1",
+  "version": "1.0.0",
+  "product": "FUSE LocalLLM Desktop",
+  "product_version": "0.2.2",
+  "source_drive_folder_id": "1sPpaA8G4ZkEy-4WkC_Ph81QOs4fiYj61",
+  "source_manifest_drive_id": "1Z2XG4r7IY3aZPY4ejYe_N6bsMZu7aCm-",
+  "source_manifest_sha256": "723a7cf4c3e8f87425884a0e8b8a077740e73b99d4d5875073f689d0ace45ffb",
+  "source_file_count": 21,
+  "imported_file_count": 22,
+  "excluded_generated": [
+    "tests/__pycache__/test_product.cpython-313.pyc"
+  ],
+  "llama_cpp_commit": "60081bb2b5b3294165a4d67c5cbeebe74c868014",
+  "source_import_method": "RAW_GOOGLE_DRIVE_BYTES_TO_GIT_BLOBS",
+  "all_non_generated_manifest_hashes_verified": true,
+  "authority_expansion": false,
+  "truth_boundary": "DRIVE_SOURCE_BYTE_CUSTODY_VERIFIED != HOSTED_WINDOWS_BUILD_VERIFIED != OWNER_WINDOWS_RUNTIME_VERIFIED != INSTALLER_VERIFIED"
+}

@@ -54,3 +54,33 @@ For every owner-facing mission update:
 10. If the current surface cannot continue automatically, emit exact continuation state rather than a final-looking narrative.
 
 **GREEN ≠ DONE. CHECKPOINT ≠ TERMINAL. PACKETS DONE ≠ MISSION ACCEPTED.**
+
+## Durable terminal debt / zero-debt finality
+
+The existing AAREK, MBMPC-PILF closure bridge, Master Bible Portfolio Compiler and commercial maturity courts may discover declarative terminal/stage/gap debt. FUSE Autonomic Completion must preserve applicable mandatory debt through `TerminalDebtLedger` rather than relying on a single chat/client to remember it.
+
+For governed missions with a terminal-debt profile:
+
+1. reconcile mandatory terminal predicates into durable RunStore debt;
+2. preserve a maturity vector per predicate;
+3. compute dependency-ready debt;
+4. compile a collision-safe `AutonomousDebtBurner` wave;
+5. use existing authority/routing/executor organs to close the debt;
+6. require semantic/proof evidence before maturity is marked passed;
+7. recompile after every material outcome;
+8. continue automatically while safe machine-ready debt exists.
+
+Hard floor:
+
+`OPEN_MANDATORY_TERMINAL_DEBT == 0`
+
+before `COMPLETE_VERIFIED`, `PRODUCTION_VERIFIED` or `COMMERCIAL_READY_VERIFIED` may be presented for a profile that requires terminal debt.
+
+Packet completion, source admission, CI success, installer creation, artifact upload, provider ACK or one successful runtime cannot silently clear unrelated maturity debt.
+
+A blocked debt is scoped to its causal intersection. Disjoint READY debt must continue.
+
+A debt that lacks an executor/handler becomes an explicit capability gap and is routed through reuse -> rebind -> repair -> extend -> compose -> lawful harvest -> minimum residual build. It is not discarded.
+
+For the Local Sovereign AI product mission, load `governance/fuse_local_sovereign_ai_finality_v2.json`.
+

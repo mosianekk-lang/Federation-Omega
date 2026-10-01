@@ -1,0 +1,116 @@
+{
+  "schema": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
+  "version": "2.0.0",
+  "contract_id": "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-002",
+  "enabled": true,
+  "authority": "START:FUSE_ONE",
+  "mission_reuse": "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+  "predecessor": {
+    "version": "1.0.0",
+    "main_sha": "52742a8e32dfe0e246a09e330552150311b4c5cd",
+    "config_path": "config/fuse-google-intelligence-runtime-v1.json",
+    "prompt_path": "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md",
+    "prompt_sha256": "5622203476ab7d2952ed738a14242077199373973815794ad0fd8cf1d18b1e2b",
+    "rollback_preserved": true
+  },
+  "prompt_path": "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md",
+  "prompt_sha256": "325cdb3384fc3196d2f4778e9736f168e64b7344467cdb5c78fb42dd53ba4018",
+  "primary_google_protocol": "VERTEX_AI_INTERACTIONS_REST",
+  "primary_google_model_candidate": "gemini-3.8-flash",
+  "incumbent_google_protocol": "VERTEX_AI_GENERATE_CONTENT_REST",
+  "incumbent_google_model": "gemini-2.5-flash",
+  "champion_state": "CANDIDATE_REQUIRES_MATCHED_COURT",
+  "auth_preference": "WIF_ADC",
+  "interactions_endpoint_template": "https://aiplatform.googleapis.com/v1beta1/projects/{project}/locations/global/interactions",
+  "sensitive_default_store": false,
+  "canonical_memory": [
+    "KDV",
+    "BIBLE_MEMORY_FABRIC",
+    "MISSION_BUS"
+  ],
+  "formation_modes": [
+    "FAST",
+    "FUSION",
+    "ADVERSARIAL",
+    "FORMATION",
+    "DEEP",
+    "LIVE",
+    "CHAMPION_TOURNAMENT"
+  ],
+  "capability_cells": {
+    "GOOGLE_GEMINI_INTERACTIONS_CORE": {
+      "model": "gemini-3.8-flash",
+      "proof": "REQUIRES_PROVIDER_SEMANTIC_READBACK"
+    },
+    "GOOGLE_VERTEX_GENERATECONTENT_ROLLBACK": {
+      "model": "gemini-2.5-flash",
+      "proof": "V1_VERIFIED_SCOPED"
+    },
+    "GOOGLE_GEMINI_LIVE": {
+      "model": "gemini-3.8-live",
+      "proof": "UNVERIFIED"
+    },
+    "GOOGLE_GEMINI_LIVE_EXTENDED_THINKING": {
+      "model": "gemini-3.8-live-extended-thinking",
+      "proof": "UNVERIFIED"
+    },
+    "GOOGLE_DEEP_RESEARCH": {
+      "proof": "UNVERIFIED"
+    },
+    "GOOGLE_SEARCH_GROUNDED": {
+      "proof": "UNVERIFIED"
+    },
+    "GOOGLE_CODE_EXECUTION": {
+      "proof": "UNVERIFIED"
+    },
+    "GOOGLE_FILE_SEARCH": {
+      "proof": "UNVERIFIED"
+    },
+    "GOOGLE_REMOTE_MCP": {
+      "proof": "UNVERIFIED"
+    },
+    "GOOGLE_AI_STUDIO_BUILD": {
+      "proof": "CONTROL_SURFACE_ONLY"
+    },
+    "GOOGLE_AI_STUDIO_GITHUB": {
+      "proof": "REQUIRES_PROVIDER_BINDING"
+    },
+    "GOOGLE_MANAGED_AGENT": {
+      "proof": "DEPRECATION_SENSITIVE_NOT_FOUNDATIONAL"
+    }
+  },
+  "interaction_required_readback": [
+    "provider_identity",
+    "model_identity",
+    "protocol",
+    "interaction_id",
+    "interaction_status",
+    "semantic_nonce",
+    "usage",
+    "latency_ms",
+    "observed_at",
+    "response_digest"
+  ],
+  "hard_gates": [
+    "AUTHORITY",
+    "PRIVACY",
+    "CURRENTNESS",
+    "CAPABILITY",
+    "BUDGET",
+    "PROOF_FLOOR",
+    "RECOVERY_FLOOR"
+  ],
+  "cross_provider_fusion_requires_independent_domains": true,
+  "provider_output_can_expand_authority": false,
+  "ai_studio_can_promote_canonical_truth": false,
+  "secret_payload_to_model": false,
+  "unknown_effect_requires_readback": true,
+  "matched_champion_promotion_required": true,
+  "truth_boundary": "V2_PROMPT_BOUND!=V2_SOURCE_ADMITTED!=INTERACTIONS_CALLABLE!=GEMINI_3_8_SEMANTIC_VERIFIED!=CHAMPION_PROMOTED!=LIVE_VERIFIED!=RESEARCH_VERIFIED!=MCP_EFFECT_VERIFIED!=CROSS_PROVIDER_FUSION_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE",
+  "creates_new_controller": false,
+  "creates_new_scheduler": false,
+  "creates_new_mission_bus": false,
+  "creates_new_authority_root": false,
+  "creates_new_truth_memory_proof_root": false,
+  "ai_studio_role": "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME"
+}

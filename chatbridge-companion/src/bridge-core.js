@@ -333,8 +333,8 @@
   }
 
   function shouldPreempt(metrics, settings) {
-    const tokenThreshold = Number(settings && settings.tokenThreshold) || 65000;
-    const messageThreshold = Number(settings && settings.messageThreshold) || 80;
+    const tokenThreshold = Number(settings && settings.tokenThreshold) || 24000;
+    const messageThreshold = Number(settings && settings.messageThreshold) || 32;
     return Number(metrics.estimatedRenderedTokens) >= tokenThreshold || Number(metrics.renderedMessageCount) >= messageThreshold;
   }
 

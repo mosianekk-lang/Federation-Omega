@@ -1,0 +1,120 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.1.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "benchmarks/developer1000-public-signal-manifest-v1.json",
+        "benchmarks/output_mirror_v*.mjs",
+        "config/chatgpt-power-diary-v1.json",
+        "config/fuse-24x7-autonomy-v1.json",
+        "config/fuse-bootstrap-inheritance-v*.json",
+        "config/fuse-bootstrap-memory-snapshot-v1.json",
+        "config/fuse-bootstrap-self-improvement-v1.json",
+        "config/fuse-chatgpt-failure-repair-v1.json",
+        "config/fuse-constraint-routing-v1.json",
+        "config/fuse-directive-fidelity-*.json",
+        "config/fuse-estate-automation-prompts-v1a.json",
+        "config/fuse-failure-repair-prompts-v1.json",
+        "config/fuse-forest-first-*.json",
+        "config/fuse-output-mirror-v*.json",
+        "config/fuse-parallel-frontend-continuity-v1.json",
+        "config/fuse-sovereign-power-diary-v2.json",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "fuse_runtime/autonomous_improvement_loop_v1.mjs",
+        "fuse_runtime/historical_backfill_runner_v1.mjs",
+        "fuse_runtime/output_mirror_v*.mjs",
+        "governance/proofos_omega_policy_extension_fuse_output_mirror_runtime_v1.json"
+      ],
+      "reason": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_AUTONOMY_AND_RUNTIME_CONTRACT"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_OUTPUT_MIRROR_RUNTIME",
+      "patterns": [
+        "benchmarks/developer1000-public-signal-manifest-v1.json",
+        "benchmarks/output_mirror_v*.mjs",
+        "config/chatgpt-power-diary-v1.json",
+        "config/fuse-24x7-autonomy-v1.json",
+        "config/fuse-bootstrap-inheritance-v*.json",
+        "config/fuse-bootstrap-memory-snapshot-v1.json",
+        "config/fuse-bootstrap-self-improvement-v1.json",
+        "config/fuse-chatgpt-failure-repair-v1.json",
+        "config/fuse-constraint-routing-v1.json",
+        "config/fuse-directive-fidelity-*.json",
+        "config/fuse-estate-automation-prompts-v1a.json",
+        "config/fuse-failure-repair-prompts-v1.json",
+        "config/fuse-forest-first-*.json",
+        "config/fuse-output-mirror-v*.json",
+        "config/fuse-parallel-frontend-continuity-v1.json",
+        "config/fuse-sovereign-power-diary-v2.json",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "fuse_runtime/autonomous_improvement_loop_v1.mjs",
+        "fuse_runtime/historical_backfill_runner_v1.mjs",
+        "fuse_runtime/output_mirror_v*.mjs",
+        "governance/proofos_omega_policy_extension_fuse_output_mirror_runtime_v1.json",
+        "tests/test_proofos_fuse_output_mirror_runtime_mapping.py",
+        "tests/test_fuse_output_mirror_runtime_contract_court.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_output_mirror_runtime_contract_court",
+      "kind": "unittest_glob",
+      "target": "test_fuse_output_mirror_runtime_contract_court.py",
+      "patterns": [
+        "benchmarks/developer1000-public-signal-manifest-v1.json",
+        "benchmarks/output_mirror_v*.mjs",
+        "config/chatgpt-power-diary-v1.json",
+        "config/fuse-24x7-autonomy-v1.json",
+        "config/fuse-bootstrap-inheritance-v*.json",
+        "config/fuse-bootstrap-memory-snapshot-v1.json",
+        "config/fuse-bootstrap-self-improvement-v1.json",
+        "config/fuse-chatgpt-failure-repair-v1.json",
+        "config/fuse-constraint-routing-v1.json",
+        "config/fuse-directive-fidelity-*.json",
+        "config/fuse-estate-automation-prompts-v1a.json",
+        "config/fuse-failure-repair-prompts-v1.json",
+        "config/fuse-forest-first-*.json",
+        "config/fuse-output-mirror-v*.json",
+        "config/fuse-parallel-frontend-continuity-v1.json",
+        "config/fuse-sovereign-power-diary-v2.json",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "fuse_runtime/autonomous_improvement_loop_v1.mjs",
+        "fuse_runtime/historical_backfill_runner_v1.mjs",
+        "fuse_runtime/output_mirror_v*.mjs",
+        "governance/proofos_omega_policy_extension_fuse_output_mirror_runtime_v1.json",
+        "tests/test_fuse_output_mirror_runtime_contract_court.py",
+        "governance/proofos_omega_policy_extension_fuse_output_mirror_runtime_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_OUTPUT_MIRROR_RUNTIME"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 600
+    },
+    {
+      "id": "proofos_fuse_output_mirror_runtime_mapping",
+      "kind": "unittest_glob",
+      "target": "test_proofos_fuse_output_mirror_runtime_mapping.py",
+      "patterns": [
+        "governance/proofos_omega_policy_extension_fuse_output_mirror_runtime_v1.json",
+        "tests/test_proofos_fuse_output_mirror_runtime_mapping.py"
+      ],
+      "subsystems": [
+        "FUSE_OUTPUT_MIRROR_RUNTIME"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 300
+    }
+  ]
+}

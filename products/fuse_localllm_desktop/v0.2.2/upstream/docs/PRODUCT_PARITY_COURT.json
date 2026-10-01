@@ -1,0 +1,40 @@
+{
+  "schema": "FUSE-LOCAL-LLM-PRODUCT-PARITY-COURT-V1",
+  "failure_fingerprint": "DEVELOPER_BUNDLE_PRESENTED_AS_DESKTOP_PRODUCT",
+  "observed_from_owner_screenshot": {
+    "fuse_v011": "Explorer-visible source/build bundle with config/docs/include/scripts/src/tests and BUILD_INSTALL_RUN_WINDOWS.cmd",
+    "competitor": "Installed desktop application with chat-first surface, sidebar navigation, history, model picker and settings"
+  },
+  "root_cause": "v0.1.1 optimized runtime/backend proof but did not compile the owner-facing product terminal predicates into the build.",
+  "mechanisms_harvested": [
+    "separate background inference service + desktop shell",
+    "chat-first application instead of source-folder-first UX",
+    "persistent conversation history",
+    "model picker/model management",
+    "runtime status/settings",
+    "installer/start-menu/desktop entry",
+    "streaming response UX",
+    "ecosystem compatibility endpoints"
+  ],
+  "v020_predicates": {
+    "CHAT_FIRST_UI": "PASS_SOURCE",
+    "SIDEBAR_NAVIGATION": "PASS_SOURCE",
+    "CHAT_HISTORY": "PASS_SOURCE",
+    "LOCAL_MODEL_PICKER": "PASS_SOURCE",
+    "GGUF_SCAN": "PASS_SOURCE",
+    "MODEL_SWITCH_API": "PASS_SOURCE",
+    "STREAMING_CHAT": "PASS_SOURCE",
+    "OPENAI_API_COMPAT": "PASS_SOURCE",
+    "OLLAMA_COMPAT_CORE_ENDPOINTS": "PASS_SOURCE",
+    "SETTINGS_UI": "PASS_SOURCE",
+    "TEXT_CODE_ATTACHMENTS": "PASS_SOURCE",
+    "NO_TERMINAL_NORMAL_LAUNCH": "PASS_SOURCE",
+    "START_MENU_DESKTOP_SHORTCUTS": "PASS_SOURCE",
+    "WINDOWS_PRODUCT_BUILD": "OPEN_PHYSICAL_WINDOWS",
+    "OWNER_QWEN_15GB_LOAD": "OPEN_PHYSICAL_WINDOWS",
+    "GPU_AUTODETECT_RUNTIME": "OPEN_PHYSICAL_WINDOWS",
+    "SYSTEM_TRAY": "OPEN",
+    "MODEL_DOWNLOAD_CATALOG": "OPEN",
+    "MULTIMODAL_IMAGE_PDF": "OPEN"
+  }
+}

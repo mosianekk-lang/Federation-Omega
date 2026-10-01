@@ -3,7 +3,8 @@
     "auto_continue_with_mission_recompiler": true,
     "explicit_court_required": true,
     "missing_gates_recompile": true,
-    "packet_completion_is_not_commercial_proof": true
+    "packet_completion_is_not_commercial_proof": true,
+    "zero_terminal_debt_required_before_terminal_report": true
   },
   "learning": {
     "chain_of_thought": false,
@@ -36,7 +37,7 @@
     "IRREDUCIBLE_EXTERNAL_BOUNDARY",
     "SAFETY_OR_AUTHORITY_BOUNDARY"
   ],
-  "version": "5.0.2",
+  "version": "5.1.0",
   "finality_presentation": {
     "packet_completion_is_not_terminal_acceptance": true,
     "explicit_terminal_court_required_for_noncommercial_success": true,
@@ -56,6 +57,23 @@
       "IRREDUCIBLE_OWNER_DECISION",
       "IRREDUCIBLE_EXTERNAL_BOUNDARY",
       "SAFETY_OR_AUTHORITY_BOUNDARY"
+    ],
+    "open_mandatory_terminal_debt_forces_active_build": true,
+    "terminal_report_requires_zero_mandatory_terminal_debt": true
+  },
+  "terminal_debt": {
+    "schema": "FUSE-TERMINAL-DEBT-V1",
+    "enabled": true,
+    "mandatory_open_debt_terminal_floor": 0,
+    "durable_store": "RunStore.terminal_debt",
+    "debt_burner": "AutonomousDebtBurner",
+    "readiness": "DEPENDENCIES_CLOSED_AND_BLOCKERS_EMPTY_AND_AUTHORITY_VALID",
+    "selection": "TERMINAL_UNLOCK_X_PRIORITY_DIV_COST_WITH_COLLISION_SAFE_WAVES",
+    "blocked_lane_scope": "LOCAL_CAUSAL_INTERSECTION_ONLY",
+    "second_same_semantic_failure": "CHANGED_MECHANISM_REQUIRED",
+    "packet_completion_may_not_clear_debt_without_evidence": true,
+    "product_profiles": [
+      "governance/fuse_local_sovereign_ai_finality_v2.json"
     ]
   }
 }

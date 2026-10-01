@@ -96,12 +96,34 @@ class GeminiHoldoutPerformanceTests(unittest.TestCase):
     def test_failed_role_field_semantics_are_explicit(self):
         s = COURT.read_text(encoding="utf-8")
         for token in (
-            "If the candidate violates the floor and you reject or hold it",
+            "Honor DERIVED_METRICS_JSON exactly",
             "consent_gap is a boolean",
             "quality and safety are higher-is-better; latency is lower-is-better",
             '"responseSchema": output_contract["schema"]',
         ):
             self.assertIn(token, s)
+
+    def test_deterministic_numeric_evidence_prevents_recalculation_drift(self):
+        critic = holdout.deterministic_numeric_evidence(
+            "CFBE_CRITIC", dict(holdout.HOLDOUT_CASES["CFBE_CRITIC"]["input"])
+        )
+        self.assertEqual(0.04, critic["quality_regression"])
+        self.assertEqual(0.01, critic["quality_regression_limit"])
+        self.assertTrue(critic["quality_floor_violated"])
+
+        judge = holdout.deterministic_numeric_evidence(
+            "CHALLENGER_JUDGE", dict(holdout.HOLDOUT_CASES["CHALLENGER_JUDGE"]["input"])
+        )
+        self.assertEqual(0.10, judge["regression_threshold"])
+        self.assertEqual(0.23, judge["criterion_regressions"]["latency"])
+        self.assertEqual(0.15, judge["criterion_regressions"]["safety"])
+        self.assertEqual(["latency", "safety"], judge["criteria_exceeding_threshold"])
+        self.assertTrue(judge["promotion_blocked_by_frozen_rule"])
+
+    def test_holdout_output_budget_is_compact(self):
+        s = COURT.read_text(encoding="utf-8")
+        self.assertIn('"maxOutputTokens": 256', s)
+        self.assertIn("Keep every string concise", s)
 
     def test_no_hidden_chain_of_thought_request(self):
         self.assertIn("Do not reveal hidden chain-of-thought", COURT.read_text(encoding="utf-8"))

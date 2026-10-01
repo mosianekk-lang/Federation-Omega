@@ -1,0 +1,186 @@
+{
+  "schema": "FUSE_UNIFIED_CAPABILITY_FABRIC_V1",
+  "version": "1.0.0",
+  "parent_facade": "FUSE Ecosystem v1",
+  "sovereign_controller_created": false,
+  "purpose": "Expose the existing FUSE/Federation capability estate as one owner-facing system with one intent ingress, one capability resolution contract, one transactional execution spine, one proof chain and one delivery surface.",
+  "owner_experience": "ONE_FUSE_SYSTEM",
+  "canonical_path": [
+    "OWNER_INTENT",
+    "estate.resolve",
+    "CAPABILITY_FAMILY_COMPOSITION",
+    "SERVICE_CONTRACT_SELECTION",
+    "runtime.transactional",
+    "QUALIFIED_EXECUTION_CARRIERS",
+    "SEMANTIC_EFFECT_READBACK",
+    "observability.agent",
+    "PROOFOS_REALITY_JUDGE",
+    "OUTPUT_MIRROR",
+    "artifact.workspace",
+    "OWNER"
+  ],
+  "service_count": 35,
+  "registered_services": [
+    "research.deep",
+    "agent.action",
+    "agent.multi",
+    "model.council",
+    "code.agentic",
+    "creative.studio",
+    "design.graph",
+    "compute.symbolic",
+    "product.foundry",
+    "runtime.application",
+    "data.analytics",
+    "data.query",
+    "data.stream",
+    "model.lifecycle",
+    "identity.workload",
+    "knowledge.enterprise",
+    "memory.continuum",
+    "workflow.enterprise",
+    "communications.enterprise",
+    "device.computer",
+    "edge.runtime",
+    "security.agent",
+    "security.scb",
+    "observability.agent",
+    "marketplace.capability",
+    "migration.semantic",
+    "release.progressive",
+    "supplychain.attestation",
+    "simulation.digital_twin",
+    "commercial.product",
+    "artifact.workspace",
+    "ecosystem.harvest",
+    "estate.resolve",
+    "strategy.intelligence",
+    "runtime.transactional"
+  ],
+  "capability_families": {
+    "INTELLIGENCE": [
+      "model.council",
+      "agent.multi",
+      "strategy.intelligence"
+    ],
+    "RESEARCH_KNOWLEDGE": [
+      "research.deep",
+      "knowledge.enterprise",
+      "memory.continuum"
+    ],
+    "EXECUTION_AUTOMATION": [
+      "agent.action",
+      "workflow.enterprise",
+      "runtime.transactional",
+      "runtime.application"
+    ],
+    "DEVELOPER_PRODUCT": [
+      "code.agentic",
+      "product.foundry",
+      "migration.semantic",
+      "release.progressive",
+      "commercial.product"
+    ],
+    "CREATIVE_DESIGN": [
+      "creative.studio",
+      "design.graph",
+      "artifact.workspace"
+    ],
+    "DATA_ANALYTICS": [
+      "data.analytics",
+      "data.query",
+      "data.stream",
+      "model.lifecycle"
+    ],
+    "SYMBOLIC_SIMULATION": [
+      "compute.symbolic",
+      "simulation.digital_twin"
+    ],
+    "SECURITY_TRUST": [
+      "identity.workload",
+      "security.agent",
+      "security.scb",
+      "supplychain.attestation"
+    ],
+    "COMMUNICATIONS": [
+      "communications.enterprise"
+    ],
+    "DEVICE_EDGE": [
+      "device.computer",
+      "edge.runtime"
+    ],
+    "MARKET_CAPABILITY": [
+      "marketplace.capability",
+      "ecosystem.harvest",
+      "estate.resolve"
+    ],
+    "OBSERVABILITY_PROOF": [
+      "observability.agent"
+    ]
+  },
+  "resolution_law": [
+    "RESOLVE_EXISTING_CAPABILITY_BEFORE_BUILD",
+    "COMPOSE_CROSS_FAMILY_CAPABILITIES_BY_OUTCOME",
+    "SELECT_PROVIDER_ONLY_AFTER_SERVICE_AND_AUTHORITY_RESOLUTION",
+    "PRESERVE_MISSION_IDENTITY_AND_CHECKPOINTS",
+    "NO_DUPLICATE_CONTROLLER_OR_PRODUCT_ROOT",
+    "BUILD_ONLY_TRUE_RESIDUAL_CAPABILITY",
+    "PROMOTE_NEW_RESIDUAL_INTO_EXISTING_FAMILY",
+    "KEEP_PROVIDER_ADAPTERS_REPLACEABLE",
+    "READBACK_BEFORE_EFFECT_RETRY",
+    "PROVE_BEFORE_TERMINAL_DELIVERY"
+  ],
+  "owner_command_compiler": {
+    "input": "OWNER_OUTCOME",
+    "output": "UNIFIED_MISSION_GRAPH",
+    "automatic": [
+      "historical_recall",
+      "estate_census",
+      "currentness",
+      "family_selection",
+      "service_composition",
+      "route_election",
+      "safe_parallelism",
+      "recovery",
+      "proof",
+      "delivery"
+    ],
+    "owner_should_not_choose": [
+      "provider",
+      "model",
+      "connector",
+      "runtime",
+      "tool_chain",
+      "retry_strategy",
+      "internal_service"
+    ]
+  },
+  "creative_policy": {
+    "canonical_target": "OWNER_CREATIVE_INTENT",
+    "route": "creative.studio + design.graph + artifact.workspace + supporting intelligence/research/product/runtime services as required",
+    "platform_limit_response": "REROUTE_OR_COMPOSE"
+  },
+  "build_policy": {
+    "route": "code.agentic + product.foundry + runtime.application + release.progressive + supplychain.attestation + observability.agent",
+    "source_is_terminal": false
+  },
+  "research_policy": {
+    "route": "research.deep + knowledge.enterprise + model.council + observability.agent",
+    "groundedness_required": true
+  },
+  "automation_policy": {
+    "route": "workflow.enterprise + agent.action + runtime.transactional + observability.agent",
+    "owner_debugging_default": false
+  },
+  "proof_policy": {
+    "route": "observability.agent + supplychain.attestation + existing ProofOS/Reality Judge + Output Mirror",
+    "terminal_delivery_requires_proof": true
+  },
+  "family_convergence": {
+    "external_capability_default": "ENRICH_EXISTING_FAMILY",
+    "overlapping_system_default": "MERGE_ALIAS_RETIRE_OR_ADAPT",
+    "algorithm_default": "INTERNAL_IMPLEMENTATION_CANDIDATE_NOT_PRODUCT",
+    "product_surface_default": "ONE_FUSE_ECOSYSTEM"
+  },
+  "truth_boundary": "UNIFIED_SOURCE_CONTRACT_DOES_NOT_BY_ITSELF_PROVE_ALL_PROVIDER_BINDINGS_OR_ALL_RUNTIME_SERVICES_CURRENTLY_HEALTHY"
+}

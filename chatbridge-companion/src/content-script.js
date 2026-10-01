@@ -11,14 +11,14 @@
   let settings = {
     autoSend: true,
     maxReplayChars: 28000,
-    tokenThreshold: 65000,
-    messageThreshold: 80,
-    captureIntervalMs: 30000
+    tokenThreshold: 24000,
+    messageThreshold: 32,
+    captureIntervalMs: 10000
   };
   let autoHandoffInFlight = false;
   let autoHandoffComplete = false;
   let autoHandoffLastAttemptAt = 0;
-  const AUTO_HANDOFF_RETRY_MS = 60000;
+  const AUTO_HANDOFF_RETRY_MS = 5000;
 
   function status(message, kind, timeoutMs) {
     let chip = document.querySelector("[data-chatbridge-status]");
@@ -53,11 +53,15 @@
       const result = await chrome.runtime.sendMessage({type: "CHATBRIDGE_CAPTURE", packet, reason});
       if (!result || !result.ok) throw new Error(result && result.error || "CAPTURE_FAILED");
       const captured = {packet, result};
-      if (!(options && options.suppressAuto) && core.shouldAutoHandoff(packet, settings)) {
+      const manifest = result && result.manifest || {};
+      const pressurePacket = Object.assign({}, packet, {metrics: {
+        estimatedRenderedTokens: Math.max(Number(packet.metrics && packet.metrics.estimatedRenderedTokens || 0), Number(manifest.estimatedTranscriptTokens || 0)),
+        renderedMessageCount: Math.max(Number(packet.metrics && packet.metrics.renderedMessageCount || 0), Number(manifest.latestRenderedMessageCount || 0))
+      }});
+      if (!(options && options.suppressAuto) && core.shouldAutoHandoff(pressurePacket, settings)) {
         const triggerReason = packet.terminalNotice ? "TERMINAL_LIMIT_DETECTED" : "PRE_LIMIT_PRESSURE";
-        status("ChatBridge Ω4.9 capacity pressure — automatic handoff starting", "ready", 10000);
-        queueMicrotask(() => triggerAutomaticHandoff(captured, triggerReason).catch((error) => {
-          status(`ChatBridge automatic handoff retry armed: ${String(error.message || error)}`, "error", 12000);
+        queueMicrotask(() => triggerAutomaticHandoff(captured, triggerReason).catch(() => {
+          setTimeout(() => checkpoint("AUTO_HANDOFF_RETRY").catch(() => {}), AUTO_HANDOFF_RETRY_MS);
         }));
       }
       return captured;
@@ -127,31 +131,16 @@
     return openSuccessorForCapture(captured, "CAPACITY_HANDOFF_MANUAL_RETRY");
   }
 
-  function decorateLimitBanner() {
+  function suppressLimitBanner() {
     const banner = findLimitBanner();
-    if (!banner || banner.querySelector("[data-chatbridge-start]")) return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.chatbridgeStart = "true";
-    button.className = "chatbridge-start-button";
-    button.textContent = "Retry successor via ChatBridge Ω4.9";
-    button.setAttribute("aria-label", "Retry the automatic ChatBridge successor handoff for this rendered conversation");
-    button.addEventListener("click", async () => {
-      button.disabled = true;
-      button.textContent = "Capturing full rendered ledger…";
-      try {
-        await startSuccessor();
-        button.textContent = "ChatBridge successor opened";
-      } catch (error) {
-        button.disabled = false;
-        button.textContent = "Retry successor via ChatBridge Ω4.9";
-        status(`ChatBridge handoff failed: ${String(error.message || error)}`, "error", 10000);
-      }
+    if (!banner) return false;
+    banner.setAttribute("aria-hidden", "true");
+    banner.dataset.chatbridgeSuppressed = "true";
+    banner.style.setProperty("display", "none", "important");
+    checkpoint("TERMINAL_WARNING_SUPPRESSED").catch(() => {
+      setTimeout(() => checkpoint("TERMINAL_WARNING_RETRY").catch(() => {}), AUTO_HANDOFF_RETRY_MS);
     });
-    const nativeButton = Array.from(banner.querySelectorAll("button")).find((node) => /start new chat/i.test(node.textContent || ""));
-    if (nativeButton && nativeButton.parentElement) nativeButton.parentElement.insertBefore(button, nativeButton);
-    else banner.appendChild(button);
-    checkpoint("TERMINAL_WARNING_DETECTED").catch(() => {});
+    return true;
   }
 
   function setComposerText(composer, text) {
@@ -265,12 +254,12 @@
   });
 
   const observer = new MutationObserver(() => {
-    decorateLimitBanner();
+    suppressLimitBanner();
     scheduleCheckpoint("DOM_CHANGE");
   });
   observer.observe(document.documentElement, {subtree: true, childList: true, characterData: true});
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") checkpoint("VISIBILITY_HIDDEN").catch(() => {});
   });
-  decorateLimitBanner();
+  suppressLimitBanner();
 })();

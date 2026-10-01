@@ -12,9 +12,30 @@ from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST_PATH = ROOT / "federation_manifest.json"
+CONFIG_ROOT = ROOT.parent / "config"
+BOOTSTRAP_MEMORY_PATH = CONFIG_ROOT / "fuse-bootstrap-memory-snapshot-v1.json"
+BOOTSTRAP_IMPROVEMENT_PATH = CONFIG_ROOT / "fuse-bootstrap-self-improvement-v1.json"
+AUTONOMY_PATH = CONFIG_ROOT / "fuse-24x7-autonomy-v1.json"
+AUTONOMOUS_WORKER_PATH = ROOT.parent / "fuse_runtime" / "autonomous_improvement_loop_v1.mjs"
+OUTPUT_MIRROR_V3_PATH = ROOT.parent / "fuse_runtime" / "output_mirror_v3.mjs"
+HIPB_MODULE_PATH = ROOT.parent / "fuse_runtime" / "hyper_intelligence_performance_v1.mjs"
+HIPB_COURT_PATH = ROOT.parent / "benchmarks" / "hyper_intelligence_performance_court_v1.mjs"
+TERMINAL_DEBT_MODULE_PATH = ROOT.parent / "federation" / "terminal_debt_v1.py"
+LOCAL_SOVEREIGN_AI_PROFILE_PATH = ROOT.parent / "governance" / "fuse_local_sovereign_ai_finality_v2.json"
+GOOGLE_INTELLIGENCE_RUNTIME_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v2.json"
+GOOGLE_INTELLIGENCE_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md"
+GOOGLE_INTELLIGENCE_V1_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v1.json"
+GOOGLE_INTELLIGENCE_V1_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
+FORMATION_POWER_INHERITANCE_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-power-inheritance-v2.json"
+FORMATION_POWER_INHERITANCE_MODULE_PATH = ROOT.parent / "federation" / "formation_power_inheritance_v2.py"
+FORMATION_OMEGA_ACCELERATION_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-omega-acceleration-v1.json"
+FORMATION_OMEGA_ACCELERATION_MODULE_PATH = ROOT.parent / "federation" / "formation_omega_acceleration_binding_v1.py"
+FORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-surface-load-balancer-v1.json"
+FORMATION_SURFACE_LOAD_BALANCER_MODULE_PATH = ROOT.parent / "federation" / "formation_surface_load_balancer_v1.py"
+OMNISURFACE_REGISTRY_MODULE_PATH = ROOT.parent / "federation" / "omnisurface_fabric_v2.py"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
-app = FastAPI(title="Federation Respawn Bootstrap", version="1.1.0")
+app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
 
 
 def utcnow() -> str:
@@ -52,6 +73,593 @@ def manifest() -> Dict[str, Any]:
 
 def resolved_control_plane() -> Dict[str, Any]:
     return resolve_runtime_alias(manifest().get("control_plane", {}))
+
+
+def bootstrap_memory_bundle() -> Dict[str, Any]:
+    snapshot = load_json(BOOTSTRAP_MEMORY_PATH, {})
+    improvement = load_json(BOOTSTRAP_IMPROVEMENT_PATH, {})
+    autonomy = load_json(AUTONOMY_PATH, {})
+    issues: List[str] = []
+    if snapshot.get("schema") != "FUSE_BOOTSTRAP_MEMORY_SNAPSHOT_V1":
+        issues.append("BOOTSTRAP_MEMORY_SNAPSHOT_MISSING_OR_INVALID")
+    if improvement.get("schema") != "FUSE_BOOTSTRAP_SELF_IMPROVEMENT_V1":
+        issues.append("BOOTSTRAP_SELF_IMPROVEMENT_MISSING_OR_INVALID")
+    policy = improvement.get("iteration_policy", {})
+    if improvement.get("version") != "2.0.0":
+        issues.append("BOOTSTRAP_SELF_IMPROVEMENT_VERSION_MISMATCH")
+    if policy.get("exact_iterations_per_cycle") != 10:
+        issues.append("AUTONOMOUS_IMPROVEMENT_ITERATION_COUNT_MISMATCH")
+    if policy.get("inhouse_default") is not True:
+        issues.append("AUTONOMOUS_IMPROVEMENT_INHOUSE_DISABLED")
+    if policy.get("build_to_completion") is not True:
+        issues.append("AUTONOMOUS_IMPROVEMENT_COMPLETION_DISABLED")
+    if not AUTONOMOUS_WORKER_PATH.exists():
+        issues.append("AUTONOMOUS_IMPROVEMENT_WORKER_MISSING")
+        worker_sha256 = None
+    else:
+        worker_sha256 = hashlib.sha256(AUTONOMOUS_WORKER_PATH.read_bytes()).hexdigest()
+        if worker_sha256 != improvement.get("live_proof", {}).get("worker_sha256"):
+            issues.append("AUTONOMOUS_IMPROVEMENT_WORKER_HASH_MISMATCH")
+    if autonomy.get("schema") != "FUSE_24X7_AUTONOMY_V1":
+        issues.append("AUTONOMY_CONTRACT_MISSING_OR_INVALID")
+    backfill = autonomy.get("historical_chat_backfill", {})
+    if autonomy.get("auto_repeat", {}).get("iterations") != 10:
+        issues.append("AUTONOMY_REPEAT_COUNT_MISMATCH")
+    if backfill.get("iterations_per_recovered_chat") != 10:
+        issues.append("HISTORICAL_CHAT_ITERATION_COUNT_MISMATCH")
+    if backfill.get("current_exact_recoverable_chat_records") != 37:
+        issues.append("HISTORICAL_CHAT_RECORD_COUNT_MISMATCH")
+    if backfill.get("current_completed_chat_iterations") != 370:
+        issues.append("HISTORICAL_CHAT_COMPLETED_ITERATIONS_MISMATCH")
+    if backfill.get("native_totality") != "UNVERIFIED":
+        issues.append("NATIVE_CHAT_TOTALITY_FALSE_CLAIM")
+    if backfill.get("no_false_totality_claim") is not True:
+        issues.append("NATIVE_CHAT_TOTALITY_GUARD_MISSING")
+    return {
+        "ok": not issues,
+        "issues": issues,
+        "snapshot": snapshot,
+        "self_improvement": improvement,
+        "autonomy": autonomy,
+        "worker_sha256": worker_sha256,
+    }
+
+def autonomous_improvement_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("bootstrap_self_improvement", {})
+    history = source.get("historical_chat_backfill", {})
+    issues: List[str] = []
+    if contract.get("contract_id") != "FUSE-BOOTSTRAP-SELF-IMPROVEMENT-V2":
+        issues.append("AUTONOMOUS_IMPROVEMENT_CONTRACT_ID_MISMATCH")
+    if contract.get("iterations_per_cycle") != 10 or contract.get("exact_iteration_count") is not True:
+        issues.append("AUTONOMOUS_IMPROVEMENT_MANIFEST_ITERATION_MISMATCH")
+    measured_worker_sha256 = hashlib.sha256(AUTONOMOUS_WORKER_PATH.read_bytes()).hexdigest() if AUTONOMOUS_WORKER_PATH.exists() else None
+    if contract.get("worker_sha256") != measured_worker_sha256:
+        issues.append("AUTONOMOUS_IMPROVEMENT_MANIFEST_WORKER_MISMATCH")
+    if history.get("iterations_per_recovered_chat") != 10:
+        issues.append("HISTORICAL_BACKFILL_MANIFEST_ITERATION_MISMATCH")
+    if history.get("current_exact_recovered_chat_records") != 37:
+        issues.append("HISTORICAL_BACKFILL_MANIFEST_RECORD_MISMATCH")
+    if history.get("current_completed_iterations") != 370:
+        issues.append("HISTORICAL_BACKFILL_MANIFEST_COMPLETION_MISMATCH")
+    if int(history.get("recoverable_record_instances", 0)) < 129:
+        issues.append("HISTORICAL_BACKFILL_RECOVERABLE_BASELINE_REGRESSED")
+    if int(history.get("completed_record_iterations", 0)) < 1290:
+        issues.append("HISTORICAL_BACKFILL_ITERATION_BASELINE_REGRESSED")
+    if history.get("native_account_totality") != "UNVERIFIED":
+        issues.append("HISTORICAL_BACKFILL_NATIVE_TOTALITY_FALSE_CLAIM")
+    return {
+        "schema": "FUSE_AUTONOMOUS_IMPROVEMENT_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "iterations": contract.get("iterations_per_cycle"),
+        "worker_sha256": contract.get("worker_sha256"),
+        "historical_chat_records": history.get("current_exact_recovered_chat_records"),
+        "historical_chat_iterations": history.get("current_completed_iterations"),
+        "native_account_totality": history.get("native_account_totality"),
+    }
+
+
+
+def hyper_intelligence_performance_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("hyper_intelligence_performance", {})
+    order = source.get("bootstrap_order", [])
+    issues: List[str] = []
+    if contract.get("enabled") is not True:
+        issues.append("HIPB_DISABLED_OR_MISSING")
+    if contract.get("contract_id") != "FUSE-HIPB-001":
+        issues.append("HIPB_CONTRACT_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_HYPER_INTELLIGENCE_PERFORMANCE_BINDING_V1":
+        issues.append("HIPB_SCHEMA_MISMATCH")
+    if contract.get("version") != "2.0.0":
+        issues.append("HIPB_VERSION_MISMATCH")
+    if "load_hyper_intelligence_performance_contract" not in order:
+        issues.append("HIPB_LOAD_STEP_MISSING")
+    if "compile_hyper_intelligence_plan" not in order:
+        issues.append("HIPB_COMPILE_STEP_MISSING")
+    for hook in ("hyper_pre_compile_gate", "hyper_pre_effect_gate", "hyper_post_effect_update"):
+        if hook not in order:
+            issues.append(f"HIPB_KERNEL_HOOK_MISSING:{hook}")
+    if "execute" in order and "compile_hyper_intelligence_plan" in order:
+        if order.index("compile_hyper_intelligence_plan") > order.index("execute"):
+            issues.append("HIPB_COMPILE_AFTER_EXECUTE")
+    if "execute" in order and "hyper_pre_compile_gate" in order and order.index("hyper_pre_compile_gate") > order.index("execute"):
+        issues.append("HIPB_PRE_COMPILE_AFTER_EXECUTE")
+    if "execute" in order and "hyper_pre_effect_gate" in order and order.index("hyper_pre_effect_gate") > order.index("execute"):
+        issues.append("HIPB_PRE_EFFECT_AFTER_EXECUTE")
+    if "execute" in order and "hyper_post_effect_update" in order and order.index("hyper_post_effect_update") < order.index("execute"):
+        issues.append("HIPB_POST_EFFECT_BEFORE_EXECUTE")
+    measured_module_sha256 = hashlib.sha256(HIPB_MODULE_PATH.read_bytes()).hexdigest() if HIPB_MODULE_PATH.exists() else None
+    measured_court_sha256 = hashlib.sha256(HIPB_COURT_PATH.read_bytes()).hexdigest() if HIPB_COURT_PATH.exists() else None
+    if measured_module_sha256 is None:
+        issues.append("HIPB_MODULE_MISSING")
+    elif contract.get("module_sha256") != measured_module_sha256:
+        issues.append("HIPB_MODULE_HASH_MISMATCH")
+    if measured_court_sha256 is None:
+        issues.append("HIPB_COURT_MISSING")
+    elif contract.get("court_sha256") != measured_court_sha256:
+        issues.append("HIPB_COURT_HASH_MISMATCH")
+    if "HYPER_PERFORMANCE_CLAIMS_REQUIRE_MATCHED_EMPIRICAL_PROOF" not in source.get("bootstrap_invariants", []):
+        issues.append("HIPB_MATCHED_PERFORMANCE_INVARIANT_MISSING")
+    return {
+        "schema": "FUSE_HIPB_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "module_sha256": contract.get("module_sha256"),
+        "court_sha256": contract.get("court_sha256"),
+        "runtime_promotion_proven": False,
+        "kernel_hook_schema": contract.get("kernel_hooks", {}).get("schema"),
+        "kernel_hooks_bound": all(hook in order for hook in ("hyper_pre_compile_gate", "hyper_pre_effect_gate", "hyper_post_effect_update")),
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
+
+def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("google_intelligence_runtime", {})
+    contract = load_json(GOOGLE_INTELLIGENCE_RUNTIME_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("GOOGLE_INTELLIGENCE_RUNTIME_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-002":
+        issues.append("GOOGLE_INTELLIGENCE_MANIFEST_CONTRACT_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2":
+        issues.append("GOOGLE_INTELLIGENCE_SCHEMA_MISMATCH")
+    if contract.get("version") != "2.0.0":
+        issues.append("GOOGLE_INTELLIGENCE_VERSION_MISMATCH")
+    if contract.get("creates_new_controller") is not False or contract.get("creates_new_authority_root") is not False:
+        issues.append("GOOGLE_INTELLIGENCE_AUTHORITY_DUPLICATION")
+    if contract.get("ai_studio_role") != "BUILD_AND_CONTROL_COCKPIT_NOT_SOVEREIGN_RUNTIME":
+        issues.append("GOOGLE_AI_STUDIO_ROLE_MISMATCH")
+    if contract.get("provider_output_can_expand_authority") is not False:
+        issues.append("GOOGLE_PROVIDER_AUTHORITY_EXPANSION_NOT_BLOCKED")
+    if contract.get("secret_payload_to_model") is not False:
+        issues.append("GOOGLE_SECRET_MODEL_ACCESS_NOT_BLOCKED")
+    if contract.get("primary_google_protocol") != "VERTEX_AI_INTERACTIONS_REST":
+        issues.append("GOOGLE_INTERACTIONS_PRIMARY_PROTOCOL_MISMATCH")
+    if contract.get("primary_google_model_candidate") != "gemini-3.8-flash":
+        issues.append("GOOGLE_38_PRIMARY_MODEL_MISMATCH")
+    if contract.get("sensitive_default_store") is not False:
+        issues.append("GOOGLE_SENSITIVE_STORE_FALSE_GUARD_MISSING")
+    if contract.get("matched_champion_promotion_required") is not True:
+        issues.append("GOOGLE_MATCHED_CHAMPION_COURT_MISSING")
+    predecessor = contract.get("predecessor", {})
+    if predecessor.get("rollback_preserved") is not True:
+        issues.append("GOOGLE_V1_ROLLBACK_NOT_PRESERVED")
+    if not GOOGLE_INTELLIGENCE_V1_PATH.exists() or not GOOGLE_INTELLIGENCE_V1_PROMPT_PATH.exists():
+        issues.append("GOOGLE_V1_ROLLBACK_ARTIFACT_MISSING")
+    else:
+        v1 = load_json(GOOGLE_INTELLIGENCE_V1_PATH, {})
+        measured_v1_prompt_sha256 = hashlib.sha256(GOOGLE_INTELLIGENCE_V1_PROMPT_PATH.read_bytes()).hexdigest()
+        if predecessor.get("prompt_sha256") != measured_v1_prompt_sha256:
+            issues.append("GOOGLE_V1_ROLLBACK_PROMPT_HASH_MISMATCH")
+        if v1.get("prompt_sha256") != measured_v1_prompt_sha256:
+            issues.append("GOOGLE_V1_CONFIG_PROMPT_HASH_MISMATCH")
+
+    if not GOOGLE_INTELLIGENCE_PROMPT_PATH.exists():
+        issues.append("GOOGLE_INTELLIGENCE_PROMPT_MISSING")
+        measured_prompt_sha256 = None
+    else:
+        measured_prompt_sha256 = hashlib.sha256(GOOGLE_INTELLIGENCE_PROMPT_PATH.read_bytes()).hexdigest()
+        if contract.get("prompt_sha256") != measured_prompt_sha256:
+            issues.append("GOOGLE_INTELLIGENCE_PROMPT_HASH_MISMATCH")
+        if declared.get("prompt_sha256") != measured_prompt_sha256:
+            issues.append("GOOGLE_INTELLIGENCE_MANIFEST_PROMPT_HASH_MISMATCH")
+
+    for step in ("load_google_intelligence_runtime_contract", "compile_google_intelligence_route"):
+        if step not in order:
+            issues.append(f"GOOGLE_INTELLIGENCE_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"GOOGLE_INTELLIGENCE_STEP_AFTER_EXECUTE:{step}")
+
+    required_invariants = {
+        "GOOGLE_AI_STUDIO_IS_BUILD_CONTROL_PLANE_NOT_SOVEREIGN_AUTHORITY",
+        "GOOGLE_PROVIDER_LIVE_CLAIMS_REQUIRE_PROVIDER_SEMANTIC_READBACK",
+        "GOOGLE_MODEL_OUTPUT_CANNOT_EXPAND_FUSE_AUTHORITY",
+        "GOOGLE_INTERACTIONS_V2_REQUIRES_PROVIDER_SEMANTIC_READBACK",
+        "GOOGLE_38_CHAMPION_REQUIRES_MATCHED_NONREGRESSION_COURT",
+        "GOOGLE_SENSITIVE_INTERACTIONS_DEFAULT_STORE_FALSE",
+        "GOOGLE_LIVE_EXTENDED_THINKING_REQUIRES_INTERACTION_STATUS_FINALITY",
+        "CROSS_PROVIDER_FUSION_REQUIRES_INDEPENDENCE_PROOF",
+    }
+    for item in sorted(required_invariants - invariants):
+        issues.append(f"GOOGLE_INTELLIGENCE_INVARIANT_MISSING:{item}")
+
+    return {
+        "schema": "FUSE_GOOGLE_INTELLIGENCE_BOOTSTRAP_GUARD_V2",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "prompt_sha256": contract.get("prompt_sha256"),
+        "measured_prompt_sha256": measured_prompt_sha256,
+        "ai_studio_role": contract.get("ai_studio_role"),
+        "primary_google_protocol": contract.get("primary_google_protocol"),
+        "primary_google_model_candidate": contract.get("primary_google_model_candidate"),
+        "rollback_v1_preserved": contract.get("predecessor", {}).get("rollback_preserved"),
+        "provider_live_proven": False,
+        "live_provider_state": contract.get("live_provider_state"),
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
+
+def formation_power_inheritance_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("formation_power_inheritance", {})
+    contract = load_json(FORMATION_POWER_INHERITANCE_CONFIG_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("FORMATION_POWER_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-FORMATION-POWER-002":
+        issues.append("FORMATION_POWER_MANIFEST_ID_MISMATCH")
+    if contract.get("contract_id") != "FUSE-FORMATION-POWER-002":
+        issues.append("FORMATION_POWER_CONFIG_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_FORMATION_POWER_INHERITANCE_V2" or contract.get("version") != "2.0.0":
+        issues.append("FORMATION_POWER_SCHEMA_OR_VERSION_MISMATCH")
+    if contract.get("applies_to") != "ALL_FUSE_WORKFLOWS":
+        issues.append("FORMATION_POWER_NOT_GLOBAL")
+    if contract.get("agentic_frontier_gene_pool") != 53:
+        issues.append("FORMATION_POWER_FRONTIER_GENE_POOL_MISMATCH")
+    if contract.get("max_mutating_lanes") != 1:
+        issues.append("FORMATION_POWER_MUTATING_LANE_POLICY_MISMATCH")
+    if contract.get("builder_self_certification") is not False:
+        issues.append("FORMATION_POWER_SELF_CERTIFICATION_NOT_BLOCKED")
+    for key in (
+        "creates_new_controller",
+        "creates_new_scheduler",
+        "creates_new_mission_bus",
+        "creates_new_authority_root",
+        "creates_new_truth_memory_proof_root",
+    ):
+        if contract.get(key) is not False:
+            issues.append(f"FORMATION_POWER_DUPLICATION:{key}")
+    if not FORMATION_POWER_INHERITANCE_MODULE_PATH.exists():
+        issues.append("FORMATION_POWER_MODULE_MISSING")
+    for step in ("load_formation_power_inheritance_contract", "compile_workflow_formation_power"):
+        if step not in order:
+            issues.append(f"FORMATION_POWER_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"FORMATION_POWER_STEP_AFTER_EXECUTE:{step}")
+    if "compile_surface_formation" in order and "compile_workflow_formation_power" in order:
+        if order.index("compile_workflow_formation_power") > order.index("compile_surface_formation"):
+            issues.append("FORMATION_POWER_AFTER_SURFACE_FORMATION")
+    required = {
+        "ALL_FUSE_WORKFLOWS_REQUIRE_FORMATION_POWER_COMPILE",
+        "FORMATION_POWER_USES_EXISTING_ORGANS_NO_DUPLICATE_CONTROL_PLANE",
+        "FORMATION_POWER_MAX_ONE_MUTATING_LANE",
+        "FORMATION_POWER_BUILDER_CANNOT_SELF_CERTIFY",
+        "FORMATION_POWER_PARALLELIZES_ONLY_DISJOINT_READY_WORK",
+        "FORMATION_POWER_DYNAMIC_REPLAN_ON_CURRENTNESS_HEALTH_PROOF_OR_EPOCH_CHANGE",
+        "FORMATION_POWER_LEARNING_CANNOT_EXPAND_AUTHORITY",
+    }
+    for item in sorted(required - invariants):
+        issues.append(f"FORMATION_POWER_INVARIANT_MISSING:{item}")
+    return {
+        "schema": "FUSE_FORMATION_POWER_BOOTSTRAP_GUARD_V2",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "applies_to": contract.get("applies_to"),
+        "agentic_frontier_gene_pool": contract.get("agentic_frontier_gene_pool"),
+        "max_mutating_lanes": contract.get("max_mutating_lanes"),
+        "provider_execution_proven": False,
+        "external_effect_authorized": False,
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
+def formation_omega_acceleration_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("formation_omega_acceleration", {})
+    contract = load_json(FORMATION_OMEGA_ACCELERATION_CONFIG_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("FORMATION_ACCELERATION_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-FORMATION-OMEGA-ACCEL-001":
+        issues.append("FORMATION_ACCELERATION_MANIFEST_ID_MISMATCH")
+    if contract.get("contract_id") != "FUSE-FORMATION-OMEGA-ACCEL-001":
+        issues.append("FORMATION_ACCELERATION_CONFIG_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_FORMATION_OMEGA_ACCELERATION_BINDING_V1":
+        issues.append("FORMATION_ACCELERATION_SCHEMA_MISMATCH")
+    five = contract.get("five_minute_completion", {})
+    if five.get("target_total_seconds") != 300 or five.get("active_execution_budget_seconds") != 240:
+        issues.append("FORMATION_ACCELERATION_FIVE_MINUTE_BUDGET_MISMATCH")
+    if five.get("omega_scientia_falsification_required") is not True:
+        issues.append("FORMATION_ACCELERATION_SCIENTIA_MISSING")
+    if contract.get("formation_ultimate_programming", {}).get("profile") != "FORMATION_ULTIMATE_PROGRAMMING_V1":
+        issues.append("FORMATION_ACCELERATION_ULTIMATE_PROGRAMMING_MISSING")
+    if contract.get("formation_alpha_omega_compiler", {}).get("underlying_engine") != "AlphaOmegaEngine":
+        issues.append("FORMATION_ACCELERATION_ALPHA_OMEGA_MISSING")
+    for key in (
+        "creates_new_controller",
+        "creates_new_scheduler",
+        "creates_new_mission_bus",
+        "creates_new_authority_root",
+        "creates_new_truth_memory_proof_root",
+    ):
+        if contract.get(key) is not False:
+            issues.append(f"FORMATION_ACCELERATION_DUPLICATION:{key}")
+    if not FORMATION_OMEGA_ACCELERATION_MODULE_PATH.exists():
+        issues.append("FORMATION_ACCELERATION_MODULE_MISSING")
+    for step in (
+        "load_formation_omega_acceleration_contract",
+        "compile_five_minute_scientia",
+        "compile_applicable_ultimate_programming",
+        "compile_applicable_alpha_omega",
+    ):
+        if step not in order:
+            issues.append(f"FORMATION_ACCELERATION_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"FORMATION_ACCELERATION_STEP_AFTER_EXECUTE:{step}")
+    if "compile_surface_formation" in order and "compile_applicable_alpha_omega" in order:
+        if order.index("compile_applicable_alpha_omega") > order.index("compile_surface_formation"):
+            issues.append("FORMATION_ACCELERATION_AFTER_SURFACE_FORMATION")
+    required = {
+        "ALL_FUSE_WORKFLOWS_GET_FIVE_MINUTE_SCIENTIA_PREFLIGHT",
+        "OVER_BUDGET_FORMATION_MUST_RECOMPILE_BEFORE_EXECUTION",
+        "FIVE_MINUTE_SUCCESS_REQUIRES_OBSERVED_WALL_CLOCK_ACCEPTANCE_AND_PROOF",
+        "EXTERNAL_WAIT_IS_NOT_FALSELY_GUARANTEED_AS_FIVE_MINUTE_COMPLETION",
+        "PROGRAMMING_WORK_INHERITS_FORMATION_ULTIMATE_PROGRAMMING",
+        "BUILD_AND_RESIDUAL_WORK_INHERITS_ALPHA_OMEGA_COMPILER",
+        "FORMATION_ACCELERATION_CANNOT_MINT_AUTHORITY",
+    }
+    for item in sorted(required - invariants):
+        issues.append(f"FORMATION_ACCELERATION_INVARIANT_MISSING:{item}")
+    return {
+        "schema": "FUSE_FORMATION_OMEGA_ACCELERATION_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "five_minute_slo_seconds": five.get("target_total_seconds"),
+        "active_execution_budget_seconds": five.get("active_execution_budget_seconds"),
+        "provider_execution_proven": False,
+        "external_effect_authorized": False,
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
+def formation_surface_load_balancer_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("formation_surface_load_balancer", {})
+    contract = load_json(FORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-FORMATION-SURFACE-LB-001":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_MANIFEST_ID_MISMATCH")
+    if contract.get("contract_id") != "FUSE-FORMATION-SURFACE-LB-001":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_CONFIG_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_SCHEMA_MISMATCH")
+    if contract.get("version") != "1.0.0":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_VERSION_MISMATCH")
+    if contract.get("applies_to") != "ALL_MATERIAL_MISSIONS":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_NOT_GLOBAL")
+    if contract.get("formation_principle") != "MINIMUM_SUFFICIENT_PROVEN_PORTFOLIO":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_SELECTION_LAW_MISMATCH")
+    if contract.get("all_surfaces_invoked_every_task") is not False:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_FORCED_FANOUT")
+    if contract.get("external_effect_authority") is not False:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_EFFECT_AUTHORITY_EXPANSION")
+    if contract.get("provider_execution_authority") is not False:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_PROVIDER_AUTHORITY_EXPANSION")
+    for key in (
+        "creates_new_controller",
+        "creates_new_scheduler",
+        "creates_new_mission_bus",
+        "creates_new_authority_root",
+        "creates_new_truth_memory_proof_root",
+    ):
+        if contract.get(key) is not False:
+            issues.append(f"FORMATION_SURFACE_LOAD_BALANCER_DUPLICATION:{key}")
+
+    required_surfaces = {
+        "GOOGLE-APPS-SCRIPT",
+        "GOOGLE-CLOUD",
+        "GOOGLE-AI-STUDIO-GEMINI",
+        "CANVA",
+        "OPENROUTER",
+    }
+    missing_surfaces = sorted(required_surfaces - set(contract.get("core_requested_surfaces", [])))
+    issues.extend(f"FORMATION_SURFACE_REQUIRED_SURFACE_MISSING:{item}" for item in missing_surfaces)
+
+    if not FORMATION_SURFACE_LOAD_BALANCER_MODULE_PATH.exists():
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_MODULE_MISSING")
+    if not OMNISURFACE_REGISTRY_MODULE_PATH.exists():
+        issues.append("FORMATION_SURFACE_OMNISURFACE_REGISTRY_MISSING")
+
+    for step in ("load_formation_surface_load_balancer_contract", "compile_surface_formation"):
+        if step not in order:
+            issues.append(f"FORMATION_SURFACE_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"FORMATION_SURFACE_STEP_AFTER_EXECUTE:{step}")
+
+    required_invariants = {
+        "ALL_MATERIAL_WORK_REQUIRES_SURFACE_FORMATION_COMPILE",
+        "MINIMUM_SUFFICIENT_SURFACE_PORTFOLIO_REQUIRED",
+        "SURFACE_FAILURE_IS_LOCAL_NOT_GLOBAL_STALL",
+        "PROVIDER_DIVERSITY_DOES_NOT_EQUAL_INDEPENDENCE",
+        "SURFACE_LOAD_BALANCER_CANNOT_MINT_AUTHORITY",
+        "EXTERNAL_EFFECTS_REMAIN_FDOF_SICF_GATED",
+    }
+    for item in sorted(required_invariants - invariants):
+        issues.append(f"FORMATION_SURFACE_INVARIANT_MISSING:{item}")
+
+    return {
+        "schema": "FUSE_FORMATION_SURFACE_LOAD_BALANCER_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "applies_to": contract.get("applies_to"),
+        "formation_principle": contract.get("formation_principle"),
+        "default_max_parallel_surfaces": contract.get("default_max_parallel_surfaces"),
+        "provider_execution_proven": False,
+        "external_effect_authorized": False,
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+def terminal_debt_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("terminal_debt_finality", {})
+    order = source.get("bootstrap_order", [])
+    issues: List[str] = []
+    if contract.get("enabled") is not True:
+        issues.append("TERMINAL_DEBT_DISABLED_OR_MISSING")
+    if contract.get("contract_id") != "FUSE-TERMINAL-DEBT-FINALITY-V1":
+        issues.append("TERMINAL_DEBT_CONTRACT_ID_MISMATCH")
+    if contract.get("schema") != "FUSE-TERMINAL-DEBT-V1":
+        issues.append("TERMINAL_DEBT_SCHEMA_MISMATCH")
+    if contract.get("version") != "1.0.0":
+        issues.append("TERMINAL_DEBT_VERSION_MISMATCH")
+    if contract.get("mandatory_open_debt_terminal_floor") != 0:
+        issues.append("TERMINAL_DEBT_ZERO_FLOOR_MISSING")
+    for step in ("load_terminal_debt_finality_contract", "reconcile_terminal_debt"):
+        if step not in order:
+            issues.append(f"TERMINAL_DEBT_BOOT_STEP_MISSING:{step}")
+    if "execute" in order and "reconcile_terminal_debt" in order and order.index("reconcile_terminal_debt") > order.index("execute"):
+        issues.append("TERMINAL_DEBT_RECONCILE_AFTER_EXECUTE")
+    if not TERMINAL_DEBT_MODULE_PATH.exists():
+        issues.append("TERMINAL_DEBT_MODULE_MISSING")
+    if not LOCAL_SOVEREIGN_AI_PROFILE_PATH.exists():
+        issues.append("LOCAL_SOVEREIGN_AI_PROFILE_MISSING")
+        profile = {}
+    else:
+        profile = load_json(LOCAL_SOVEREIGN_AI_PROFILE_PATH, {})
+        if profile.get("schema") != "FUSE_LOCAL_SOVEREIGN_AI_FINALITY_V2":
+            issues.append("LOCAL_SOVEREIGN_AI_PROFILE_SCHEMA_MISMATCH")
+        if profile.get("version") != "2.0.0":
+            issues.append("LOCAL_SOVEREIGN_AI_PROFILE_VERSION_MISMATCH")
+        if profile.get("profile_id") != "FUSE-LOCAL-SOVEREIGN-AI-FINALITY-001":
+            issues.append("LOCAL_SOVEREIGN_AI_PROFILE_ID_MISMATCH")
+        predicates = profile.get("terminal_predicates", [])
+        ids = {str(row.get("id")) for row in predicates if isinstance(row, dict)}
+        required = {
+            "FUSE_EXE_WINDOWS_PRODUCT",
+            "LOCAL_CHAT",
+            "OPENAI_DISABLED_VERIFIED",
+            "OFFLINE_CORE_VERIFIED",
+            "GOOGLE_DRIVE_RELEASE",
+            "CROSS_PC_INSTALL",
+            "UPDATE_ROLLBACK_LKG",
+            "BACKUP_RESTORE",
+            "SECURITY_PRIVACY_COURTS",
+            "NATURAL_OWNER_WORKLOAD",
+            "COMMERCIAL_READY_VERIFIED",
+        }
+        missing = sorted(required - ids)
+        issues.extend(f"LOCAL_SOVEREIGN_AI_PREDICATE_MISSING:{item}" for item in missing)
+        if profile.get("completion_rule", {}).get("mandatory_open_terminal_debt") != 0:
+            issues.append("LOCAL_SOVEREIGN_AI_ZERO_DEBT_RULE_MISSING")
+    if "MANDATORY_TERMINAL_DEBT_ZERO_BEFORE_TERMINAL_SUCCESS" not in source.get("bootstrap_invariants", []):
+        issues.append("TERMINAL_DEBT_BOOTSTRAP_INVARIANT_MISSING")
+    return {
+        "schema": "FUSE_TERMINAL_DEBT_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "profile_id": contract.get("product_profile_id"),
+        "predicate_count": len(profile.get("terminal_predicates", [])) if isinstance(profile, dict) else 0,
+        "terminal_floor": contract.get("mandatory_open_debt_terminal_floor"),
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
+def output_mirror_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    contract = source.get("output_mirror_bootstrap", {})
+    fidelity = source.get("directive_fidelity_bootstrap", {})
+    issues: List[str] = []
+    if fidelity.get("enabled") is not True:
+        issues.append("DIRECTIVE_FIDELITY_DISABLED_OR_MISSING")
+    if fidelity.get("contract_id") != "FUSE-DIRECTIVE-FIDELITY-V1":
+        issues.append("DIRECTIVE_FIDELITY_CONTRACT_ID_MISMATCH")
+    if contract.get("enabled") is not True:
+        issues.append("OUTPUT_MIRROR_BOOTSTRAP_DISABLED_OR_MISSING")
+    if contract.get("contract_id") != "FUSE-OUTPUT-MIRROR-BOOTSTRAP-V3":
+        issues.append("OUTPUT_MIRROR_BOOTSTRAP_CONTRACT_ID_MISMATCH")
+    if contract.get("release_policy") != "ZERO_FAIL_ACROSS_ALL_REQUIRED_DIMENSIONS":
+        issues.append("OUTPUT_MIRROR_RELEASE_POLICY_MISMATCH")
+    required = set(contract.get("required_dimensions", []))
+    expected = {
+        "intent_fidelity", "execution_finality", "proof_evidence", "design_code_health",
+        "testing", "security_privacy", "reliability_recovery", "performance_cost",
+        "currentness_reproducibility", "owner_value",
+    }
+    missing = sorted(expected - required)
+    issues.extend(f"MISSING_OUTPUT_MIRROR_DIMENSION:{name}" for name in missing)
+    if contract.get("developer1000", {}).get("sha256") != "f7277e2244f1d59849f64f5d4f48af7c20de14ecb8573dba763353bf6084cb7e":
+        issues.append("DEVELOPER1000_CORPUS_MISMATCH")
+    if contract.get("benchmark_court", {}).get("dataset_sha256") != "d69644412e285ef3a5baeab0b0ef4683ae42280ddca0bdb4a0ea2ce3a5fd6510":
+        issues.append("OUTPUT_MIRROR_BENCHMARK_COURT_MISMATCH")
+    diary = contract.get("power_diary", {})
+    if diary.get("source_sha256") != "3d95834ff0070e06c8de385b9240c65490d9b71ceb63fa5e3364f407261c0495":
+        issues.append("POWER_DIARY_SOURCE_MISMATCH")
+    if diary.get("chapter_count") != 40:
+        issues.append("POWER_DIARY_CHAPTER_COUNT_MISMATCH")
+    if diary.get("required_family_count") != 17:
+        issues.append("POWER_DIARY_FAMILY_COUNT_MISMATCH")
+    measured_mirror_sha256 = None
+    if not OUTPUT_MIRROR_V3_PATH.exists():
+        issues.append("OUTPUT_MIRROR_MODULE_MISSING")
+    else:
+        measured_mirror_sha256 = hashlib.sha256(OUTPUT_MIRROR_V3_PATH.read_bytes()).hexdigest()
+        if diary.get("module_sha256") != measured_mirror_sha256:
+            issues.append("POWER_DIARY_MODULE_HASH_MISMATCH")
+    return {
+        "schema": "FUSE_OUTPUT_MIRROR_BOOTSTRAP_GUARD_V3",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "boot_kernel_min_version": contract.get("boot_kernel_min_version"),
+        "mirror_min_version": contract.get("mirror_min_version"),
+        "required_dimension_count": len(required),
+        "power_diary_sha256": contract.get("power_diary", {}).get("source_sha256"),
+        "power_diary_chapter_count": contract.get("power_diary", {}).get("chapter_count"),
+        "power_diary_family_count": contract.get("power_diary", {}).get("required_family_count"),
+        "directive_fidelity_contract_id": fidelity.get("contract_id"),
+        "directive_fidelity_enabled": fidelity.get("enabled"),
+    }
 
 
 def state() -> Dict[str, Any]:
@@ -161,6 +769,21 @@ def already_solved(req: SolvedRequest) -> Dict[str, Any]:
 @app.post("/bootstrap")
 def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     validate_system(req.system)
+    source_manifest = manifest()
+    mirror_guard = output_mirror_bootstrap_guard(source_manifest)
+    memory_bundle = bootstrap_memory_bundle()
+    autonomy_guard = autonomous_improvement_bootstrap_guard(source_manifest)
+    hipb_guard = hyper_intelligence_performance_bootstrap_guard(source_manifest)
+    google_guard = google_intelligence_runtime_bootstrap_guard(source_manifest)
+    formation_power_guard = formation_power_inheritance_bootstrap_guard(source_manifest)
+    formation_acceleration_guard = formation_omega_acceleration_bootstrap_guard(source_manifest)
+    formation_guard = formation_surface_load_balancer_bootstrap_guard(source_manifest)
+    debt_guard = terminal_debt_bootstrap_guard(source_manifest)
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_power_guard["ok"] or not formation_acceleration_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_power_inheritance_guard": formation_power_guard, "formation_omega_acceleration_guard": formation_acceleration_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
+        )
     s = state()
     solved = search_state(
         SolvedRequest(system=req.system, matter=req.matter, problem=req.objective or "", terms=req.terms)
@@ -187,6 +810,29 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "matter": req.matter,
         "chat_ref": req.chat_ref,
         "bootstrap_order": manifest().get("bootstrap_order", []),
+        "bootstrap_invariants": manifest().get("bootstrap_invariants", []),
+        "runtime_sovereignty": source_manifest.get("runtime_sovereignty", {}),
+        "bootstrap_memory_snapshot": memory_bundle["snapshot"],
+        "bootstrap_self_improvement": memory_bundle["self_improvement"],
+        "autonomy_contract": memory_bundle["autonomy"],
+        "autonomous_improvement_guard": autonomy_guard,
+        "hyper_intelligence_performance": source_manifest.get("hyper_intelligence_performance", {}),
+        "hyper_intelligence_performance_guard": hipb_guard,
+        "google_intelligence_runtime": source_manifest.get("google_intelligence_runtime", {}),
+        "google_intelligence_runtime_guard": google_guard,
+        "formation_power_inheritance": source_manifest.get("formation_power_inheritance", {}),
+        "formation_power_inheritance_guard": formation_power_guard,
+        "formation_omega_acceleration": source_manifest.get("formation_omega_acceleration", {}),
+        "formation_omega_acceleration_guard": formation_acceleration_guard,
+        "formation_surface_load_balancer": source_manifest.get("formation_surface_load_balancer", {}),
+        "formation_surface_load_balancer_guard": formation_guard,
+        "terminal_debt_finality": source_manifest.get("terminal_debt_finality", {}),
+        "terminal_debt_bootstrap_guard": debt_guard,
+        "historical_chat_backfill": source_manifest.get("historical_chat_backfill", {}),
+        "directive_fidelity_bootstrap": source_manifest.get("directive_fidelity_bootstrap", {}),
+        "output_mirror_bootstrap": source_manifest.get("output_mirror_bootstrap", {}),
+        "output_mirror_bootstrap_guard": mirror_guard,
+        "delivery_rule": source_manifest.get("delivery_rule"),
         "control_plane": resolved_control_plane(),
         "already_solved_candidates": solved,
         "recent_deltas": recent,

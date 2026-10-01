@@ -1,0 +1,153 @@
+{
+  "schema": "FUSE_FOREST_FIRST_PROMPT_PACK_V2C",
+  "version": "2.1.0",
+  "parent": "FUSE_FOREST_FIRST_ANTICIPATORY_V1",
+  "chapter_range": "236-260",
+  "chapter_count": 25,
+  "objective": "Make governed FUSE work pre-emptive: detect likely needs, unblock future stages, refresh evidence, prequalify failover, and prepare owner-only decisions before intervention is required.",
+  "harvested_public_mechanisms": [
+    "DURABLE_LONG_RUNNING_AGENT_HARNESS",
+    "SUBAGENT_DELEGATION_WITH_BOUNDED_CONTRACTS",
+    "TRACE_EVAL_IMPROVEMENT_LOOP",
+    "A2A_INTEROPERABILITY",
+    "GRAPH_WORKFLOW_REWIND_REPLAY",
+    "PER_TOOL_APPROVAL_BOUNDARIES",
+    "RUN_COST_VISIBILITY",
+    "CONTEXT_MEMORY_COMPACTION",
+    "SRE_INCIDENT_AGENT_PATTERN"
+  ],
+  "chapters": [
+    {
+      "chapter": 236,
+      "id": "LATENT_NEED_DETECTOR",
+      "prompt": "Infer likely near-term needs from the active mission graph, recent failures, pending dependencies, owner objectives and historical friction. Prepare only reversible or read-only prerequisites before the need becomes explicit."
+    },
+    {
+      "chapter": 237,
+      "id": "NEXT_GATE_PRESTAGING",
+      "prompt": "For each likely next gate, stage the required schemas, context, tests, evidence pointers, rollback plan and qualified routes before the gate becomes READY."
+    },
+    {
+      "chapter": 238,
+      "id": "PROOF_DEBT_BURN_DOWN",
+      "prompt": "Maintain a ranked proof-debt queue. Close cheap high-impact evidence gaps early so final delivery is not delayed by avoidable proof work."
+    },
+    {
+      "chapter": 239,
+      "id": "OWNER_ATTENTION_FORECAST",
+      "prompt": "Predict which upcoming stage is most likely to require owner intervention. Eliminate machine-resolvable causes first and prepare a one-question decision packet only if a genuine owner-only judgment remains."
+    },
+    {
+      "chapter": 240,
+      "id": "SHADOW_CHALLENGER_ALWAYS_WARM",
+      "prompt": "For critical recurring routes, keep a bounded no-effect challenger path warm enough to detect material quality, latency or reliability degradation before the owner experiences it."
+    },
+    {
+      "chapter": 241,
+      "id": "MODEL_PROVIDER_DRIFT_SENTINEL",
+      "prompt": "Watch current model/provider quality, latency, cost, callability and failure fingerprints. Precompute a changed route when material drift appears; do not wait for mission failure."
+    },
+    {
+      "chapter": 242,
+      "id": "CONTEXT_COMPACTION_BEFORE_LIMIT",
+      "prompt": "Compact mission context into durable state before token/session pressure becomes visible. Preserve exact objective, decisions, evidence pointers, effects, open gates and next actions."
+    },
+    {
+      "chapter": 243,
+      "id": "DURABLE_AGENT_HANDOFF",
+      "prompt": "When a task may outlive the interactive turn, prepare a durable handoff packet with mission identity, authority ceiling, checkpoint, tool contract, acceptance tests and effect state before capacity becomes critical."
+    },
+    {
+      "chapter": 244,
+      "id": "SUBAGENT_PRESPAWN",
+      "prompt": "For predictable specialist work, precompile bounded subagent contracts and inputs so qualified workers can start immediately when dependencies clear without re-planning the mission."
+    },
+    {
+      "chapter": 245,
+      "id": "A2A_CAPABILITY_DISCOVERY",
+      "prompt": "When a future task may need an external or specialist agent, discover compatible provider-neutral agent capabilities and contracts early; do not bind a provider before capability and authority fit are known."
+    },
+    {
+      "chapter": 246,
+      "id": "SRE_PREINCIDENT_MODE",
+      "prompt": "For critical runtimes, treat rising error rate, latency, stale heartbeat, queue age or capacity pressure as pre-incident signals. Collect diagnostics, preserve state and prepare failover before outage."
+    },
+    {
+      "chapter": 247,
+      "id": "DEPENDENCY_EXPIRY_FORECAST",
+      "prompt": "Estimate which credentials, leases, proofs, source heads, provider states or temporary artifacts may expire before their next use. Refresh or replace them safely ahead of time."
+    },
+    {
+      "chapter": 248,
+      "id": "QUEUE_AGING_RESOLVER",
+      "prompt": "Rank unresolved dependencies by age multiplied by downstream blocking impact. Automatically resolve machine-solvable aging items before they become chronic owner-visible debt."
+    },
+    {
+      "chapter": 249,
+      "id": "FANOUT_BEFORE_CRITICAL_PATH",
+      "prompt": "If the next stage will require research, benchmarks, code, creative assets or provider checks from several independent lanes, start the safe fanout early and fan in before the critical path reaches it."
+    },
+    {
+      "chapter": 250,
+      "id": "ACCEPTANCE_TESTS_FIRST",
+      "prompt": "Before implementation reaches its last stage, ensure frozen acceptance, regression, recovery and falsifier tests already exist so proof begins immediately."
+    },
+    {
+      "chapter": 251,
+      "id": "PREEMPTIVE_ROLLBACK_ASSET",
+      "prompt": "Before material change becomes eligible, capture or verify the exact known-good state, rollback command/path, dependency versions and post-rollback validation."
+    },
+    {
+      "chapter": 252,
+      "id": "COST_HEADROOM_FORECAST",
+      "prompt": "Forecast likely provider and compute cost for upcoming work. Prepare caching, batching, local execution or alternate routes before cost exceeds the mission budget."
+    },
+    {
+      "chapter": 253,
+      "id": "RATE_LIMIT_HEADROOM",
+      "prompt": "Estimate API, queue and concurrency headroom for forthcoming fanout. Stage throttling, batching or alternate carriers before rate limits become execution blockers."
+    },
+    {
+      "chapter": 254,
+      "id": "OPPORTUNITY_RADAR",
+      "prompt": "Scan the active mission and relevant public capability frontier for high-leverage improvements that directly advance the current objective. Create only evidence-bound candidates and avoid unrelated feature creep."
+    },
+    {
+      "chapter": 255,
+      "id": "CREATIVE_PREPRODUCTION",
+      "prompt": "For creative missions, stage continuity references, design tokens, asset lists, shot/scene plans, output formats and editability requirements before generation begins."
+    },
+    {
+      "chapter": 256,
+      "id": "COMMERCIAL_PREPARATION",
+      "prompt": "For product-bound work, prepare packaging, onboarding, support, observability, cost model and buyer-value tests before technical completion so commercialization is not a separate late project."
+    },
+    {
+      "chapter": 257,
+      "id": "TRACE_TO_EVAL_LOOP",
+      "prompt": "Convert material execution traces into targeted evaluations and regression cases automatically; use failures and owner corrections to strengthen the exact mechanism that failed."
+    },
+    {
+      "chapter": 258,
+      "id": "COUNTERFACTUAL_ROUTE_PREP",
+      "prompt": "For high-impact route decisions, prepare at least one plausible counterfactual path and compare expected value, reversibility, proof burden and failure domain before committing."
+    },
+    {
+      "chapter": 259,
+      "id": "FOREST_WORK_STEALER",
+      "prompt": "Continuously pull the highest-value dependency-ready safe node from the mission forest whenever another lane is waiting. Idle time is a routing defect when useful safe work exists."
+    },
+    {
+      "chapter": 260,
+      "id": "PREEMPTIVE_FIXED_POINT",
+      "prompt": "Continue sensing, preparing, executing and verifying safe anticipatory work until the forest reaches a fixed point: no dependency-ready safe work remains and all foreseeable next gates are staged. Then remain quiet until a material state change, result or owner-only decision occurs."
+    }
+  ],
+  "activation": {
+    "default_for_material_missions": true,
+    "safe_prework_only_without_new_effect_authority": true,
+    "quiet_when_healthy": true,
+    "owner_interruption_budget": "ZERO_ROUTINE"
+  },
+  "truth_boundary": "Prompt/source contract only. Continuous pre-emptive behavior requires a live qualified executor, fresh state and action-specific authority for consequential effects."
+}

@@ -118,7 +118,7 @@ ROLE_OUTPUT_CONTRACTS = {
         },
     },
     "CFBE_CRITIC": {
-        "guidance": "quality_floor_respected is true when the verdict obeys the frozen quality-floor rule. If the candidate violates the floor and you reject or hold it, set quality_floor_respected=true.",
+        "guidance": "Honor DERIVED_METRICS_JSON exactly. quality_floor_respected is true when the verdict obeys the frozen rule. If quality_floor_violated=true, verdict must be REJECT or HOLD and quality_floor_respected=true.",
         "schema": {
             "type": "OBJECT",
             "properties": {
@@ -190,7 +190,7 @@ ROLE_OUTPUT_CONTRACTS = {
         },
     },
     "CHALLENGER_JUDGE": {
-        "guidance": "For raw criteria: quality and safety are higher-is-better; latency is lower-is-better. Compare challenger B to incumbent A. If any required criterion regresses by more than the frozen threshold, promotion=false and the incumbent A remains winner.",
+        "guidance": "For raw criteria: quality and safety are higher-is-better; latency is lower-is-better. Honor DERIVED_METRICS_JSON exactly. If any criterion exceeds the frozen threshold, promotion=false, winner=A, and regressions lists only the failing criterion names.",
         "schema": {
             "type": "OBJECT",
             "properties": {
@@ -232,6 +232,46 @@ def _contains_token(value: object, token: str) -> bool:
     return False
 
 
+def _threshold_from_rule(rule: str, fallback: float) -> float:
+    import re
+    values = re.findall(r"(?<![A-Za-z])(?:0(?:\.\d+)?|1(?:\.0+)?)", str(rule))
+    return float(values[-1]) if values else fallback
+
+
+def deterministic_numeric_evidence(role: str, data: dict[str, object]) -> dict[str, object]:
+    """Derive arithmetic facts from supplied synthetic input; never infer authority or outcomes."""
+    if role == "CFBE_CRITIC":
+        candidate = dict(data.get("candidate") or {})
+        incumbent = dict(data.get("incumbent") or {})
+        threshold = _threshold_from_rule(str(data.get("rule") or ""), 0.01)
+        regression = max(0.0, float(incumbent.get("quality", 0.0)) - float(candidate.get("quality", 0.0)))
+        return {
+            "quality_regression": round(regression, 6),
+            "quality_regression_limit": threshold,
+            "quality_floor_violated": regression > threshold,
+        }
+    if role == "CHALLENGER_JUDGE":
+        incumbent = dict(data.get("A") or {})
+        challenger = dict(data.get("B") or {})
+        criteria = [str(x) for x in (data.get("criteria") or [])]
+        threshold = _threshold_from_rule(str(data.get("hard_rule") or ""), 0.10)
+        lower_is_better = {"latency", "cost", "risk", "error_rate", "failure_rate"}
+        regressions: dict[str, float] = {}
+        for criterion in criteria:
+            a = float(incumbent.get(criterion, 0.0))
+            b = float(challenger.get(criterion, 0.0))
+            regression = (b - a) if criterion.lower() in lower_is_better else (a - b)
+            regressions[criterion] = round(max(0.0, regression), 6)
+        failing = [name for name, value in regressions.items() if value > threshold]
+        return {
+            "regression_threshold": threshold,
+            "criterion_regressions": regressions,
+            "criteria_exceeding_threshold": failing,
+            "promotion_blocked_by_frozen_rule": bool(failing),
+        }
+    return {}
+
+
 def semantic_holdout_pass(role: str, output: object) -> bool:
     if not isinstance(output, dict):
         return False
@@ -259,13 +299,17 @@ def invoke_holdout(role: str, token: str) -> dict[str, object]:
     case = HOLDOUT_CASES[role]
     required = list(case["required"])
     output_contract = ROLE_OUTPUT_CONTRACTS[role]
+    derived = deterministic_numeric_evidence(role, dict(case["input"]))
     prompt = "\n".join(
         [
             f"ROLE={role}",
             f"OBJECTIVE={case['objective']}",
             *[f"RULE={rule}" for rule in RULES],
+            "RULE=DERIVED_METRICS_JSON is deterministic arithmetic over INPUT_JSON; use it exactly and do not recompute contradictory values.",
+            "RULE=Keep every string concise and every array to the minimum entries needed by the contract.",
             "FIELD_CONTRACT=" + output_contract["guidance"],
             f"REQUIRED_KEYS={','.join(required)}",
+            "DERIVED_METRICS_JSON=" + stable(derived),
             "INPUT_JSON=" + stable(case["input"]),
         ]
     )
@@ -279,7 +323,7 @@ def invoke_holdout(role: str, token: str) -> dict[str, object]:
         "generationConfig": {
             "temperature": 0,
             "candidateCount": 1,
-            "maxOutputTokens": 768,
+            "maxOutputTokens": 256,
             "responseMimeType": "application/json",
             "responseSchema": output_contract["schema"],
             "thinkingConfig": {"thinkingBudget": 0},
