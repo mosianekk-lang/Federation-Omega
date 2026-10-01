@@ -82,6 +82,10 @@
     "compile_google_intelligence_route",
     "load_formation_power_inheritance_contract",
     "compile_workflow_formation_power",
+    "load_formation_omega_acceleration_contract",
+    "compile_five_minute_scientia",
+    "compile_applicable_ultimate_programming",
+    "compile_applicable_alpha_omega",
     "load_formation_surface_load_balancer_contract",
     "compile_surface_formation",
     "load_terminal_debt_finality_contract",
@@ -148,7 +152,14 @@
     "SURFACE_FAILURE_IS_LOCAL_NOT_GLOBAL_STALL",
     "PROVIDER_DIVERSITY_DOES_NOT_EQUAL_INDEPENDENCE",
     "SURFACE_LOAD_BALANCER_CANNOT_MINT_AUTHORITY",
-    "EXTERNAL_EFFECTS_REMAIN_FDOF_SICF_GATED"
+    "EXTERNAL_EFFECTS_REMAIN_FDOF_SICF_GATED",
+    "ALL_FUSE_WORKFLOWS_GET_FIVE_MINUTE_SCIENTIA_PREFLIGHT",
+    "OVER_BUDGET_FORMATION_MUST_RECOMPILE_BEFORE_EXECUTION",
+    "FIVE_MINUTE_SUCCESS_REQUIRES_OBSERVED_WALL_CLOCK_ACCEPTANCE_AND_PROOF",
+    "EXTERNAL_WAIT_IS_NOT_FALSELY_GUARANTEED_AS_FIVE_MINUTE_COMPLETION",
+    "PROGRAMMING_WORK_INHERITS_FORMATION_ULTIMATE_PROGRAMMING",
+    "BUILD_AND_RESIDUAL_WORK_INHERITS_ALPHA_OMEGA_COMPILER",
+    "FORMATION_ACCELERATION_CANNOT_MINT_AUTHORITY"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -451,5 +462,23 @@
     "authority_expansion": false,
     "provider_execution_proven": false,
     "truth_boundary": "SURFACE_FORMATION_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=EFFECT_VERIFIED!=OWNER_VALUE!=COMPLETE"
+  },
+  "formation_omega_acceleration": {
+    "contract_id": "FUSE-FORMATION-OMEGA-ACCEL-001",
+    "schema": "FUSE_FORMATION_OMEGA_ACCELERATION_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-formation-omega-acceleration-v1.json",
+    "binding_path": "federation/formation_omega_acceleration_binding_v1.py",
+    "applies_to": "ALL_FUSE_WORKFLOWS",
+    "five_minute_slo_seconds": 300,
+    "active_execution_budget_seconds": 240,
+    "verification_delivery_reserve_seconds": 60,
+    "omega_scientia_required": true,
+    "ultimate_programming_profile": "FORMATION_ULTIMATE_PROGRAMMING_V1",
+    "alpha_omega_compiler_profile": "FORMATION_ALPHA_OMEGA_COMPILER_V1",
+    "authority_expansion": false,
+    "provider_execution_proven": false,
+    "truth_boundary": "ACCELERATION_BOUND!=DEADLINE_FORECAST!=WORKFLOW_EXECUTED!=OBSERVED_5M_SLO!=PROGRAMMING_VERIFIED!=ALPHA_OMEGA_PLAN_EXECUTED!=COMPLETE"
   }
 }
