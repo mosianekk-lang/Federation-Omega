@@ -15,7 +15,8 @@
         "tests/test_formation_surface_load_balancer_v1.py",
         "tests/test_fuse_formation_surface_bootstrap_v1.py",
         "tests/test_omnisurface_fabric_v2.py",
-        "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json"
+        "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json",
+        "tests/test_omnisurface_formation_bridge_v1.py"
       ],
       "reason": "GLOBAL_FORMATION_SURFACE_ROUTING_BOOTSTRAP_AUTHORITY_PRIVACY_COST_PARALLELISM_AND_PROOF_BOUNDARY"
     }
@@ -34,7 +35,8 @@
         "tests/test_formation_surface_load_balancer_v1.py",
         "tests/test_fuse_formation_surface_bootstrap_v1.py",
         "tests/test_omnisurface_fabric_v2.py",
-        "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json"
+        "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json",
+        "tests/test_omnisurface_formation_bridge_v1.py"
       ],
       "depends_on": [
         "FEDERATION_CORE",
@@ -86,11 +88,11 @@
     {
       "id": "omnisurface_registry_v2",
       "kind": "unittest_glob",
-      "target": "test_omnisurface_fabric_v2.py",
+      "target": "test_omnisurface_formation_bridge_v1.py",
       "patterns": [
         "federation/omnisurface_fabric_v2.py",
         "governance/federation_omnisurface_fabric_v2.json",
-        "tests/test_omnisurface_fabric_v2.py"
+        "tests/test_omnisurface_formation_bridge_v1.py"
       ],
       "subsystems": [
         "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
