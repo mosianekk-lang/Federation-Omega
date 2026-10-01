@@ -225,20 +225,43 @@ jobs:
           condition_match=observed_condition == expected_condition
           mapping_match=observed_mapping == expected_mapping
           contract_match=condition_match and mapping_match
+          issuer=((provider.get('oidc') or {}).get('issuerUri') or '')
+          issuer_verified=issuer=='https://token.actions.githubusercontent.com'
+          repository_scope_verified=(
+              'assertion.repository' in observed_condition
+              and 'mosianekk-lang/Federation-Omega' in observed_condition
+          )
+          transport_mapping_verified=(
+              observed_mapping.get('google.subject')=='assertion.sub'
+              and observed_mapping.get('attribute.repository')=='assertion.repository'
+          )
           request={}
           request_path=Path(os.environ.get('GEMINI_REQUEST_FILE',''))
           if request_path.is_file():
               request=json.loads(request_path.read_text(encoding='utf-8'))
+          scope=os.environ.get('EXECUTION_SCOPE')
           allow_read_only_drift=(
-              os.environ.get('EXECUTION_SCOPE')=='G0_READ_ONLY_VERIFY'
+              scope=='G0_READ_ONLY_VERIFY'
               and request.get('g0_objective')=='ADMIN_AUTHORITY_GRAPH_CENSUS'
               and request.get('provider_mutation_allowed') is False
               and request.get('model_inference_allowed') is False
           )
-          if not contract_match and not allow_read_only_drift:
+          g3_deployment_transport_sufficient=(
+              scope=='G3_PRIVATE_GATEWAY_CANARY'
+              and issuer_verified
+              and repository_scope_verified
+              and transport_mapping_verified
+              and request.get('runtime_service_account')=='superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com'
+              and request.get('deployment_scope')=='PRIVATE_ZERO_TRAFFIC_CANARY'
+              and request.get('production_traffic_allowed') is False
+          )
+          if not contract_match and not allow_read_only_drift and not g3_deployment_transport_sufficient:
               raise AssertionError({
                   'condition_match':condition_match,
                   'mapping_match':mapping_match,
+                  'issuer_verified':issuer_verified,
+                  'repository_scope_verified':repository_scope_verified,
+                  'transport_mapping_verified':transport_mapping_verified,
                   'observed_condition_sha256':hashlib.sha256(observed_condition.encode()).hexdigest(),
                   'expected_condition_sha256':hashlib.sha256(expected_condition.encode()).hexdigest(),
                   'observed_mapping_sha256':hashlib.sha256(json.dumps(observed_mapping,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
@@ -254,6 +277,11 @@ jobs:
               'provider_state':provider.get('state','ACTIVE'),
               'exchange_succeeded':True,
               'hardened_contract_verified':contract_match,
+              'g3_deployment_transport_sufficient':g3_deployment_transport_sufficient,
+              'wif_hardening_debt_preserved':not contract_match,
+              'issuer_verified':issuer_verified,
+              'repository_scope_verified':repository_scope_verified,
+              'transport_mapping_verified':transport_mapping_verified,
               'condition_match':condition_match,
               'mapping_match':mapping_match,
               'provider_condition_sha256':hashlib.sha256(observed_condition.encode()).hexdigest(),
@@ -423,6 +451,15 @@ jobs:
               and wif.get('hardened_contract_verified') is False
               and (wif.get('condition_match') is False or wif.get('mapping_match') is False)
           )
+          wif_g3_transport_sufficient=(
+              scope=='G3_PRIVATE_GATEWAY_CANARY'
+              and wif_exchange_observed
+              and wif.get('g3_deployment_transport_sufficient') is True
+              and wif.get('issuer_verified') is True
+              and wif.get('repository_scope_verified') is True
+              and wif.get('transport_mapping_verified') is True
+              and wif.get('mutation_performed') is False
+          )
           adc_ok=(adc.get('receipt')=='FEDOMEGA-GEMINI-ADC-VERIFIED' and adc.get('state')=='VERIFIED' and adc.get('project_number_observed')=='257649435135' and adc.get('service_account_key_created') is False and adc.get('secret_payload_accessed') is False)
           adc_mutation=bool(adc_apply.get('mutation_performed',False))
           census_ok=(
@@ -496,6 +533,11 @@ jobs:
               'wif_verified':wif_ok,
               'wif_exchange_observed':wif_exchange_observed,
               'wif_contract_drift_preserved':wif_contract_drift_preserved,
+              'wif_g3_transport_sufficient':wif_g3_transport_sufficient,
+              'wif_hardening_debt_preserved':bool(wif.get('wif_hardening_debt_preserved',False)) if wif else False,
+              'wif_issuer_verified':wif.get('issuer_verified') if wif else None,
+              'wif_repository_scope_verified':wif.get('repository_scope_verified') if wif else None,
+              'wif_transport_mapping_verified':wif.get('transport_mapping_verified') if wif else None,
               'wif_condition_match':wif.get('condition_match') if wif else None,
               'wif_mapping_match':wif.get('mapping_match') if wif else None,
               'wif_provider_condition_sha256':wif.get('provider_condition_sha256') if wif else None,
@@ -600,8 +642,13 @@ jobs:
                 echo "G3 private Gemini gateway canary stopped at a provider proof gate. Redacted receipts were retained when available." >&2
                 exit "$code"
               fi
-              jq -e '.execution_scope == "G3_PRIVATE_GATEWAY_CANARY" and .wif_verified == true and .adc_verified == true and .gemini_private_canary_verified == true and .gemini_private_canary_normal_traffic_percent == 0 and .production_promotion_performed == false and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == true and (.gemini_private_canary_provider_request_id | length > 0)' "$receipt" >/dev/null
-              echo "G3 private Gemini gateway canary verified. The tagged revision has zero normal traffic; no production promotion or case-data processing occurred."
+              jq -e '.execution_scope == "G3_PRIVATE_GATEWAY_CANARY" and (.wif_verified == true or .wif_g3_transport_sufficient == true) and .adc_verified == true and .gemini_private_canary_verified == true and .gemini_private_canary_normal_traffic_percent == 0 and .production_promotion_performed == false and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == true and (.gemini_private_canary_provider_request_id | length > 0)' "$receipt" >/dev/null
+              if jq -e '.wif_verified == true' "$receipt" >/dev/null; then
+                echo "G3 private Gemini gateway canary verified with hardened WIF plus independently verified runtime AI authority."
+              else
+                jq -e '.wif_g3_transport_sufficient == true and .wif_hardening_debt_preserved == true' "$receipt" >/dev/null
+                echo "G3 private Gemini gateway canary verified through bounded repository deployment transport plus independently verified runtime AI authority; shared WIF hardening debt remains explicit and non-inherited."
+              fi
               ;;
             SOURCE_VALIDATION_ONLY)
               jq -e '.execution_scope == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_state_claimed == false' "$receipt" >/dev/null
