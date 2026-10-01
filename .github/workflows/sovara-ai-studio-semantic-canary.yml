@@ -196,3 +196,64 @@ jobs:
           path: /tmp/fuse-gemini-role-matrix/*.json
           if-no-files-found: error
           retention-days: 90
+
+
+  v2-interactions-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate V2 zero-effect contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          c=json.load(open('config/fuse-google-intelligence-runtime-v2.json',encoding='utf-8'))
+          assert c['schema']=='FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2'
+          assert c['version']=='2.0.0'
+          assert c['primary_google_protocol']=='VERTEX_AI_INTERACTIONS_REST'
+          assert c['primary_google_model_candidate']=='gemini-3.8-flash'
+          assert c['sensitive_default_store'] is False
+          assert c['provider_output_can_expand_authority'] is False
+          assert c['secret_payload_to_model'] is False
+          p=Path(c['prompt_path'])
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==c['prompt_sha256']
+          assert c['predecessor']['rollback_preserved'] is True
+          PY
+
+      - name: Authenticate canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Run V2 Gemini 3.8 Interactions semantic canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 scripts/run_google_interactions_v2_canary.py
+
+      - name: Upload immutable redacted V2 Interactions receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-google-interactions-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-google-interactions-v2/INTERACTIONS_V2_SEMANTIC_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
