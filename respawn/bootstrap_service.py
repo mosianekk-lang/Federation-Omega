@@ -22,8 +22,10 @@ HIPB_MODULE_PATH = ROOT.parent / "fuse_runtime" / "hyper_intelligence_performanc
 HIPB_COURT_PATH = ROOT.parent / "benchmarks" / "hyper_intelligence_performance_court_v1.mjs"
 TERMINAL_DEBT_MODULE_PATH = ROOT.parent / "federation" / "terminal_debt_v1.py"
 LOCAL_SOVEREIGN_AI_PROFILE_PATH = ROOT.parent / "governance" / "fuse_local_sovereign_ai_finality_v2.json"
-GOOGLE_INTELLIGENCE_RUNTIME_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v1.json"
-GOOGLE_INTELLIGENCE_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
+GOOGLE_INTELLIGENCE_RUNTIME_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v2.json"
+GOOGLE_INTELLIGENCE_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md"
+GOOGLE_INTELLIGENCE_V1_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v1.json"
+GOOGLE_INTELLIGENCE_V1_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
@@ -219,11 +221,11 @@ def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]
 
     if declared.get("enabled") is not True or contract.get("enabled") is not True:
         issues.append("GOOGLE_INTELLIGENCE_RUNTIME_DISABLED_OR_MISSING")
-    if declared.get("contract_id") != "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-001":
+    if declared.get("contract_id") != "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-002":
         issues.append("GOOGLE_INTELLIGENCE_MANIFEST_CONTRACT_ID_MISMATCH")
-    if contract.get("schema") != "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V1":
+    if contract.get("schema") != "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2":
         issues.append("GOOGLE_INTELLIGENCE_SCHEMA_MISMATCH")
-    if contract.get("version") != "1.0.0":
+    if contract.get("version") != "2.0.0":
         issues.append("GOOGLE_INTELLIGENCE_VERSION_MISMATCH")
     if contract.get("creates_new_controller") is not False or contract.get("creates_new_authority_root") is not False:
         issues.append("GOOGLE_INTELLIGENCE_AUTHORITY_DUPLICATION")
@@ -233,6 +235,26 @@ def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]
         issues.append("GOOGLE_PROVIDER_AUTHORITY_EXPANSION_NOT_BLOCKED")
     if contract.get("secret_payload_to_model") is not False:
         issues.append("GOOGLE_SECRET_MODEL_ACCESS_NOT_BLOCKED")
+    if contract.get("primary_google_protocol") != "VERTEX_AI_INTERACTIONS_REST":
+        issues.append("GOOGLE_INTERACTIONS_PRIMARY_PROTOCOL_MISMATCH")
+    if contract.get("primary_google_model_candidate") != "gemini-3.8-flash":
+        issues.append("GOOGLE_38_PRIMARY_MODEL_MISMATCH")
+    if contract.get("sensitive_default_store") is not False:
+        issues.append("GOOGLE_SENSITIVE_STORE_FALSE_GUARD_MISSING")
+    if contract.get("matched_champion_promotion_required") is not True:
+        issues.append("GOOGLE_MATCHED_CHAMPION_COURT_MISSING")
+    predecessor = contract.get("predecessor", {})
+    if predecessor.get("rollback_preserved") is not True:
+        issues.append("GOOGLE_V1_ROLLBACK_NOT_PRESERVED")
+    if not GOOGLE_INTELLIGENCE_V1_PATH.exists() or not GOOGLE_INTELLIGENCE_V1_PROMPT_PATH.exists():
+        issues.append("GOOGLE_V1_ROLLBACK_ARTIFACT_MISSING")
+    else:
+        v1 = load_json(GOOGLE_INTELLIGENCE_V1_PATH, {})
+        measured_v1_prompt_sha256 = hashlib.sha256(GOOGLE_INTELLIGENCE_V1_PROMPT_PATH.read_bytes()).hexdigest()
+        if predecessor.get("prompt_sha256") != measured_v1_prompt_sha256:
+            issues.append("GOOGLE_V1_ROLLBACK_PROMPT_HASH_MISMATCH")
+        if v1.get("prompt_sha256") != measured_v1_prompt_sha256:
+            issues.append("GOOGLE_V1_CONFIG_PROMPT_HASH_MISMATCH")
 
     if not GOOGLE_INTELLIGENCE_PROMPT_PATH.exists():
         issues.append("GOOGLE_INTELLIGENCE_PROMPT_MISSING")
@@ -254,12 +276,17 @@ def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]
         "GOOGLE_AI_STUDIO_IS_BUILD_CONTROL_PLANE_NOT_SOVEREIGN_AUTHORITY",
         "GOOGLE_PROVIDER_LIVE_CLAIMS_REQUIRE_PROVIDER_SEMANTIC_READBACK",
         "GOOGLE_MODEL_OUTPUT_CANNOT_EXPAND_FUSE_AUTHORITY",
+        "GOOGLE_INTERACTIONS_V2_REQUIRES_PROVIDER_SEMANTIC_READBACK",
+        "GOOGLE_38_CHAMPION_REQUIRES_MATCHED_NONREGRESSION_COURT",
+        "GOOGLE_SENSITIVE_INTERACTIONS_DEFAULT_STORE_FALSE",
+        "GOOGLE_LIVE_EXTENDED_THINKING_REQUIRES_INTERACTION_STATUS_FINALITY",
+        "CROSS_PROVIDER_FUSION_REQUIRES_INDEPENDENCE_PROOF",
     }
     for item in sorted(required_invariants - invariants):
         issues.append(f"GOOGLE_INTELLIGENCE_INVARIANT_MISSING:{item}")
 
     return {
-        "schema": "FUSE_GOOGLE_INTELLIGENCE_BOOTSTRAP_GUARD_V1",
+        "schema": "FUSE_GOOGLE_INTELLIGENCE_BOOTSTRAP_GUARD_V2",
         "ok": not issues,
         "issues": issues,
         "contract_id": contract.get("contract_id"),
@@ -267,6 +294,9 @@ def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]
         "prompt_sha256": contract.get("prompt_sha256"),
         "measured_prompt_sha256": measured_prompt_sha256,
         "ai_studio_role": contract.get("ai_studio_role"),
+        "primary_google_protocol": contract.get("primary_google_protocol"),
+        "primary_google_model_candidate": contract.get("primary_google_model_candidate"),
+        "rollback_v1_preserved": contract.get("predecessor", {}).get("rollback_preserved"),
         "provider_live_proven": False,
         "live_provider_state": contract.get("live_provider_state"),
         "truth_boundary": contract.get("truth_boundary"),
