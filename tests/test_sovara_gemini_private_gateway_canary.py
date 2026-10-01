@@ -58,6 +58,17 @@ class SovaraGeminiPrivateGatewayCanaryTests(unittest.TestCase):
         self.assertIn("EXPECTED_RUNTIME_SERVICE_ACCOUNT", self.app)
         self.assertIn("RUNTIME_IDENTITY_MISMATCH", self.app)
 
+    def test_canary_requires_v2_interactions_proof_on_same_revision(self) -> None:
+        self.assertIn("INTERACTIONS_MODEL", self.script)
+        self.assertIn("gemini-3.8-flash", self.script)
+        self.assertIn("/v2/interactions-handshake", self.script)
+        self.assertIn("SOVARA_GEMINI_INTERACTIONS_HANDSHAKE_RECEIPT_V2", self.script)
+        self.assertIn("VERTEX_AI_INTERACTIONS_REST", self.script)
+        self.assertIn("interactions_interaction_id", self.script)
+        self.assertIn("interactions_handshake_receipt_sha256", self.script)
+        self.assertIn("interactions_store", self.script)
+        self.assertIn("both V1 generateContent rollback proof and V2 Gemini 3.8 Interactions semantic proof", self.readme)
+
     def test_canary_does_not_promote_production_traffic(self) -> None:
         self.assertIn("production_promotion_performed':False", self.script)
         self.assertNotIn("update-traffic", self.script)

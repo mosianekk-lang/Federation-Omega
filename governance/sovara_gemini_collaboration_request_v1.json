@@ -1,56 +1,36 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "FUSE-MOBILE-PHASE-A-ADMIN-AUTHORITY-CENSUS-20260910-001",
-  "mode": "G0_READ_ONLY_VERIFY",
+  "request_id": "FUSE-GOOGLE-INTELLIGENCE-V2-G3-INTERACTIONS-CANARY-20261001-001",
+  "mode": "G3_PRIVATE_GATEWAY_CANARY",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
-  "provider_mutation_allowed": false,
-  "model_inference_allowed": false,
+  "provider_mutation_allowed": true,
+  "model_inference_allowed": true,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
-  "expected_missing_adc_controls": [
-    "aiplatform_user_binding",
-    "service_usage_consumer_binding",
-    "deployer_cloud_run_developer_binding"
+  "deployment_scope": "PRIVATE_ZERO_TRAFFIC_CANARY",
+  "production_traffic_allowed": false,
+  "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "service": "sovara-gemini-gateway",
+  "source_scope": [
+    "services/gemini_gateway/app.py",
+    "services/gemini_gateway/interactions_v2.py",
+    "sovara/gemini/private_gateway_canary.sh"
   ],
-  "fuse_mobile_phase_a_context": {
-    "mission": "FUSE_MOBILE_COMPLETE_VERIFIED_V1",
-    "source_main_sha": "28d04d704225fcac90df4714392c7bd1b7f8bae5",
-    "provider_currentness_run_id": "34422976465",
-    "provider_currentness_artifact_id": "10131596226",
-    "provider_currentness_artifact_sha256": "c318c21ee5ecfbffd2823632d9930bec7fd6fb53e2e898a273a1caf609728742",
-    "permission_receipt_sha256": "506c970b50e43124cd973c577b6dd349d5454dbb1fc8166cac55ead58d104dcc",
-    "iap_api_enabled": false,
-    "cloud_run_iap_enabled": false,
-    "public_invoker_present": false,
-    "deployer_granted_permissions": [
-      "run.services.update",
-      "run.services.setIamPolicy"
-    ],
-    "deployer_missing_permissions": [
-      "serviceusage.services.enable"
-    ]
-  },
-  "prior_provider_evidence": {
-    "latest_wif_run_id": "34415319068",
-    "latest_wif_source_sha": "9cd95c9f6c7608ffc1cd2b19e6d7cb05aa7de7cf",
-    "oidc_exchange_succeeded": true,
-    "hardened_wif_contract_verified": false,
-    "observed_wif_condition_class": "REPOSITORY_NAME_ONLY_TRUST",
-    "expected_wif_condition_class": "REPOSITORY_ID_OWNER_ID_MAIN_REF_EXACT_WORKFLOW_EVENT_BOUND",
-    "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
-    "runtime_service_account_exists": true,
-    "deployer_service_account_user": true,
-    "missing_controls": [
-      "aiplatform_user_binding",
-      "service_usage_consumer_binding",
-      "deployer_cloud_run_developer_binding"
-    ]
-  },
-  "purpose": "Run the already-admitted drift-aware read-only SOVARA x SOL 6.2 admin authority graph census as a reusable Strategic FUSE provider-discovery carrier for FUSE Mobile Phase A. In addition to the existing project-IAM authority observations, determine whether any already-reachable owner/admin service-account route has serviceusage.services.enable so the IAP API can be enabled without granting broader permanent authority to the ordinary deployer.",
-  "truth_boundary": "Read-only verification only. The census may inspect IAM policy, service-account trust/delegation edges and provider-native testIamPermissions responses. It must not enable any API, mutate IAM, alter WIF policy, bind a role, create a service account or key, access secret payloads, invoke a model, process case data, build or deploy an image, change traffic, communicate externally, publish, spend, or promote a runtime. serviceusage.services.enable is evidence only in this G0 request; possession of the permission does not itself authorize a provider mutation."
+  "required_provider_proofs": [
+    "V1_GENERATECONTENT_EXACT_NONCE",
+    "V2_INTERACTIONS_38_EXACT_NONCE",
+    "INTERACTION_ID",
+    "INTERACTION_STATUS_COMPLETED",
+    "USAGE_METADATA",
+    "STORE_FALSE",
+    "RUNTIME_SERVICE_ACCOUNT_READBACK",
+    "ZERO_NORMAL_TRAFFIC",
+    "IMMUTABLE_IMAGE_DIGEST"
+  ],
+  "purpose": "Deploy the exact admitted FUSE Google Intelligence Runtime V2 gateway source as a private zero-traffic Cloud Run canary under the existing superior-logic-runtime service account and prove both the V1 rollback semantic path and the V2 Gemini 3.8 Interactions stateless semantic path. No production traffic promotion is requested.",
+  "truth_boundary": "This request authorizes only the existing G3 private zero-traffic canary mechanism after source admission and ADC/WIF verification. It does not authorize production promotion, public ingress, new IAM roles, service-account keys, case data, external communication, unrelated provider effects, or proof inheritance to Live, Deep Research, Search, File Search, MCP, cross-provider fusion, owner value or COMPLETE."
 }

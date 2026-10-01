@@ -18,7 +18,15 @@
         "tests/test_sovara_google_interactions_v2_canary.py",
         "tests/test_fuse_google_intelligence_runtime_v1.py",
         "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json",
-        "scripts/run_google_interactions_v2_canary.py"
+        "scripts/run_google_interactions_v2_canary.py",
+        "services/gemini_gateway/app.py",
+        "services/gemini_gateway/interactions_v2.py",
+        "services/gemini_gateway/__init__.py",
+        "services/gemini_gateway/README.md",
+        "sovara/gemini/private_gateway_canary.sh",
+        "governance/sovara_gemini_collaboration_request_v1.json",
+        "tests/test_gemini_gateway.py",
+        "tests/test_sovara_gemini_private_gateway_canary.py"
       ],
       "reason": "FUSE_GOOGLE_INTERACTIONS_V2_RUNTIME_BOUNDARY"
     }
@@ -40,7 +48,15 @@
         "tests/test_sovara_google_interactions_v2_canary.py",
         "tests/test_fuse_google_intelligence_runtime_v1.py",
         "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json",
-        "scripts/run_google_interactions_v2_canary.py"
+        "scripts/run_google_interactions_v2_canary.py",
+        "services/gemini_gateway/app.py",
+        "services/gemini_gateway/interactions_v2.py",
+        "services/gemini_gateway/__init__.py",
+        "services/gemini_gateway/README.md",
+        "sovara/gemini/private_gateway_canary.sh",
+        "governance/sovara_gemini_collaboration_request_v1.json",
+        "tests/test_gemini_gateway.py",
+        "tests/test_sovara_gemini_private_gateway_canary.py"
       ],
       "depends_on": [
         "SOVARA",
@@ -85,6 +101,42 @@
         ".github/workflows/sovara-ai-studio-semantic-canary.yml",
         "tests/test_sovara_google_interactions_v2_canary.py",
         "scripts/run_google_interactions_v2_canary.py"
+      ],
+      "subsystems": [
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
+        "SOVARA"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "fuse_google_private_gateway_interactions_v2",
+      "kind": "unittest_glob",
+      "target": "test_gemini_gateway.py",
+      "patterns": [
+        "services/gemini_gateway/app.py",
+        "services/gemini_gateway/interactions_v2.py",
+        "services/gemini_gateway/__init__.py",
+        "tests/test_gemini_gateway.py"
+      ],
+      "subsystems": [
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
+        "SOVARA"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "sovara_gemini_private_gateway_interactions_v2_canary",
+      "kind": "unittest_glob",
+      "target": "test_sovara_gemini_private_gateway_canary.py",
+      "patterns": [
+        "services/gemini_gateway/README.md",
+        "sovara/gemini/private_gateway_canary.sh",
+        "governance/sovara_gemini_collaboration_request_v1.json",
+        "tests/test_sovara_gemini_private_gateway_canary.py"
       ],
       "subsystems": [
         "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
