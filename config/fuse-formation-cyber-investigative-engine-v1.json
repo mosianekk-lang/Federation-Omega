@@ -1,0 +1,77 @@
+{
+  "schema": "FUSE_FORMATION_CYBER_INVESTIGATIVE_ENGINE_V1",
+  "version": "1.0.0",
+  "contract_id": "FUSE-FORMATION-CYBER-INVESTIGATIVE-001",
+  "enabled": true,
+  "authority": "START:FUSE_ONE",
+  "inheritance": "ALL_AUTHORISED_NETWORK_DEVICE_SOFTWARE_EVIDENCE_AND_REVERSE_ENGINEERING_WORKFLOWS",
+  "reuse": [
+    "FUSE-FORMATION-POWER-002",
+    "FUSE-FORMATION-NETWORK-INTEL-001",
+    "HYPERCUBE",
+    "CFBE",
+    "CODEFORGE",
+    "FUSE_HYPERCUBE_HBR_001",
+    "PROOFOS",
+    "REALITY_JUDGE",
+    "FDOF",
+    "SICF",
+    "FUSE_WORK_PLANE",
+    "FEDERATION_LEARNING"
+  ],
+  "harvest_method": [
+    "DISCOVER",
+    "EXTRACT_MECHANISM",
+    "IDENTIFY_WHY_IT_WORKS",
+    "REMOVE_VENDOR_SPECIFIC_NOISE",
+    "COMPARE_COMPOSE"
+  ],
+  "dispositions": [
+    "REUSE",
+    "REBIND",
+    "REPAIR",
+    "EXTEND",
+    "COMPOSE",
+    "HARVEST",
+    "BUILD_MINIMUM_RESIDUAL",
+    "HOLD_RIGHTS_OR_AUTHORITY",
+    "REJECT"
+  ],
+  "persistent_learning": {
+    "new_state_root": false,
+    "receivers": [
+      "EXISTING_MISSION_CHECKPOINT",
+      "FUSE_WORK_PLANE",
+      "FAILURE_MEMORY",
+      "ROUTE_MEMORY",
+      "FEDERATION_LEARNING",
+      "ARTIFACT_PROVENANCE",
+      "PROOFOS_JUDGE"
+    ],
+    "store_failure_fingerprints": true,
+    "store_successful_workarounds": true,
+    "store_mechanism_receipts": true,
+    "store_counterexamples": true,
+    "natural_prevention_separate_from_configuration": true
+  },
+  "rights_boundary": {
+    "allowed": [
+      "OWNER_CONTROLLED",
+      "EXPLICITLY_AUTHORISED",
+      "OPEN_SOURCE",
+      "PUBLIC_DOCUMENTATION",
+      "LICENSED_ANALYSIS"
+    ],
+    "closed_source_default": "CLEAN_ROOM_BEHAVIOURAL_OR_METADATA_ONLY",
+    "prohibited": [
+      "AUTHENTICATION_BYPASS",
+      "CREDENTIAL_EXTRACTION_OR_REPLAY",
+      "DRM_OR_ACCESS_CONTROL_CIRCUMVENTION",
+      "PROPRIETARY_SOURCE_EXFILTRATION",
+      "PRIVATE_MODEL_WEIGHT_EXTRACTION",
+      "STEALTH_OR_EVASION",
+      "EXPLOITATION_WITHOUT_SEPARATE_EXACT_AUTHORITY"
+    ]
+  },
+  "truth_boundary": "ENGINE_BOUND!=TARGET_AUTHORISED!=SOURCE_KNOWN!=BEHAVIOUR_VERIFIED!=SECURITY_DEFECT_PROVEN!=OWNER_VALUE!=COMPLETE"
+}
