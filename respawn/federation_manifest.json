@@ -80,6 +80,8 @@
     "compile_hyper_intelligence_plan",
     "load_google_intelligence_runtime_contract",
     "compile_google_intelligence_route",
+    "load_formation_surface_load_balancer_contract",
+    "compile_surface_formation",
     "load_terminal_debt_finality_contract",
     "reconcile_terminal_debt",
     "hyper_pre_compile_gate",
@@ -131,7 +133,13 @@
     "GOOGLE_38_CHAMPION_REQUIRES_MATCHED_NONREGRESSION_COURT",
     "GOOGLE_SENSITIVE_INTERACTIONS_DEFAULT_STORE_FALSE",
     "GOOGLE_LIVE_EXTENDED_THINKING_REQUIRES_INTERACTION_STATUS_FINALITY",
-    "CROSS_PROVIDER_FUSION_REQUIRES_INDEPENDENCE_PROOF"
+    "CROSS_PROVIDER_FUSION_REQUIRES_INDEPENDENCE_PROOF",
+    "ALL_MATERIAL_WORK_REQUIRES_SURFACE_FORMATION_COMPILE",
+    "MINIMUM_SUFFICIENT_SURFACE_PORTFOLIO_REQUIRED",
+    "SURFACE_FAILURE_IS_LOCAL_NOT_GLOBAL_STALL",
+    "PROVIDER_DIVERSITY_DOES_NOT_EQUAL_INDEPENDENCE",
+    "SURFACE_LOAD_BALANCER_CANNOT_MINT_AUTHORITY",
+    "EXTERNAL_EFFECTS_REMAIN_FDOF_SICF_GATED"
   ],
   "runtime_sovereignty": {
     "contract_id": "FUSE-SOL62-RUNTIME-SOVEREIGNTY-V1",
@@ -403,5 +411,19 @@
     "authority_expansion": false,
     "live_provider_state": "REQUIRES_V2_PROVIDER_SEMANTIC_READBACK",
     "truth_boundary": "V2_PROMPT_BOUND!=V2_SOURCE_ADMITTED!=INTERACTIONS_CALLABLE!=GEMINI_3_8_SEMANTIC_VERIFIED!=CHAMPION_PROMOTED!=LIVE_VERIFIED!=RESEARCH_VERIFIED!=MCP_EFFECT_VERIFIED!=CROSS_PROVIDER_FUSION_VERIFIED!=OWNER_VALUE_VERIFIED!=COMPLETE"
+  },
+  "formation_surface_load_balancer": {
+    "contract_id": "FUSE-FORMATION-SURFACE-LB-001",
+    "schema": "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-formation-surface-load-balancer-v1.json",
+    "planner_path": "federation/formation_surface_load_balancer_v1.py",
+    "registry_path": "federation/omnisurface_fabric_v2.py",
+    "governance_path": "governance/federation_omnisurface_fabric_v2.json",
+    "applies_to": "ALL_MATERIAL_MISSIONS",
+    "authority_expansion": false,
+    "provider_execution_proven": false,
+    "truth_boundary": "SURFACE_FORMATION_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=EFFECT_VERIFIED!=OWNER_VALUE!=COMPLETE"
   }
 }

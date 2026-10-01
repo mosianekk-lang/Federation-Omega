@@ -26,6 +26,9 @@ GOOGLE_INTELLIGENCE_RUNTIME_PATH = CONFIG_ROOT / "fuse-google-intelligence-runti
 GOOGLE_INTELLIGENCE_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md"
 GOOGLE_INTELLIGENCE_V1_PATH = CONFIG_ROOT / "fuse-google-intelligence-runtime-v1.json"
 GOOGLE_INTELLIGENCE_V1_PROMPT_PATH = ROOT.parent / "prompts" / "FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
+FORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-surface-load-balancer-v1.json"
+FORMATION_SURFACE_LOAD_BALANCER_MODULE_PATH = ROOT.parent / "federation" / "formation_surface_load_balancer_v1.py"
+OMNISURFACE_REGISTRY_MODULE_PATH = ROOT.parent / "federation" / "omnisurface_fabric_v2.py"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
@@ -302,6 +305,91 @@ def google_intelligence_runtime_bootstrap_guard(payload: Optional[Dict[str, Any]
         "truth_boundary": contract.get("truth_boundary"),
     }
 
+
+def formation_surface_load_balancer_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("formation_surface_load_balancer", {})
+    contract = load_json(FORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-FORMATION-SURFACE-LB-001":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_MANIFEST_ID_MISMATCH")
+    if contract.get("contract_id") != "FUSE-FORMATION-SURFACE-LB-001":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_CONFIG_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_SCHEMA_MISMATCH")
+    if contract.get("version") != "1.0.0":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_VERSION_MISMATCH")
+    if contract.get("applies_to") != "ALL_MATERIAL_MISSIONS":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_NOT_GLOBAL")
+    if contract.get("formation_principle") != "MINIMUM_SUFFICIENT_PROVEN_PORTFOLIO":
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_SELECTION_LAW_MISMATCH")
+    if contract.get("all_surfaces_invoked_every_task") is not False:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_FORCED_FANOUT")
+    if contract.get("external_effect_authority") is not False:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_EFFECT_AUTHORITY_EXPANSION")
+    if contract.get("provider_execution_authority") is not False:
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_PROVIDER_AUTHORITY_EXPANSION")
+    for key in (
+        "creates_new_controller",
+        "creates_new_scheduler",
+        "creates_new_mission_bus",
+        "creates_new_authority_root",
+        "creates_new_truth_memory_proof_root",
+    ):
+        if contract.get(key) is not False:
+            issues.append(f"FORMATION_SURFACE_LOAD_BALANCER_DUPLICATION:{key}")
+
+    required_surfaces = {
+        "GOOGLE-APPS-SCRIPT",
+        "GOOGLE-CLOUD",
+        "GOOGLE-AI-STUDIO-GEMINI",
+        "CANVA",
+        "OPENROUTER",
+    }
+    missing_surfaces = sorted(required_surfaces - set(contract.get("core_requested_surfaces", [])))
+    issues.extend(f"FORMATION_SURFACE_REQUIRED_SURFACE_MISSING:{item}" for item in missing_surfaces)
+
+    if not FORMATION_SURFACE_LOAD_BALANCER_MODULE_PATH.exists():
+        issues.append("FORMATION_SURFACE_LOAD_BALANCER_MODULE_MISSING")
+    if not OMNISURFACE_REGISTRY_MODULE_PATH.exists():
+        issues.append("FORMATION_SURFACE_OMNISURFACE_REGISTRY_MISSING")
+
+    for step in ("load_formation_surface_load_balancer_contract", "compile_surface_formation"):
+        if step not in order:
+            issues.append(f"FORMATION_SURFACE_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"FORMATION_SURFACE_STEP_AFTER_EXECUTE:{step}")
+
+    required_invariants = {
+        "ALL_MATERIAL_WORK_REQUIRES_SURFACE_FORMATION_COMPILE",
+        "MINIMUM_SUFFICIENT_SURFACE_PORTFOLIO_REQUIRED",
+        "SURFACE_FAILURE_IS_LOCAL_NOT_GLOBAL_STALL",
+        "PROVIDER_DIVERSITY_DOES_NOT_EQUAL_INDEPENDENCE",
+        "SURFACE_LOAD_BALANCER_CANNOT_MINT_AUTHORITY",
+        "EXTERNAL_EFFECTS_REMAIN_FDOF_SICF_GATED",
+    }
+    for item in sorted(required_invariants - invariants):
+        issues.append(f"FORMATION_SURFACE_INVARIANT_MISSING:{item}")
+
+    return {
+        "schema": "FUSE_FORMATION_SURFACE_LOAD_BALANCER_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "applies_to": contract.get("applies_to"),
+        "formation_principle": contract.get("formation_principle"),
+        "default_max_parallel_surfaces": contract.get("default_max_parallel_surfaces"),
+        "provider_execution_proven": False,
+        "external_effect_authorized": False,
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
 def terminal_debt_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     source = payload if payload is not None else manifest()
     contract = source.get("terminal_debt_finality", {})
@@ -539,11 +627,12 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     autonomy_guard = autonomous_improvement_bootstrap_guard(source_manifest)
     hipb_guard = hyper_intelligence_performance_bootstrap_guard(source_manifest)
     google_guard = google_intelligence_runtime_bootstrap_guard(source_manifest)
+    formation_guard = formation_surface_load_balancer_bootstrap_guard(source_manifest)
     debt_guard = terminal_debt_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not debt_guard["ok"]:
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "terminal_debt_bootstrap_guard": debt_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
         )
     s = state()
     solved = search_state(
@@ -581,6 +670,8 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "hyper_intelligence_performance_guard": hipb_guard,
         "google_intelligence_runtime": source_manifest.get("google_intelligence_runtime", {}),
         "google_intelligence_runtime_guard": google_guard,
+        "formation_surface_load_balancer": source_manifest.get("formation_surface_load_balancer", {}),
+        "formation_surface_load_balancer_guard": formation_guard,
         "terminal_debt_finality": source_manifest.get("terminal_debt_finality", {}),
         "terminal_debt_bootstrap_guard": debt_guard,
         "historical_chat_backfill": source_manifest.get("historical_chat_backfill", {}),
