@@ -30,6 +30,8 @@ from formation_omega.autonomic_fabric import (
     ProofDirectedScheduler,
     SwarmRole,
 )
+from federation.formation_cyber_investigative_engine_v1 import FormationCyberInvestigativeEngine
+from federation.formation_network_intelligence_v1 import FormationNetworkIntelligence
 from federation.formation_surface_load_balancer_v1 import (
     FormationSurfaceLoadBalancer,
     FormationWorkPackage,
@@ -246,6 +248,8 @@ class FormationPowerCompiler:
             allow_external_effects=False,
         )
         self.failure_horizon = FailureHorizon()
+        self.network_intelligence = FormationNetworkIntelligence()
+        self.cyber_investigative = FormationCyberInvestigativeEngine()
 
     @staticmethod
     def _mode(spec: WorkflowFormationSpec, package_count: int) -> FormationPowerMode:
@@ -382,6 +386,29 @@ class FormationPowerCompiler:
                 "FEDERATION_LEARNING_POSTPASS",
             ]
         )
+        if spec.workflow_class in {WorkflowClass.WINDOWS_DEVICE, WorkflowClass.EVIDENCE} or "NETWORK" in spec.domains or "DEVICE" in spec.domains:
+            orchestration.extend([
+                "FORMATION_NETWORK_INTELLIGENCE_V1",
+                "TEMPORAL_IDENTITY_GRAPH",
+                "IP_MAC_EPOCH_SEPARATION",
+                "PRIVATE_MAC_CAUTION",
+                "PASSIVE_PROTOCOL_EVIDENCE_FUSION",
+                "NEXT_BEST_EVIDENCE_PLANNING",
+            ])
+        if (
+            spec.workflow_class in {WorkflowClass.ENGINEERING, WorkflowClass.EVIDENCE, WorkflowClass.WINDOWS_DEVICE}
+            or {"CYBER","FORENSICS","SOFTWARE","REVERSE_ENGINEERING","NETWORK","DEVICE"} & set(spec.domains)
+        ):
+            orchestration.extend([
+                "FORMATION_CYBER_INVESTIGATIVE_ENGINE_V1",
+                "RIGHTS_AUTHORITY_AND_SCOPE_PREFLIGHT",
+                "HISTORICAL_HYPERCUBE_CFBE_REUSE_CENSUS",
+                "STATIC_METADATA_DEPENDENCY_AND_INTERFACE_ANALYSIS",
+                "CLEAN_ROOM_BEHAVIOURAL_PROTOCOL_INFERENCE_WHEN_AUTHORISED",
+                "MECHANISM_EXTRACTION_VENDOR_NOISE_REMOVAL",
+                "CAPABILITY_GRAPH_AND_DIGITAL_TWIN",
+                "PERSISTENT_FAILURE_FINGERPRINT_AND_WORKAROUND_COMPILATION",
+            ])
         if mode in {
             FormationPowerMode.FUSION,
             FormationPowerMode.ADVERSARIAL,
