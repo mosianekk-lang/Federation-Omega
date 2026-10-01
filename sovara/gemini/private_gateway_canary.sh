@@ -316,16 +316,51 @@ curl --fail --silent --show-error \
   -d "{\"semantic_nonce\":\"${INTERACTIONS_NONCE}\"}" \
   "$CANARY_URL/v2/interactions-handshake" > "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json"
 
-python3 - "$RECEIPT_DIR/G3_HEALTH.json" "$RECEIPT_DIR/G3_READY.json" "$RECEIPT_DIR/G3_HANDSHAKE.json" "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json" "$RECEIPT_DIR/G3_CANARY_TARGET.json" "$NONCE" "$INTERACTIONS_NONCE" "$PROJECT_ID" "$PROJECT_NUMBER" "$RUNTIME_SA" "$SOURCE_SHA" "$SERVICE_PREEXISTED" "$PREVIOUS_READY" <<'PY' > "$RECEIPT_DIR/G3_PRIVATE_CANARY_RECEIPT.json"
+EPHEMERAL_SERVICE_DELETED=false
+if [[ "$EPHEMERAL_SERVICE" == true ]]; then
+  gcloud run services delete "$TARGET_SERVICE" \
+    --project "$PROJECT_ID" --region "$REGION" --quiet
+  EPHEMERAL_CREATED=false
+  if gcloud run services describe "$TARGET_SERVICE" \
+    --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+    echo "Ephemeral G3 canary service still exists after delete" >&2
+    exit 8
+  fi
+  EPHEMERAL_SERVICE_DELETED=true
+fi
+
+python3 - "$DEPLOYMENT_MODE" "$EPHEMERAL_SERVICE_DELETED" "$TARGET_SERVICE" "$SERVICE" <<'PY' > "$RECEIPT_DIR/G3_CLEANUP_VERIFICATION.json"
+import json,sys
+mode=sys.argv[1]
+deleted=sys.argv[2].lower()=='true'
+target=sys.argv[3]
+production=sys.argv[4]
+ephemeral=mode=='EPHEMERAL_SERVICE_COLD_START'
+cleanup_verified=(deleted if ephemeral else True)
+print(json.dumps({
+    'schema':'SOVARA_G3_CLEANUP_VERIFICATION_V1',
+    'deployment_mode':mode,
+    'canary_service':target,
+    'production_service':production,
+    'ephemeral_service':ephemeral,
+    'ephemeral_service_deleted':deleted,
+    'cleanup_verified':cleanup_verified,
+},sort_keys=True))
+if not cleanup_verified:
+    raise SystemExit('G3 cleanup verification failed')
+PY
+
+python3 - "$RECEIPT_DIR/G3_HEALTH.json" "$RECEIPT_DIR/G3_READY.json" "$RECEIPT_DIR/G3_HANDSHAKE.json" "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json" "$RECEIPT_DIR/G3_CANARY_TARGET.json" "$RECEIPT_DIR/G3_CLEANUP_VERIFICATION.json" "$NONCE" "$INTERACTIONS_NONCE" "$PROJECT_ID" "$PROJECT_NUMBER" "$RUNTIME_SA" "$SOURCE_SHA" "$SERVICE_PREEXISTED" "$PREVIOUS_READY" <<'PY' > "$RECEIPT_DIR/G3_PRIVATE_CANARY_RECEIPT.json"
 import hashlib,json,sys
 health=json.load(open(sys.argv[1],encoding='utf-8'))
 ready=json.load(open(sys.argv[2],encoding='utf-8'))
 hs=json.load(open(sys.argv[3],encoding='utf-8'))
 ihs=json.load(open(sys.argv[4],encoding='utf-8'))
 target=json.load(open(sys.argv[5],encoding='utf-8'))
-nonce,interactions_nonce,project,number,runtime,source=sys.argv[6:12]
-service_preexisted=(sys.argv[12].lower()=='true')
-previous_ready=sys.argv[13]
+cleanup=json.load(open(sys.argv[6],encoding='utf-8'))
+nonce,interactions_nonce,project,number,runtime,source=sys.argv[7:13]
+service_preexisted=(sys.argv[13].lower()=='true')
+previous_ready=sys.argv[14]
 assert health.get('status')=='HEALTHY', health
 assert health.get('provider_execution_verified') is False, health
 assert ready.get('status')=='READY_IDENTITY_VERIFIED', ready
@@ -352,6 +387,10 @@ assert ihs.get('store') is False, ihs
 assert isinstance(ihs.get('usage'),dict), ihs
 assert len(str(ihs.get('receipt_sha256') or ''))==64, ihs
 assert target.get('normal_traffic_percent')==0, target
+assert cleanup.get('cleanup_verified') is True, cleanup
+if target.get('ephemeral_service') is True:
+    assert target.get('production_service_mutated') is False, target
+    assert cleanup.get('ephemeral_service_deleted') is True, cleanup
 r={
   'receipt':'FEDOMEGA-GEMINI-GATEWAY-CANARY-VERIFIED',
   'state':'VERIFIED',
@@ -363,7 +402,14 @@ r={
   'tag':target['tag'],
   'image_digest_ref':target['image_digest_ref'],
   'runtime_service_account':runtime,
-  'normal_traffic_percent':0,
+  'deployment_mode':target.get('deployment_mode'),
+  'canary_service':target.get('canary_service'),
+  'normal_traffic_percent':target.get('normal_traffic_percent'),
+  'ephemeral_service':target.get('ephemeral_service'),
+  'ephemeral_service_traffic_percent':target.get('ephemeral_service_traffic_percent'),
+  'ephemeral_service_deleted':cleanup.get('ephemeral_service_deleted'),
+  'cleanup_verified':cleanup.get('cleanup_verified'),
+  'production_service_mutated':target.get('production_service_mutated'),
   'provider_request_id':hs['provider_request_id'],
   'model_identity':hs['model_identity'],
   'semantic_nonce_sha256':hs['semantic_nonce_sha256'],
