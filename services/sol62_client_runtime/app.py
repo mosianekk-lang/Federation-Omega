@@ -804,9 +804,9 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "interruption": stored["value"],
             "durable_handoff": auto_resume,
             "effect_authorized": False,
-            "truth_boundary": (
-                "INTERRUPTION_DECISION_NE_EFFECT_AUTHORITY;"
-                "RESOLVED_RESUME_OR_APPROVE_AUTO_ENQUEUES_EXISTING_GENESIS_WAKE"
+            "truth_boundary": "INTERRUPTION_DECISION_NE_EFFECT_AUTHORITY",
+            "auto_resume_truth_boundary": (
+                "RESOLVED_WAKE_QUEUED_NE_WAKE_EXECUTED_NE_EFFECT_AUTHORIZED"
             ),
         }
 
