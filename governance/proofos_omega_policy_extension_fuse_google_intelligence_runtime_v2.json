@@ -1,44 +1,54 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
   "version": "1.0.0",
-  "risk_rules": [{
-    "risk": "R4_CORE",
-    "patterns": [
-      "config/fuse-google-intelligence-runtime-v2.json",
-      "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md",
-      "frontier_convergence/gemini_adapter.py",
-      "frontier_convergence/intelligence_formation_v2.py",
-      "frontier_convergence/__init__.py",
-      "config/fuse-bootstrap-inheritance-v3.json",
-      "respawn/federation_manifest.json",
-      "respawn/bootstrap_service.py",
-      ".github/workflows/sovara-google-interactions-v2-canary.yml",
-      "tests/test_fuse_google_intelligence_runtime_v2.py",
-      "tests/test_sovara_google_interactions_v2_canary.py",
-      "tests/test_fuse_google_intelligence_runtime_v1.py",
-      "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json"
-    ],
-    "reason": "FUSE_GOOGLE_INTERACTIONS_V2_RUNTIME_BOUNDARY"
-  }],
-  "subsystem_rules": [{
-    "subsystem": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
-    "patterns": [
-      "config/fuse-google-intelligence-runtime-v2.json",
-      "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md",
-      "frontier_convergence/gemini_adapter.py",
-      "frontier_convergence/intelligence_formation_v2.py",
-      "frontier_convergence/__init__.py",
-      "config/fuse-bootstrap-inheritance-v3.json",
-      "respawn/federation_manifest.json",
-      "respawn/bootstrap_service.py",
-      ".github/workflows/sovara-google-interactions-v2-canary.yml",
-      "tests/test_fuse_google_intelligence_runtime_v2.py",
-      "tests/test_sovara_google_interactions_v2_canary.py",
-      "tests/test_fuse_google_intelligence_runtime_v1.py",
-      "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json"
-    ],
-    "depends_on": ["SOVARA", "RESPAWN", "FEDERATION_CORE"]
-  }],
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "config/fuse-google-intelligence-runtime-v2.json",
+        "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md",
+        "frontier_convergence/gemini_adapter.py",
+        "frontier_convergence/intelligence_formation_v2.py",
+        "frontier_convergence/__init__.py",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "tests/test_fuse_google_intelligence_runtime_v2.py",
+        "tests/test_sovara_google_interactions_v2_canary.py",
+        "tests/test_fuse_google_intelligence_runtime_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json",
+        "scripts/run_google_interactions_v2_canary.py"
+      ],
+      "reason": "FUSE_GOOGLE_INTERACTIONS_V2_RUNTIME_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
+      "patterns": [
+        "config/fuse-google-intelligence-runtime-v2.json",
+        "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md",
+        "frontier_convergence/gemini_adapter.py",
+        "frontier_convergence/intelligence_formation_v2.py",
+        "frontier_convergence/__init__.py",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "tests/test_fuse_google_intelligence_runtime_v2.py",
+        "tests/test_sovara_google_interactions_v2_canary.py",
+        "tests/test_fuse_google_intelligence_runtime_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json",
+        "scripts/run_google_interactions_v2_canary.py"
+      ],
+      "depends_on": [
+        "SOVARA",
+        "RESPAWN",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
   "historical_associations": [],
   "tests": [
     {
@@ -55,9 +65,14 @@
         "respawn/federation_manifest.json",
         "respawn/bootstrap_service.py",
         "tests/test_fuse_google_intelligence_runtime_v2.py",
-        "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json"
+        "governance/proofos_omega_policy_extension_fuse_google_intelligence_runtime_v2.json",
+        "scripts/run_google_interactions_v2_canary.py"
       ],
-      "subsystems": ["FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2", "SOVARA", "RESPAWN"],
+      "subsystems": [
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
+        "SOVARA",
+        "RESPAWN"
+      ],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 240
@@ -67,10 +82,14 @@
       "kind": "unittest_glob",
       "target": "test_sovara_google_interactions_v2_canary.py",
       "patterns": [
-        ".github/workflows/sovara-google-interactions-v2-canary.yml",
-        "tests/test_sovara_google_interactions_v2_canary.py"
+        ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+        "tests/test_sovara_google_interactions_v2_canary.py",
+        "scripts/run_google_interactions_v2_canary.py"
       ],
-      "subsystems": ["FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2", "SOVARA"],
+      "subsystems": [
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2",
+        "SOVARA"
+      ],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
