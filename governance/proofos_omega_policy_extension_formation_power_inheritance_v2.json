@@ -13,7 +13,10 @@
         "respawn/bootstrap_service.py",
         "tests/test_formation_power_inheritance_v2.py",
         "tests/test_fuse_formation_power_bootstrap_v2.py",
-        "governance/proofos_omega_policy_extension_formation_power_inheritance_v2.json"
+        "governance/proofos_omega_policy_extension_formation_power_inheritance_v2.json",
+        "federation/formation_omega_acceleration_binding_v1.py",
+        "config/fuse-formation-omega-acceleration-v1.json",
+        "tests/test_formation_omega_acceleration_binding_v1.py"
       ],
       "reason": "GLOBAL_ALL_WORKFLOW_FORMATION_INHERITANCE_SWARM_CAPABILITY_GENES_PARALLELISM_REPLAN_LEARNING_AND_PROOF_BOUNDARY"
     }
@@ -30,7 +33,10 @@
         "respawn/bootstrap_service.py",
         "tests/test_formation_power_inheritance_v2.py",
         "tests/test_fuse_formation_power_bootstrap_v2.py",
-        "governance/proofos_omega_policy_extension_formation_power_inheritance_v2.json"
+        "governance/proofos_omega_policy_extension_formation_power_inheritance_v2.json",
+        "federation/formation_omega_acceleration_binding_v1.py",
+        "config/fuse-formation-omega-acceleration-v1.json",
+        "tests/test_formation_omega_acceleration_binding_v1.py"
       ],
       "depends_on": [
         "FEDERATION_CORE",
@@ -75,6 +81,23 @@
       "subsystems": [
         "FUSE_FORMATION_POWER_INHERITANCE_V2",
         "RESPAWN"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "formation_omega_acceleration_binding_v1",
+      "kind": "unittest_glob",
+      "target": "test_formation_omega_acceleration_binding_v1.py",
+      "patterns": [
+        "federation/formation_omega_acceleration_binding_v1.py",
+        "config/fuse-formation-omega-acceleration-v1.json",
+        "tests/test_formation_omega_acceleration_binding_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_FORMATION_POWER_INHERITANCE_V2",
+        "FEDERATION_CORE"
       ],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
