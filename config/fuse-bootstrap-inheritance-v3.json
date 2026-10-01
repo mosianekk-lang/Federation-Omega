@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_BOOTSTRAP_INHERITANCE_V3",
-  "version": "3.7.0",
+  "version": "3.8.0",
   "boot_kernel": "5.10.1",
   "authority": "START:FUSE_ONE",
   "enabled": true,
@@ -54,6 +54,7 @@
     "GOOGLE_INTELLIGENCE_RUNTIME_BINDING",
     "FORMATION_POWER_INHERITANCE",
     "FORMATION_OMEGA_ACCELERATION",
+    "COGNITIVE_SURFACE_FABRIC_BINDING",
     "FORMATION_SURFACE_LOAD_BALANCER",
     "ROUTE_COMPILE",
     "HIPB_PRE_EFFECT",
@@ -243,5 +244,27 @@
     "alpha_omega_compiler_profile": "FORMATION_ALPHA_OMEGA_COMPILER_V1",
     "authority_expansion": false,
     "truth_boundary": "ACCELERATION_BOUND!=DEADLINE_FORECAST!=WORKFLOW_EXECUTED!=OBSERVED_5M_SLO!=PROGRAMMING_VERIFIED!=ALPHA_OMEGA_PLAN_EXECUTED!=COMPLETE"
+  },
+  "cognitive_surface_fabric": {
+    "contract_id": "FUSE-COGNITIVE-SURFACE-FABRIC-001",
+    "schema": "FUSE_COGNITIVE_SURFACE_FABRIC_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-cognitive-surface-fabric-v1.json",
+    "compiler_path": "federation/cognitive_surface_fabric_v1.py",
+    "apps_script_bridge_path": "apps_script/cognitive_surface_bridge/FuseCognitiveSurfaceBridge.gs",
+    "applies_to": "MATERIAL_COGNITIVE_AND_CROSS_SURFACE_WORK",
+    "surfaces": [
+      "GOOGLE-APPS-SCRIPT",
+      "GOOGLE-AI-STUDIO-GEMINI",
+      "CANVA",
+      "OPENROUTER",
+      "HYPERCUBE"
+    ],
+    "auto_build_rule": "MINIMUM_TRUE_RESIDUAL_ONLY",
+    "auto_research_rule": "VALUE_OF_INFORMATION_GATED",
+    "auto_deploy_rule": "EXACT_AUTHORITY_CANARY_READBACK",
+    "authority_expansion": false,
+    "truth_boundary": "COGNITIVE_SURFACE_FABRIC_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=ALPHA_OMEGA_BUILD_EXECUTED!=OWNER_VALUE!=COMPLETE"
   }
 }

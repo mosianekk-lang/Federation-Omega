@@ -7,6 +7,9 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
+
+from proofos_omega import repository_coordination as legacy_coordination
 
 from proofos_omega.repository_coordination_v3 import (
     CLAIM_SCHEMA,
@@ -157,9 +160,47 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
 
     def test_expired_active_never_silently_releases(self):
         a = lease("A", ["mobile/**"], 11, "NODE-A", expires="2026-09-02T22:49:30+02:00")
-        result = self.assess(["cfbe/x.py"], "legacy", registry(a, generation=11))
+        reg = registry(a, generation=11)
+        result = self.assess(["mobile/app.py"], "legacy", reg)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("V3_FOREIGN_WRITE_CONFLICT", self.rules(result))
+        self.assertEqual("ACTIVE", reg["active_leases"][0]["state"])
+        self.assertEqual("PASS", self.assess(["cfbe/x.py"], "legacy", reg)["status"])
+        self.assertEqual("PASS", can_acquire(reg, ["cfbe/**"], now=NOW)["status"])
+        self.assertEqual("FAIL", can_acquire(reg, ["mobile/**"], now=NOW)["status"])
+
+    def test_expired_owner_cannot_commit_even_with_exact_claim(self):
+        a = lease("A", ["mobile/**"], 11, "NODE-A", expires="2026-09-02T22:49:30+02:00")
+        result = self.assess(["mobile/app.py"], json.dumps(claim(a)), registry(a, generation=11))
         self.assertEqual("FAIL", result["status"])
         self.assertIn("V3_ACTIVE_EXPIRED_NOT_TERMINAL", self.rules(result))
+
+    def test_expired_repository_scope_still_blocks_every_write_set(self):
+        a = lease("A", ["repository:*"], 11, "NODE-A", expires="2026-09-02T22:49:30+02:00")
+        reg = registry(a, generation=11)
+        self.assertEqual("FAIL", self.assess(["docs/x.md"], "legacy", reg)["status"])
+        self.assertEqual("FAIL", can_acquire(reg, ["docs/**"], now=NOW)["status"])
+
+    def test_two_expired_disjoint_leases_can_be_recovered_without_mutual_deadlock(self):
+        expired = "2026-09-02T22:49:30+02:00"
+        a = lease("A", ["mobile/**"], 11, "NODE-A", expires=expired)
+        b = lease("B", ["cfbe/**"], 12, "NODE-B", expires=expired)
+        original = registry(a, b, generation=12)
+        first = transition_recovery(original, "A", expected_fencing_token=11, actor="RECOVERY", target_state="SUSPECT", now=NOW)
+        self.assertEqual("PASS", first["status"])
+        self.assertEqual(["SUSPECT", "ACTIVE"], [row["state"] for row in first["registry"]["active_leases"]])
+        second = transition_recovery(first["registry"], "B", expected_fencing_token=12, actor="RECOVERY", target_state="SUSPECT", now=NOW)
+        self.assertEqual("PASS", second["status"])
+        self.assertEqual(["SUSPECT", "SUSPECT"], [row["state"] for row in second["registry"]["active_leases"]])
+        self.assertEqual(["ACTIVE", "ACTIVE"], [row["state"] for row in original["active_leases"]])
+        self.assertEqual("FAIL", can_acquire(second["registry"], ["mobile/**"], now=NOW)["status"])
+        self.assertEqual("PASS", can_acquire(second["registry"], ["docs/**"], now=NOW)["status"])
+
+    def test_malformed_time_is_still_registry_corruption_for_disjoint_work(self):
+        a = lease("A", ["mobile/**"], 11, "NODE-A", expires="not-a-time")
+        result = self.assess(["docs/x.md"], "legacy", registry(a, generation=11))
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("V3_LEASE_TIME_INVALID", self.rules(result))
 
     def test_recovery_cannot_mark_suspect_before_expiry(self):
         a = lease("A", ["mobile/**"], 11, "NODE-A")
@@ -287,6 +328,108 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         a = lease("A", ["mobile/**"], 11, "NODE-A")
         body = "Summary\n<!-- FEDERATION_COORDINATION_V2\n" + json.dumps(claim(a)) + "\n-->"
         self.assertEqual("A", extract_claim(body)["lease_id"])
+
+    @staticmethod
+    def legacy_lease(*, state="ACTIVE", expires="2099-01-01T00:00:00+00:00"):
+        return {
+            "schema": legacy_coordination.LEASE_SCHEMA,
+            "state": state, "fencing_token": 353, "writer_node": "F353",
+            "system": "FDOF", "workstream": "source-admission",
+            "transaction_id": "T353", "idempotency_key": "test-f353",
+            "source_head": BASE, "scope": "repository:*",
+            "acquired_at": "2026-09-02T00:00:00+00:00", "expires_at": expires,
+            "turn_capture_id": "test-capture-353", "effect": "NONE",
+            "authority": "A1_INTERNAL_SOURCE_CI",
+        }
+
+    def hosted_assess(self, legacy, *, body="unrelated PR", tree_matches=True, legacy_error=None,
+                      event_payload=None, event_name="pull_request"):
+        legacy_sha = "7" * 40
+        legacy_message = legacy if isinstance(legacy, str) else legacy_coordination.LEASE_SCHEMA + "\n" + json.dumps(legacy)
+        def fake_git(root, args):
+            if args[0] == "ls-remote":
+                return REGISTRY_SHA + "\t" + DEFAULT_REGISTRY_REF
+            if args[0] == "show":
+                return message(registry(generation=1))
+            if args[0] == "diff":
+                return "docs/x.md"
+            return ""
+        with tempfile.TemporaryDirectory() as td:
+            event = Path(td) / "event.json"
+            payload = {"pull_request": {
+                "base": {"sha": BASE}, "head": {"sha": "2" * 40}, "body": body,
+            }} if event_payload is None else event_payload
+            event.write_text(json.dumps(payload), encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_EVENT_PATH": str(event), "GITHUB_EVENT_NAME": event_name}), patch(
+                "proofos_omega.repository_coordination_v3._origin_available", return_value=True
+            ), patch(
+                "proofos_omega.repository_coordination._runtime_lease",
+                return_value=(legacy_sha, legacy_message, tree_matches), side_effect=legacy_error,
+            ) as legacy_read, patch(
+                "proofos_omega.repository_coordination_v3._git", side_effect=fake_git
+            ) as registry_read:
+                result = evaluate_hosted_pull_request_v3(ROOT)
+        return result, legacy_read, registry_read
+
+    def test_hosted_legacy_active_global_lease_blocks_disjoint_unclaimed_pr(self):
+        result, legacy_read, registry_read = self.hosted_assess(self.legacy_lease())
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("ACTIVE_REPOSITORY_LEASE_UNCLAIMED", self.rules(result))
+        legacy_read.assert_called_once_with(ROOT, legacy_coordination.DEFAULT_LEASE_REF)
+        registry_read.assert_not_called()
+
+    def test_hosted_exact_active_legacy_claim_keeps_v2_absolute_without_v3_promotion(self):
+        active = self.legacy_lease()
+        body = dict(active, schema=legacy_coordination.CLAIM_SCHEMA,
+                    lock_ref=legacy_coordination.DEFAULT_LEASE_REF, lease_commit_sha="7" * 40)
+        result, _, registry_read = self.hosted_assess(active, body=json.dumps(body))
+        self.assertEqual("PASS", result["status"])
+        self.assertEqual("V3_DEFERRED_TO_ACTIVE_V2", result["state"])
+        self.assertFalse(result["provider_effect_authorized"])
+        registry_read.assert_not_called()
+
+    def test_hosted_expired_legacy_active_and_malformed_descriptors_fail_closed(self):
+        for value, expected_rule in (
+            (self.legacy_lease(expires="2020-01-01T00:00:00+00:00"), "ACTIVE_LEASE_EXPIRED_NOT_TERMINAL"),
+            (legacy_coordination.LEASE_SCHEMA + "\n{broken", "LEASE_DESCRIPTOR_MALFORMED"),
+        ):
+            with self.subTest(rule=expected_rule):
+                result, _, registry_read = self.hosted_assess(value)
+                self.assertEqual("FAIL", result["status"])
+                self.assertIn(expected_rule, self.rules(result))
+                registry_read.assert_not_called()
+
+    def test_hosted_explicit_terminal_legacy_lease_allows_v3_assessment(self):
+        for state in ("RELEASED", "ABORTED"):
+            with self.subTest(state=state):
+                result, legacy_read, registry_read = self.hosted_assess(self.legacy_lease(state=state))
+                self.assertEqual("PASS", result["status"])
+                self.assertEqual("V3_LEGACY_UNSCOPED_NO_CONFLICT", result["state"])
+                self.assertEqual("LEASE_" + state, result["legacy_coordination"]["state"])
+                self.assertTrue(legacy_read.called)
+                self.assertTrue(registry_read.called)
+
+    def test_hosted_legacy_provider_read_failure_never_becomes_absence(self):
+        result, _, registry_read = self.hosted_assess(self.legacy_lease(), legacy_error=RuntimeError("readback failed"))
+        self.assertEqual("FAIL", result["status"])
+        self.assertEqual("V3_LEGACY_PROVIDER_READBACK_FAILED", result["state"])
+        registry_read.assert_not_called()
+
+    def test_hosted_malformed_or_non_pr_context_cannot_pass_empty_compatibility(self):
+        for event in ({}, {"merge_group": {}}, {"pull_request": []}, {"pull_request": {"base": {}, "head": {}}}):
+            with self.subTest(event=event):
+                result, legacy_read, registry_read = self.hosted_assess(self.legacy_lease(state="RELEASED"), event_payload=event)
+                self.assertEqual("FAIL", result["status"])
+                self.assertEqual("V3_HOSTED_EVENT_CONTEXT_INVALID", result["state"])
+                self.assertEqual(0, legacy_read.call_count)
+                self.assertEqual(0, registry_read.call_count)
+
+    def test_hosted_merge_group_requires_explicit_adapter_instead_of_pr_assumption(self):
+        result, legacy_read, registry_read = self.hosted_assess(self.legacy_lease(state="RELEASED"), event_name="merge_group")
+        self.assertEqual("FAIL", result["status"])
+        self.assertEqual("V3_HOSTED_EVENT_UNSUPPORTED", result["state"])
+        self.assertEqual(0, legacy_read.call_count)
+        self.assertEqual(0, registry_read.call_count)
 
     def test_workflow_free_export_without_origin_is_explicitly_not_applicable(self):
         prior_event_path = os.environ.get("GITHUB_EVENT_PATH")

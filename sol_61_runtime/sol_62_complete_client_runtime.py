@@ -810,6 +810,75 @@ class Sol62CompleteClientRuntime:
         self.runtime.control.append_event(session_id, "SOL62_CLIENT_SESSION_BOUND", body)
         return stored
 
+    def create_owned_mission(
+        self,
+        spec: MissionSpec,
+        *,
+        owner_subject: str,
+        owner_intent: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Atomically admit one owner, mission, derived bindings and audit chain.
+
+        BEGIN IMMEDIATE precedes the ownership read. Competing processes sharing
+        this SQLite database therefore see either the complete prior admission
+        or no admission at all. This does not claim cross-database consensus.
+        The transaction contains only local deterministic work; no provider IO.
+        """
+        if not str(owner_subject).strip():
+            raise ConstraintError("MISSION_OWNER_REQUIRED")
+        intent = dict(owner_intent)
+        terminal = {"target_state": dict(spec.target_state), "success_proofs": list(spec.success_proofs)}
+        if (
+            intent.get("owner_subject") != owner_subject
+            or intent.get("mission_id") != spec.mission_id
+            or intent.get("objective") != spec.objective
+            or digest(intent.get("terminal_predicates")) != digest(terminal)
+            or digest(intent.get("constraints")) != digest(list(spec.constraints))
+            or intent.get("provider_effect_authorized") is not False
+            or any(not isinstance(intent.get(key), str) or not intent[key] for key in
+                   ("owner_label", "intent_sha256", "delegated_authority_ceiling"))
+        ):
+            raise ConstraintError("MISSION_OWNER_INTENT_MISMATCH")
+
+        with self.runtime.control.tx():
+            keys = (
+                ("sol62.mission", spec.mission_id),
+                ("sol62.mission_state", spec.mission_id),
+                ("sol62.mission_status", spec.mission_id),
+                ("sol62.client.mission", spec.mission_id),
+                ("sol62.owner.intent", spec.mission_id),
+                ("sol62.durable.policy", spec.mission_id),
+                ("sol62.client.intelligence_plan", f"{spec.mission_id}|MISSION"),
+            )
+            rows = {namespace: self._get(namespace, key) for namespace, key in keys}
+            if any(rows.values()):
+                current = rows["sol62.mission"]
+                bound = rows["sol62.client.mission"]
+                if (not all(rows.values()) or not current or not bound
+                        or bound["value"].get("owner_subject") != owner_subject):
+                    raise ConstraintError("MISSION_ID_UNAVAILABLE")
+                if digest(current["value"]) != digest(dataclasses.asdict(spec)):
+                    raise ConstraintError("MISSION_ID_CONFLICT")
+                if digest(rows["sol62.owner.intent"]["value"]) != digest(intent):
+                    raise ConstraintError("MISSION_ID_CONFLICT")
+                return self.mission_status(spec.mission_id)
+
+            self.runtime.register_mission(spec)
+            self.bind_mission(spec.mission_id, owner_subject=owner_subject)
+            self._put("sol62.owner.intent", spec.mission_id, intent)
+            self.runtime.control.append_event(
+                spec.mission_id,
+                "SOL62_OWNER_INTENT_BOUND",
+                {
+                    "owner_subject": owner_subject,
+                    "owner_label": intent["owner_label"],
+                    "intent_sha256": intent["intent_sha256"],
+                    "authority_ceiling": intent["delegated_authority_ceiling"],
+                    "external_effect": False,
+                },
+            )
+            return self.mission_status(spec.mission_id)
+
     def bind_mission(
         self,
         mission_id: str,
@@ -818,58 +887,66 @@ class Sol62CompleteClientRuntime:
         session_id: str = "",
         satisfied_constraints: Sequence[str] = (),
     ) -> dict[str, Any]:
-        mission = self._get("sol62.mission", mission_id)
-        if not mission:
-            raise ConstraintError("SOL62_MISSION_NOT_REGISTERED")
-        existing = self._get("sol62.client.mission", mission_id)
-        body = {
-            "schema": SCHEMA,
-            "mission_id": mission_id,
-            "owner_subject": owner_subject,
-            "session_id": session_id,
-            "state": "ACTIVE",
-            "proof_ids": list(existing["value"].get("proof_ids", [])) if existing else [],
-            "satisfied_constraints": sorted(set(satisfied_constraints) | set(existing["value"].get("satisfied_constraints", []) if existing else [])),
-            "total_attempts": int(existing["value"].get("total_attempts", 0)) if existing else 0,
-            "next_retry_epoch": int(existing["value"].get("next_retry_epoch", 0)) if existing else 0,
-            "mission_started_epoch": float(
-                existing["value"].get("mission_started_epoch", time.time())
-                if existing else time.time()
-            ),
-            "last_reason": existing["value"].get("last_reason", "") if existing else "",
-            "goal_mutation_by_provider_forbidden": True,
-            "continue_until_verified": self.policy.continue_until_verified,
-            "sovereign_plane": self.sovereign_plane.mission_envelope(
-                mission_id=mission_id,
-                objective=str(mission["value"]["objective"]),
-                owner_subject=owner_subject,
-                session_id=session_id,
-            ),
-        }
-        stored = self._put("sol62.client.mission", mission_id, body)
-        self.runtime.control.append_event(
-            mission_id,
-            "SOL62_CLIENT_MISSION_BOUND",
-            {
+        if not str(owner_subject).strip():
+            raise ConstraintError("MISSION_OWNER_REQUIRED")
+        with self.runtime.control.tx():
+            mission = self._get("sol62.mission", mission_id)
+            if not mission:
+                raise ConstraintError("SOL62_MISSION_NOT_REGISTERED")
+            existing = self._get("sol62.client.mission", mission_id)
+            if existing:
+                if existing["value"].get("owner_subject") != owner_subject:
+                    raise ConstraintError("MISSION_ID_UNAVAILABLE")
+                # Binding is an admission step, not a command to reset runtime state.
+                return existing
+            body = {
+                "schema": SCHEMA,
+                "mission_id": mission_id,
                 "owner_subject": owner_subject,
                 "session_id": session_id,
-                "orchestration_plane": self.sovereign_plane.contract.plane_id,
-            },
-        )
-        self.runtime.control.append_event(
-            mission_id,
-            "SOL62_SOVEREIGN_MISSION_ATTACHED",
-            {
-                "plane_id": self.sovereign_plane.contract.plane_id,
-                "truth_root": "SOL_6_2",
-                "resident_executor": self.sovereign_plane.contract.resident_executor,
-                "authority_expansion": False,
-            },
-        )
-        self.refresh_intelligence_plan(mission_id)
-        if not self._get("sol62.durable.policy", mission_id):
-            self.set_durability_policy(mission_id)
-        return stored
+                "state": "ACTIVE",
+                "proof_ids": list(existing["value"].get("proof_ids", [])) if existing else [],
+                "satisfied_constraints": sorted(set(satisfied_constraints) | set(existing["value"].get("satisfied_constraints", []) if existing else [])),
+                "total_attempts": int(existing["value"].get("total_attempts", 0)) if existing else 0,
+                "next_retry_epoch": int(existing["value"].get("next_retry_epoch", 0)) if existing else 0,
+                "mission_started_epoch": float(
+                    existing["value"].get("mission_started_epoch", time.time())
+                    if existing else time.time()
+                ),
+                "last_reason": existing["value"].get("last_reason", "") if existing else "",
+                "goal_mutation_by_provider_forbidden": True,
+                "continue_until_verified": self.policy.continue_until_verified,
+                "sovereign_plane": self.sovereign_plane.mission_envelope(
+                    mission_id=mission_id,
+                    objective=str(mission["value"]["objective"]),
+                    owner_subject=owner_subject,
+                    session_id=session_id,
+                ),
+            }
+            stored = self._put("sol62.client.mission", mission_id, body)
+            self.runtime.control.append_event(
+                mission_id,
+                "SOL62_CLIENT_MISSION_BOUND",
+                {
+                    "owner_subject": owner_subject,
+                    "session_id": session_id,
+                    "orchestration_plane": self.sovereign_plane.contract.plane_id,
+                },
+            )
+            self.runtime.control.append_event(
+                mission_id,
+                "SOL62_SOVEREIGN_MISSION_ATTACHED",
+                {
+                    "plane_id": self.sovereign_plane.contract.plane_id,
+                    "truth_root": "SOL_6_2",
+                    "resident_executor": self.sovereign_plane.contract.resident_executor,
+                    "authority_expansion": False,
+                },
+            )
+            self.refresh_intelligence_plan(mission_id)
+            if not self._get("sol62.durable.policy", mission_id):
+                self.set_durability_policy(mission_id)
+            return stored
 
     def bind_transition(self, binding: TransitionBinding) -> dict[str, Any]:
         if not self._get("sol62.transition", binding.transition_id):

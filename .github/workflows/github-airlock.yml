@@ -20,6 +20,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - name: Reserve admission report time
+        shell: bash
+        run: |
+          echo "FUSE_AIRLOCK_DEADLINE_EPOCH=$(( $(date +%s) + 540 ))" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           # Full repository history is required by the admitted BCO real first-parent
@@ -116,6 +121,24 @@ jobs:
       - name: Install declared test dependencies
         run: python -m pip install --disable-pip-version-check --no-input -r requirements.txt
 
+      - name: Enforce current source coordination
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p airlock-output
+          python - <<'PYCOORD'
+          import json
+          from pathlib import Path
+          from proofos_omega.repository_coordination_v3 import evaluate_hosted_pull_request_v3
+          report = evaluate_hosted_pull_request_v3(Path.cwd())
+          Path("airlock-output/source-coordination-report.json").write_text(json.dumps(report, indent=2) + "\n")
+          print("SOURCE_COORDINATION", report["status"], report["state"])
+          raise SystemExit(0 if report["status"] == "PASS" else 1)
+          PYCOORD
+
       # P0 bootstrap: validate the admission kernel and selector before trusting dynamic selection.
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
@@ -209,14 +232,46 @@ jobs:
           --policy governance/proofos_omega_policy_v1.json
           --manifest airlock-output/proofos-manifest.json
 
+      - name: Prepare selected browser proof runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          selected="$(python -c 'import json; p=json.load(open("airlock-output/proofos-manifest.json")); print(int(any(t["test_id"]=="fuse_one_os_browser_runtime" for t in p["selected_tests"])))')"
+          if [[ "$selected" == "1" ]]; then
+            browser_root="$RUNNER_TEMP/fuse-one-browser-runtime"
+            setup_budget="$(python -c 'import os,time; print(max(1, min(180, int(os.environ["FUSE_AIRLOCK_DEADLINE_EPOCH"]) - int(time.time()) - 60)))')"
+            set +e
+            timeout --signal=TERM --kill-after=5s "${setup_budget}s" bash -c '
+              set -euo pipefail
+              npm install --prefix "$1" --ignore-scripts --no-audit --no-fund playwright@1.62.1
+              node "$1/node_modules/playwright/cli.js" install --with-deps chromium
+            ' browser-setup "$browser_root"
+            setup_rc=$?
+            set -e
+            python - "$setup_rc" "$setup_budget" <<'PYSETUP'
+          import json, sys
+          from pathlib import Path
+          rc = int(sys.argv[1])
+          Path("airlock-output/browser-runtime-setup.json").write_text(json.dumps({
+              "status": "PASS" if rc == 0 else "FAIL", "returncode": rc,
+              "budget_seconds": int(sys.argv[2]), "playwright": "1.62.1",
+              "browser_proof_executed": False
+          }, indent=2) + "\n")
+          PYSETUP
+            test "$setup_rc" -eq 0
+            echo "PLAYWRIGHT_MODULE_PATH=$browser_root/node_modules/playwright" >> "$GITHUB_ENV"
+          fi
+
       - name: Execute manifest-selected proof court
         shell: bash
         run: |
           set -euo pipefail
+          budget="$(python -c 'import os,time; print(max(1, min(480, int(os.environ["FUSE_AIRLOCK_DEADLINE_EPOCH"]) - int(time.time()))))')"
           python -m proofos_omega.cli run \
             --policy governance/proofos_omega_policy_v1.json \
             --manifest airlock-output/proofos-manifest.json \
             --repo-root . \
+            --budget-seconds "$budget" \
             --output airlock-output/proofos-admission-report.json
 
       - name: Run non-blocking ProofOS shadow selector calibration
@@ -289,6 +344,9 @@ jobs:
           path: |
             airlock-output/github-airlock-report.json
             airlock-output/source-provenance-report.json
+            airlock-output/source-coordination-report.json
             airlock-output/proofos-manifest.json
             airlock-output/proofos-admission-report.json
+            airlock-output/proofos-admission-report.progress.json
+            airlock-output/browser-runtime-setup.json
             airlock-output/proofos-shadow-calibration.json
