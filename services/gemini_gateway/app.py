@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from . import VERSION
+from .interactions_v2 import InteractionsError, VertexInteractionsClient, sha256 as interactions_sha256
 
 CANONICAL_PROJECT_ID = "sov-hybrid-suite"
 CANONICAL_PROJECT_NUMBER = "257649435135"
@@ -29,6 +30,7 @@ METADATA_ROOT = "http://metadata.google.internal/computeMetadata/v1"
 MAX_BODY_BYTES = 256_000
 MAX_PROMPT_CHARS = 80_000
 HANDSHAKE_PREFIX = "HANDSHAKE_RECEIPT:"
+INTERACTIONS_HANDSHAKE_PREFIX = "INTERACTIONS_HANDSHAKE_RECEIPT:"
 USER_AGENT = f"sovara-gemini-gateway/{VERSION}"
 
 
@@ -280,9 +282,11 @@ class Gateway:
         *,
         identity: MetadataIdentity | None = None,
         client: VertexGeminiClient | None = None,
+        interactions_client: VertexInteractionsClient | None = None,
     ) -> None:
         self.identity = identity or MetadataIdentity()
         self.client = client or VertexGeminiClient(self.identity)
+        self.interactions_client = interactions_client or VertexInteractionsClient(self.identity)
 
     def health(self) -> dict[str, Any]:
         return {
@@ -356,6 +360,56 @@ class Gateway:
         }
         return {**receipt_core, "receipt_sha256": sha256(receipt_core)}
 
+    def interactions_handshake(self, body: Mapping[str, Any]) -> dict[str, Any]:
+        nonce = str(body.get("semantic_nonce") or "").strip()
+        if not nonce or len(nonce) > 256:
+            raise GatewayError("SEMANTIC_NONCE_REQUIRED", http_status=400)
+        if any(ch.isspace() for ch in nonce):
+            raise GatewayError("SEMANTIC_NONCE_INVALID", http_status=400)
+
+        expected = f"{INTERACTIONS_HANDSHAKE_PREFIX}{nonce}"
+        prompt = (
+            "This is a bounded stateless Vertex Interactions provider identity canary. "
+            "Return exactly the following token and no other text:\n"
+            f"{expected}"
+        )
+        try:
+            provider = self.interactions_client.interact(prompt=prompt)
+        except InteractionsError as exc:
+            raise GatewayError(exc.code, exc.detail, http_status=exc.http_status) from exc
+
+        observed = str(provider.get("text") or "").strip()
+        if observed != expected:
+            raise GatewayError(
+                "INTERACTIONS_SEMANTIC_NONCE_MISMATCH",
+                f"expected_sha256={sha256(expected)} observed_sha256={sha256(observed)}",
+                http_status=502,
+            )
+
+        receipt_core = {
+            "schema": "SOVARA_GEMINI_INTERACTIONS_HANDSHAKE_RECEIPT_V2",
+            "status": "VERIFIED",
+            "provider": provider["provider"],
+            "protocol": provider["protocol"],
+            "provider_request_id": provider["provider_request_id"],
+            "interaction_id": provider["interaction_id"],
+            "interaction_status": provider["interaction_status"],
+            "model_identity": provider["model_identity"],
+            "model_identity_source": provider["model_identity_source"],
+            "configured_model": provider["configured_model"],
+            "semantic_nonce": nonce,
+            "semantic_nonce_sha256": sha256(nonce),
+            "semantic_verified": True,
+            "finish_state": provider["finish_state"],
+            "usage": provider["usage"],
+            "latency_ms": provider["latency_ms"],
+            "provider_identity": provider["provider_identity"],
+            "request_sha256": provider["request_sha256"],
+            "response_sha256": provider["response_sha256"],
+            "store": provider["store"],
+        }
+        return {**receipt_core, "receipt_sha256": interactions_sha256(receipt_core)}
+
     def generate(self, body: Mapping[str, Any]) -> dict[str, Any]:
         prompt = str(body.get("prompt") or "")
         result = self.client.generate(
@@ -427,6 +481,8 @@ class Handler(BaseHTTPRequestHandler):
             body = self._body()
             if path == "/v1/handshake":
                 self._reply(200, self.gateway.handshake(body))
+            elif path == "/v2/interactions-handshake":
+                self._reply(200, self.gateway.interactions_handshake(body))
             elif path == "/v1/generate":
                 self._reply(200, self.gateway.generate(body))
             else:
