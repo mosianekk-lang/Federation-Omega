@@ -46,7 +46,7 @@ def test_respawn_and_bootstrap_bind_live_ten_pass_contract():
     assert bootstrap["autonomous_improvement"]["exact_iterations"]==10
     assert bootstrap["autonomous_improvement"]["historical_chat_backfill"]["current_completed_iterations"]==370
     assert bootstrap["live_proof"]["bootstrap_guard_schema"]=="FUSE_BOOTSTRAP_GUARD_V4"
-    assert manifest["schema_version"]=="1.5"
+    assert manifest["schema_version"]=="1.6"
     assert manifest["bootstrap_self_improvement"]["iterations_per_cycle"]==10
     assert manifest["historical_chat_backfill"]["current_exact_recovered_chat_records"]==37
     assert manifest["historical_chat_backfill"]["native_account_totality"]=="UNVERIFIED"

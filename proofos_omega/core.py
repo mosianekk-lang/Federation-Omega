@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import fnmatch, hashlib, json, os, re, subprocess, sys, time
+import fnmatch, hashlib, json, math, os, re, signal, subprocess, sys, time
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path, PurePosixPath
@@ -10,6 +10,118 @@ class ProofOSError(RuntimeError): pass
 class PolicyError(ProofOSError): pass
 class ImpactError(ProofOSError): pass
 class RunnerError(ProofOSError): pass
+class RunBudgetExhausted(RunnerError): pass
+
+
+class ExecutionBudget:
+    """One optional monotonic deadline shared by courts and diagnostic probes.
+
+    Budgeted POSIX courts own and clean a process group. Process creation and
+    deliberately detached sessions are not strictly interruptible by that group;
+    hosted callers must reserve time for cleanup/report/artifact publication.
+    """
+    def __init__(self, seconds, *, clock=None):
+        if isinstance(seconds, bool):
+            raise RunnerError("run budget must be a finite positive number")
+        duration = float(seconds)
+        if not math.isfinite(duration) or duration <= 0:
+            raise RunnerError("run budget must be a finite positive number")
+        self.clock = clock or time.monotonic
+        self.deadline = self.clock() + duration
+
+    def remaining(self):
+        return max(0.0, self.deadline - self.clock())
+
+    def timeout(self, per_court_limit):
+        remaining = self.remaining()
+        if remaining <= 0:
+            raise RunBudgetExhausted("proof execution budget exhausted")
+        return min(float(per_court_limit), remaining)
+
+
+def run_court_process(argv, *, budgeted=False, **kwargs):
+    """Run one admitted court, owning only its POSIX process group when bounded.
+
+    The legacy unbudgeted and Windows paths retain subprocess.run semantics.
+    The group receives TERM with at most 0.5 seconds of cleanup grace before
+    KILL on timeout and ordinary child exit, including failures. This lets an
+    owner such as Playwright close the detached browser it created; an arbitrary
+    detached session remains outside our signal authority. The bounded grace
+    and pipe-drain time are cleanup headroom beyond the court execution timeout.
+    Polling communication also detects a dead wrapper whose descendants retain
+    its output pipes. No process outside the group we created is targeted.
+    """
+    if not budgeted or os.name == "nt":
+        return subprocess.run(argv, **kwargs)
+    timeout = float(kwargs.pop("timeout"))
+    check = kwargs.pop("check", False)
+    kwargs["env"] = {**kwargs.get("env", os.environ), "PROOFOS_PARENT_OWNS_PROCESS_GROUP": "1"}
+    deadline = time.monotonic() + timeout
+    process = subprocess.Popen(argv, start_new_session=True, **kwargs)
+    cleanup_started = False
+
+    def cleanup_owned_group():
+        nonlocal cleanup_started
+        if cleanup_started:
+            return
+        cleanup_started = True
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        grace_deadline = time.monotonic() + 0.5
+        while time.monotonic() < grace_deadline:
+            process.poll()  # Reap the direct child so it cannot hold the group.
+            try:
+                os.killpg(process.pid, 0)
+            except ProcessLookupError:
+                return
+            time.sleep(min(0.01, max(0.0, grace_deadline - time.monotonic())))
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+    def drain_after_cleanup(last_timeout):
+        try:
+            return process.communicate(timeout=1.0)
+        except subprocess.TimeoutExpired as tail:
+            # An explicitly detached descendant is outside this owned group.
+            # Do not wait forever for its inherited pipe or kill unrelated PIDs.
+            for stream in (process.stdout, process.stderr):
+                if stream is not None:
+                    stream.close()
+            process.wait(timeout=1.0)
+            return tail.output or last_timeout.output or b"", tail.stderr or last_timeout.stderr or b""
+
+    try:
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                expired = subprocess.TimeoutExpired(argv, timeout)
+                cleanup_owned_group()
+                out, err = drain_after_cleanup(expired)
+                raise subprocess.TimeoutExpired(argv, timeout, output=out, stderr=err)
+            try:
+                out, err = process.communicate(timeout=min(remaining, 0.25))
+                result = subprocess.CompletedProcess(argv, process.returncode, out, err)
+                if check:
+                    result.check_returncode()
+                return result
+            except subprocess.TimeoutExpired as expired:
+                if process.poll() is not None:
+                    cleanup_owned_group()
+                    out, err = drain_after_cleanup(expired)
+                    result = subprocess.CompletedProcess(argv, process.returncode, out, err)
+                    if check:
+                        result.check_returncode()
+                    return result
+                if time.monotonic() >= deadline:
+                    cleanup_owned_group()
+                    out, err = drain_after_cleanup(expired)
+                    raise subprocess.TimeoutExpired(argv, timeout, output=out, stderr=err)
+    finally:
+        cleanup_owned_group()
 
 class RiskTier(IntEnum):
     R0_DOCS=0; R1_ISOLATED=1; R2_SHARED=2; R3_SECURITY_ABI=3; R4_CORE=4; R5_RELEASE=5
@@ -214,7 +326,11 @@ def classify_repeatability(primary_returncode:int, diagnostic_returncode:int|Non
     return "REPRODUCIBLE_FAIL"
 
 class ProofRunner:
-    def __init__(self,*,policy,repo_root,cache=None): self.policy=policy; self.repo_root=Path(repo_root); self.cache=cache
+    def __init__(self,*,policy,repo_root,cache=None):
+        self.policy=policy; self.repo_root=Path(repo_root); self.cache=cache
+        # Ephemeral output for the existing redacted CLI diagnostic path. It is
+        # deliberately excluded from the immutable proof report and cache.
+        self.failure_outputs = {}
     def runtime_identity(self): return {"python":sys.version.split()[0],"platform":sys.platform,"policy":self.policy.version}
     def _present(self,t):
         if t.kind=="unittest_glob": return any((self.repo_root/"tests").glob(t.target))
@@ -225,41 +341,103 @@ class ProofRunner:
         if t.kind=="unittest_module": return [sys.executable,"-m","unittest",t.target,"-v"]
         if t.kind=="compileall": return [sys.executable,"-m","compileall","-q",t.target]
         raise RunnerError("unsupported test kind")
-    def run(self,manifest):
+    def run(self,manifest,*,budget=None,progress=None):
         if not manifest.verify() or manifest.policy_sha256!=self.policy.sha256: raise RunnerError("manifest integrity failure")
         results=[]; blocking=[]; scoped=[]; runtime=self.runtime_identity()
+        self.failure_outputs = {}
+        clock = budget.clock if budget is not None else time.monotonic
+
+        def emit(event, test_id=None, **extra):
+            if progress is not None:
+                completed = {row.test_id for row in results}
+                progress({
+                    "schema": "FEDERATION-PROOFOS-RUN-PROGRESS-V1",
+                    "event": event, "status": "IN_PROGRESS", "test_id": test_id,
+                    "manifest_sha256": manifest.manifest_sha256,
+                    "selected_count": len(manifest.selected_tests),
+                    "completed_count": len(results),
+                    "pending_test_ids": [row.test_id for row in manifest.selected_tests if row.test_id not in completed],
+                    "unproven_test_ids": [row.test_id for row in results if row.status == "FAIL_BUDGET_EXHAUSTED"],
+                    "results": [row.to_dict() for row in results],
+                    "remaining_seconds": budget.remaining() if budget is not None else None,
+                    **extra,
+                })
+
+        def capture(test_id, stdout, stderr):
+            def decode(value):
+                return value.decode(errors="replace") if isinstance(value, bytes) else str(value or "")
+            # Redaction must see the complete prefixes of token/assignment
+            # values. The CLI redacts before applying its output-length cap.
+            self.failure_outputs[test_id] = decode(stdout) + decode(stderr)
+
+        def budget_result(t, key, *, elapsed=0.0, stdout=b"", stderr=b"", repeatability="NOT_RUN_BUDGET_EXHAUSTED"):
+            capture(t.test_id, stdout, stderr)
+            return TestExecutionResult(
+                t.test_id,"FAIL_BUDGET_EXHAUSTED",124,elapsed,key,
+                sha256_bytes(stdout or b""),sha256_bytes(stderr or b""),
+                t.failure_class,t.block_scope,False,None,repeatability,
+            )
+
+        emit("RUN_START")
         for sel in manifest.selected_tests:
+            emit("COURT_START", sel.test_id)
             t=self.policy.tests[sel.test_id]; key=proof_key_for_test(repo_root=self.repo_root,manifest=manifest,policy=self.policy,spec=t,runtime_identity=runtime)
             cached=None if t.hard_always_run or self.cache is None else self.cache.load(key)
-            if cached:
-                r=TestExecutionResult(t.test_id,"PASS",0,0.0,key,cached["stdout_sha256"],cached["stderr_sha256"],t.failure_class,t.block_scope,True); results.append(r); continue
-            if not self._present(t):
+            if budget is not None and budget.remaining() <= 0:
+                r=budget_result(t,key)
+                emit("BUDGET_EXHAUSTED", t.test_id)
+            elif cached:
+                r=TestExecutionResult(t.test_id,"PASS",0,0.0,key,cached["stdout_sha256"],cached["stderr_sha256"],t.failure_class,t.block_scope,True)
+            elif not self._present(t):
                 status="SKIPPED_NOT_PRESENT" if t.optional_if_missing else "FAIL_NOT_PRESENT"; rc=0 if t.optional_if_missing else 2
                 r=TestExecutionResult(t.test_id,status,rc,0.0,key,sha256_bytes(b""),sha256_bytes(b"required proof target not present" if rc else b""),t.failure_class,t.block_scope)
             else:
-                start=time.monotonic()
+                start=clock()
+                timeout = t.timeout_seconds
                 try:
-                    p=subprocess.run(self._argv(t),cwd=self.repo_root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=t.timeout_seconds,check=False,env={**os.environ,"PYTHONDONTWRITEBYTECODE":"1"})
+                    timeout = budget.timeout(t.timeout_seconds) if budget is not None else t.timeout_seconds
+                    p=run_court_process(self._argv(t),budgeted=budget is not None,cwd=self.repo_root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=timeout,check=False,env={**os.environ,"PYTHONDONTWRITEBYTECODE":"1"})
                     diagnostic_rc=None
                     repeatability="NOT_NEEDED"
                     if p.returncode!=0:
+                        capture(t.test_id,p.stdout,p.stderr)
+                        emit("REPEATABILITY_START",t.test_id)
                         try:
-                            probe=subprocess.run(self._argv(t),cwd=self.repo_root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=t.timeout_seconds,check=False,env={**os.environ,"PYTHONDONTWRITEBYTECODE":"1"})
+                            probe_timeout = budget.timeout(t.timeout_seconds) if budget is not None else t.timeout_seconds
+                            probe=run_court_process(self._argv(t),budgeted=budget is not None,cwd=self.repo_root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=probe_timeout,check=False,env={**os.environ,"PYTHONDONTWRITEBYTECODE":"1"})
                             diagnostic_rc=probe.returncode
                         except subprocess.TimeoutExpired:
                             diagnostic_rc=124
-                        repeatability=classify_repeatability(p.returncode,diagnostic_rc)
-                    r=TestExecutionResult(t.test_id,"PASS" if p.returncode==0 else "FAIL",p.returncode,time.monotonic()-start,key,sha256_bytes(p.stdout),sha256_bytes(p.stderr),t.failure_class,t.block_scope,False,diagnostic_rc,repeatability)
+                            if budget is not None and probe_timeout < t.timeout_seconds:
+                                emit("BUDGET_EXHAUSTED",t.test_id,phase="REPEATABILITY")
+                        except RunBudgetExhausted:
+                            repeatability="BUDGET_EXHAUSTED"
+                            emit("BUDGET_EXHAUSTED",t.test_id,phase="REPEATABILITY")
+                        if repeatability!="BUDGET_EXHAUSTED":
+                            repeatability=classify_repeatability(p.returncode,diagnostic_rc)
+                    r=TestExecutionResult(t.test_id,"PASS" if p.returncode==0 else "FAIL",p.returncode,clock()-start,key,sha256_bytes(p.stdout),sha256_bytes(p.stderr),t.failure_class,t.block_scope,False,diagnostic_rc,repeatability)
+                except RunBudgetExhausted:
+                    r=budget_result(t,key,elapsed=clock()-start)
+                    emit("BUDGET_EXHAUSTED",t.test_id)
                 except subprocess.TimeoutExpired as e:
-                    r=TestExecutionResult(t.test_id,"FAIL_TIMEOUT",124,time.monotonic()-start,key,sha256_bytes(e.stdout or b""),sha256_bytes(e.stderr or b""),t.failure_class,t.block_scope,False,None,"PRIMARY_TIMEOUT")
+                    capture(t.test_id,e.stdout,e.stderr)
+                    if budget is not None and timeout < t.timeout_seconds:
+                        r=budget_result(t,key,elapsed=clock()-start,stdout=e.stdout or b"",stderr=e.stderr or b"",repeatability="PRIMARY_BUDGET_TIMEOUT")
+                        emit("BUDGET_EXHAUSTED",t.test_id,phase="PRIMARY")
+                    else:
+                        r=TestExecutionResult(t.test_id,"FAIL_TIMEOUT",124,clock()-start,key,sha256_bytes(e.stdout or b""),sha256_bytes(e.stderr or b""),t.failure_class,t.block_scope,False,None,"PRIMARY_TIMEOUT")
             results.append(r)
-            if r.status=="PASS" and self.cache: self.cache.store(r)
+            if r.status=="PASS" and self.cache and not r.reused_from_cache: self.cache.store(r)
             elif not (r.status.startswith("PASS") or r.status.startswith("SKIPPED")):
-                f=f"{t.test_id}:{'SELECTOR_ESCAPE' if sel.mode=='SHADOW_SENTINEL' else t.failure_class}"
-                if sel.mode=="SHADOW_SENTINEL" or t.block_scope in {"GLOBAL","SUBSYSTEM"}: blocking.append(f)
+                failure_class = "PROOF_BUDGET_EXHAUSTED" if r.status=="FAIL_BUDGET_EXHAUSTED" else "SELECTOR_ESCAPE" if sel.mode=="SHADOW_SENTINEL" else t.failure_class
+                f=f"{t.test_id}:{failure_class}"
+                if r.status=="FAIL_BUDGET_EXHAUSTED" or sel.mode=="SHADOW_SENTINEL" or t.block_scope in {"GLOBAL","SUBSYSTEM"}: blocking.append(f)
                 if t.block_scope!="GLOBAL": scoped.append(f)
+            emit("COURT_COMPLETE",t.test_id,court_status=r.status)
         status="PASS" if not blocking else "FAIL"; payload={"manifest_sha256":manifest.manifest_sha256,"results":[x.to_dict() for x in results],"blocking_failures":sorted(blocking),"scoped_failures":sorted(scoped),"status":status}
-        return AdmissionReport(manifest.manifest_sha256,tuple(results),tuple(sorted(blocking)),tuple(sorted(scoped)),status,sha256_json(payload))
+        report=AdmissionReport(manifest.manifest_sha256,tuple(results),tuple(sorted(blocking)),tuple(sorted(scoped)),status,sha256_json(payload))
+        emit("RUN_COMPLETE",status=status,report_sha256=report.report_sha256)
+        return report
 
 def load_manifest(path):
     r=json.loads(Path(path).read_text()); i=r["impact"]; impact=ImpactAssessment(tuple(i["changed_paths"]),RiskTier.parse(i["risk"]),tuple(i["risk_reasons"]),tuple(i["direct_subsystems"]),tuple(i["impacted_subsystems"]),tuple(i["unmapped_production_paths"]),i["graph_sha256"])

@@ -33,6 +33,9 @@ FORMATION_OMEGA_ACCELERATION_MODULE_PATH = ROOT.parent / "federation" / "formati
 FORMATION_SURFACE_LOAD_BALANCER_CONFIG_PATH = CONFIG_ROOT / "fuse-formation-surface-load-balancer-v1.json"
 FORMATION_SURFACE_LOAD_BALANCER_MODULE_PATH = ROOT.parent / "federation" / "formation_surface_load_balancer_v1.py"
 OMNISURFACE_REGISTRY_MODULE_PATH = ROOT.parent / "federation" / "omnisurface_fabric_v2.py"
+COGNITIVE_SURFACE_FABRIC_CONFIG_PATH = CONFIG_ROOT / "fuse-cognitive-surface-fabric-v1.json"
+COGNITIVE_SURFACE_FABRIC_MODULE_PATH = ROOT.parent / "federation" / "cognitive_surface_fabric_v1.py"
+COGNITIVE_SURFACE_APPS_SCRIPT_BRIDGE_PATH = ROOT.parent / "apps_script" / "cognitive_surface_bridge" / "FuseCognitiveSurfaceBridge.gs"
 STATE_PATH = Path(os.getenv("FEDERATION_RESPAWN_STATE", ROOT / "runtime_state.json"))
 
 app = FastAPI(title="Federation Respawn Bootstrap", version="1.5.0")
@@ -454,6 +457,92 @@ def formation_omega_acceleration_bootstrap_guard(payload: Optional[Dict[str, Any
     }
 
 
+def cognitive_surface_fabric_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    source = payload if payload is not None else manifest()
+    declared = source.get("cognitive_surface_fabric", {})
+    contract = load_json(COGNITIVE_SURFACE_FABRIC_CONFIG_PATH, {})
+    order = source.get("bootstrap_order", [])
+    invariants = set(source.get("bootstrap_invariants", []))
+    issues: List[str] = []
+
+    if declared.get("enabled") is not True or contract.get("enabled") is not True:
+        issues.append("COGNITIVE_SURFACE_FABRIC_DISABLED_OR_MISSING")
+    if declared.get("contract_id") != "FUSE-COGNITIVE-SURFACE-FABRIC-001":
+        issues.append("COGNITIVE_SURFACE_MANIFEST_ID_MISMATCH")
+    if contract.get("contract_id") != "FUSE-COGNITIVE-SURFACE-FABRIC-001":
+        issues.append("COGNITIVE_SURFACE_CONFIG_ID_MISMATCH")
+    if contract.get("schema") != "FUSE_COGNITIVE_SURFACE_FABRIC_V1":
+        issues.append("COGNITIVE_SURFACE_SCHEMA_MISMATCH")
+    if contract.get("version") != "1.0.0":
+        issues.append("COGNITIVE_SURFACE_VERSION_MISMATCH")
+    for key in (
+        "creates_new_controller",
+        "creates_new_scheduler",
+        "creates_new_mission_bus",
+        "creates_new_authority_root",
+        "creates_new_truth_memory_proof_root",
+    ):
+        if contract.get(key) is not False:
+            issues.append(f"COGNITIVE_SURFACE_DUPLICATION:{key}")
+    if contract.get("external_effect_authority") is not False:
+        issues.append("COGNITIVE_SURFACE_EFFECT_AUTHORITY_EXPANSION")
+    if contract.get("provider_execution_authority") is not False:
+        issues.append("COGNITIVE_SURFACE_PROVIDER_AUTHORITY_EXPANSION")
+    if contract.get("minimum_sufficient_surface_portfolio") is not True:
+        issues.append("COGNITIVE_SURFACE_MINIMUM_PORTFOLIO_RULE_MISSING")
+    if contract.get("forced_provider_fanout") is not False:
+        issues.append("COGNITIVE_SURFACE_FORCED_PROVIDER_FANOUT")
+
+    required_roles = {
+        "GOOGLE-APPS-SCRIPT",
+        "GOOGLE-AI-STUDIO-GEMINI",
+        "CANVA",
+        "OPENROUTER",
+        "HYPERCUBE",
+    }
+    missing_roles = sorted(required_roles - set(contract.get("surface_roles", {})))
+    issues.extend(f"COGNITIVE_SURFACE_ROLE_MISSING:{item}" for item in missing_roles)
+
+    if not COGNITIVE_SURFACE_FABRIC_MODULE_PATH.exists():
+        issues.append("COGNITIVE_SURFACE_MODULE_MISSING")
+    if not COGNITIVE_SURFACE_APPS_SCRIPT_BRIDGE_PATH.exists():
+        issues.append("COGNITIVE_SURFACE_APPS_SCRIPT_BRIDGE_MISSING")
+
+    for step in ("load_cognitive_surface_fabric_contract", "compile_cognitive_surface_plan"):
+        if step not in order:
+            issues.append(f"COGNITIVE_SURFACE_BOOT_STEP_MISSING:{step}")
+        elif "execute" in order and order.index(step) > order.index("execute"):
+            issues.append(f"COGNITIVE_SURFACE_STEP_AFTER_EXECUTE:{step}")
+    if "compile_surface_formation" in order and "compile_cognitive_surface_plan" in order:
+        if order.index("compile_cognitive_surface_plan") > order.index("compile_surface_formation"):
+            issues.append("COGNITIVE_SURFACE_PLAN_AFTER_SURFACE_FORMATION")
+
+    required_invariants = {
+        "ALL_MATERIAL_COGNITIVE_WORK_GETS_SURFACE_INTELLIGENCE_BINDING",
+        "COGNITIVE_SURFACE_FABRIC_CANNOT_MINT_AUTHORITY",
+        "MISSING_SURFACE_CAPABILITY_TRIGGERS_ALPHA_OMEGA_MINIMUM_RESIDUAL",
+        "PROVIDER_MODEL_OUTPUT_IS_CANDIDATE_EVIDENCE_NOT_COMPLETION",
+        "CANVA_CREATIVE_OUTPUT_CANNOT_SELF_CERTIFY",
+        "APPS_SCRIPT_BOUNDED_QUEUE_IS_NOT_PROVIDER_EFFECT_AUTHORITY",
+    }
+    for item in sorted(required_invariants - invariants):
+        issues.append(f"COGNITIVE_SURFACE_INVARIANT_MISSING:{item}")
+
+    return {
+        "schema": "FUSE_COGNITIVE_SURFACE_FABRIC_BOOTSTRAP_GUARD_V1",
+        "ok": not issues,
+        "issues": issues,
+        "contract_id": contract.get("contract_id"),
+        "version": contract.get("version"),
+        "surface_roles": sorted(contract.get("surface_roles", {})),
+        "auto_build_rule": contract.get("auto_build", {}).get("rule"),
+        "auto_research_rule": contract.get("auto_research", {}).get("rule"),
+        "provider_execution_proven": False,
+        "external_effect_authorized": False,
+        "truth_boundary": contract.get("truth_boundary"),
+    }
+
+
 def formation_surface_load_balancer_bootstrap_guard(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     source = payload if payload is not None else manifest()
     declared = source.get("formation_surface_load_balancer", {})
@@ -777,12 +866,13 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
     google_guard = google_intelligence_runtime_bootstrap_guard(source_manifest)
     formation_power_guard = formation_power_inheritance_bootstrap_guard(source_manifest)
     formation_acceleration_guard = formation_omega_acceleration_bootstrap_guard(source_manifest)
+    cognitive_surface_guard = cognitive_surface_fabric_bootstrap_guard(source_manifest)
     formation_guard = formation_surface_load_balancer_bootstrap_guard(source_manifest)
     debt_guard = terminal_debt_bootstrap_guard(source_manifest)
-    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_power_guard["ok"] or not formation_acceleration_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
+    if not mirror_guard["ok"] or not memory_bundle["ok"] or not autonomy_guard["ok"] or not hipb_guard["ok"] or not google_guard["ok"] or not formation_power_guard["ok"] or not formation_acceleration_guard["ok"] or not cognitive_surface_guard["ok"] or not formation_guard["ok"] or not debt_guard["ok"]:
         raise HTTPException(
             status_code=503,
-            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_power_inheritance_guard": formation_power_guard, "formation_omega_acceleration_guard": formation_acceleration_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
+            detail={"error": "BOOTSTRAP_INVARIANT_FAILED", "output_mirror_bootstrap_guard": mirror_guard, "bootstrap_memory_guard": {"ok": memory_bundle["ok"], "issues": memory_bundle["issues"]}, "autonomous_improvement_guard": autonomy_guard, "hyper_intelligence_performance_guard": hipb_guard, "google_intelligence_runtime_guard": google_guard, "formation_power_inheritance_guard": formation_power_guard, "formation_omega_acceleration_guard": formation_acceleration_guard, "cognitive_surface_fabric_guard": cognitive_surface_guard, "formation_surface_load_balancer_guard": formation_guard, "terminal_debt_bootstrap_guard": debt_guard},
         )
     s = state()
     solved = search_state(
@@ -824,6 +914,8 @@ def bootstrap(req: SpawnRequest) -> Dict[str, Any]:
         "formation_power_inheritance_guard": formation_power_guard,
         "formation_omega_acceleration": source_manifest.get("formation_omega_acceleration", {}),
         "formation_omega_acceleration_guard": formation_acceleration_guard,
+        "cognitive_surface_fabric": source_manifest.get("cognitive_surface_fabric", {}),
+        "cognitive_surface_fabric_guard": cognitive_surface_guard,
         "formation_surface_load_balancer": source_manifest.get("formation_surface_load_balancer", {}),
         "formation_surface_load_balancer_guard": formation_guard,
         "terminal_debt_finality": source_manifest.get("terminal_debt_finality", {}),

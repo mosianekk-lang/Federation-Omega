@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from proofos_omega import repository_coordination as legacy_coordination
+
 REGISTRY_SCHEMA = "FEDERATION_FDOF_REGISTRY_V3"
 LEASE_SCHEMA = "FEDERATION_SCOPED_LEASE_V3"
 CLAIM_SCHEMA = "FEDERATION_COORDINATION_V2"
@@ -195,8 +197,10 @@ def _registry_findings(registry: Mapping[str, Any], policy: Mapping[str, Any], n
             out.append(Finding("V3_LEASE_ID_DUPLICATE", lid))
         ids.add(lid)
         try:
-            if state == "ACTIVE" and parse_time(str(lease.get("expires_at"))) <= now:
-                out.append(Finding("V3_ACTIVE_EXPIRED_NOT_TERMINAL", lid))
+            # Expiry retains the lease's write-set exclusion. It is not registry
+            # corruption and must not prevent disjoint work or the recovery of
+            # another expired lease. An expired owner is rejected at admission.
+            parse_time(str(lease.get("expires_at")))
         except ValueError:
             out.append(Finding("V3_LEASE_TIME_INVALID", lid))
         ws = normalize_write_set(lease.get("write_set") or [])
@@ -425,6 +429,8 @@ def evaluate(*, base_sha: str, pr_paths: Sequence[str], pr_body: str, registry_m
         else:
             if str(own.get("state")) != "ACTIVE":
                 findings.append(Finding("V3_OWN_LEASE_NOT_ACTIVE_STATE", str(own.get("state"))))
+            elif parse_time(str(own.get("expires_at"))) <= now_utc:
+                findings.append(Finding("V3_ACTIVE_EXPIRED_NOT_TERMINAL", str(own.get("lease_id"))))
             for field in policy.get("required_scoped_claim_fields", []):
                 if v3_claim.get(field) in (None,"",[]):
                     findings.append(Finding("V3_CLAIM_FIELD_MISSING", field))
@@ -482,15 +488,79 @@ def evaluate_hosted_pull_request_v3(repo_root: Path | None = None) -> dict[str, 
             (),
             [Finding("V3_HOSTED_PROVIDER_NOT_APPLICABLE_NO_ORIGIN", "provider git origin unavailable")],
         )
-    event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
-    pr = event.get("pull_request") or {}
-    base = str((pr.get("base") or {}).get("sha") or "")
-    head = str((pr.get("head") or {}).get("sha") or "")
+    event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+    if event_name not in ("", "pull_request"):
+        return _result(
+            "FAIL", "V3_HOSTED_EVENT_UNSUPPORTED", "", None, (),
+            [Finding("V3_HOSTED_EVENT_UNSUPPORTED", f"{event_name}: explicit pull-request claim context required")],
+        )
+    try:
+        event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
+        pr = event.get("pull_request") if isinstance(event, Mapping) else None
+        if not isinstance(pr, Mapping):
+            raise ValueError("pull_request must be an object")
+        base_ref, head_ref = pr.get("base"), pr.get("head")
+        if not isinstance(base_ref, Mapping) or not isinstance(head_ref, Mapping):
+            raise ValueError("pull_request base/head objects required")
+        base, head = str(base_ref.get("sha") or ""), str(head_ref.get("sha") or "")
+        if not SHA40.fullmatch(base) or not SHA40.fullmatch(head):
+            raise ValueError("exact pull_request base/head SHAs required")
+    except (OSError, KeyError, ValueError, TypeError) as exc:
+        return _result(
+            "FAIL", "V3_HOSTED_EVENT_CONTEXT_INVALID", "", None, (),
+            [Finding("V3_HOSTED_EVENT_CONTEXT_INVALID", str(exc))],
+        )
     body = str(pr.get("body") or "")
+
+    # Migration is ordered: the provider-visible V2 global lease remains
+    # absolute. The V3 registry cannot override its writer, expiry, source/tree,
+    # claim or readback gates. Reuse the existing V2 evaluator rather than
+    # reimplementing (or weakening) its exact-claim rules.
+    try:
+        legacy_policy = legacy_coordination.load_policy()
+        legacy_ref = str(policy.get("legacy_v2_ref", legacy_coordination.DEFAULT_LEASE_REF))
+        if normalize_ref(legacy_ref) != normalize_ref(str(legacy_policy.get("lease_ref"))):
+            raise ValueError("V3_LEGACY_REF_POLICY_MISMATCH")
+        legacy_sha, legacy_message, legacy_tree_matches = legacy_coordination._runtime_lease(root, legacy_ref)
+        legacy_result = legacy_coordination.evaluate_coordination(
+            base_sha=base,
+            pr_body=body,
+            lease_message=legacy_message,
+            lease_commit_sha=legacy_sha,
+            lease_tree_matches_source=legacy_tree_matches,
+            policy=legacy_policy,
+        )
+    except (RuntimeError, ValueError, json.JSONDecodeError) as exc:
+        return _result(
+            "FAIL", "V3_LEGACY_PROVIDER_READBACK_FAILED", "", None, (),
+            [Finding("V3_LEGACY_PROVIDER_READBACK_FAILED", str(exc))],
+        )
+    legacy_summary = {
+        "status": legacy_result["status"],
+        "state": legacy_result["state"],
+        "lease_commit_sha": legacy_result["lease_commit_sha"],
+    }
+    if legacy_result["status"] != "PASS":
+        return {
+            **_result(
+                "FAIL", "V3_LEGACY_COORDINATION_REJECTED", "", None, (),
+                [Finding(row["rule"], row["detail"]) for row in legacy_result["findings"]],
+            ),
+            "legacy_coordination": legacy_summary,
+        }
+    if legacy_result["state"] == "ACTIVE_LEASE_CLAIM_VERIFIED":
+        return {
+            **_result("PASS", "V3_DEFERRED_TO_ACTIVE_V2", "", None, (), []),
+            "legacy_coordination": legacy_summary,
+        }
+
     ref = str(policy.get("registry_ref", DEFAULT_REGISTRY_REF))
     remote = _git(root,["ls-remote","origin",ref])
     if not remote:
-        return evaluate(base_sha=base,pr_paths=(),pr_body=body,registry_message="",registry_sha="",policy=policy)
+        return {
+            **evaluate(base_sha=base,pr_paths=(),pr_body=body,registry_message="",registry_sha="",policy=policy),
+            "legacy_coordination": legacy_summary,
+        }
     registry_sha = remote.split()[0]
     _git(root,["fetch","--no-tags","--quiet","origin",ref])
     message = _git(root,["show","-s","--format=%B",registry_sha])
@@ -501,4 +571,7 @@ def evaluate_hosted_pull_request_v3(repo_root: Path | None = None) -> dict[str, 
             except RuntimeError:
                 _git(root,["fetch","--no-tags","--quiet","origin",sha])
     paths = tuple(x for x in _git(root,["diff","--name-only",f"{base}...{head}"]).splitlines() if x.strip()) if SHA40.fullmatch(base) and SHA40.fullmatch(head) else ()
-    return evaluate(base_sha=base,pr_paths=paths,pr_body=body,registry_message=message,registry_sha=registry_sha,policy=policy)
+    return {
+        **evaluate(base_sha=base,pr_paths=paths,pr_body=body,registry_message=message,registry_sha=registry_sha,policy=policy),
+        "legacy_coordination": legacy_summary,
+    }
