@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import time
 import urllib.error
@@ -112,6 +113,48 @@ def _normalize_interaction_response(body: object) -> tuple[dict, dict]:
     meta["wrapper"] = "unsupported"
     return {}, meta
 
+
+def _extract_provider_error(body: object) -> dict[str, object]:
+    rows = body if isinstance(body, list) else [body]
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        error = row.get("error")
+        if not isinstance(error, dict) and any(k in row for k in ("code", "status", "message")):
+            error = row
+        if not isinstance(error, dict):
+            continue
+        message = str(error.get("message") or "")
+        permissions = sorted(set(re.findall(r"aiplatform\\.[A-Za-z0-9_.]+", message)))
+        return {
+            "code": error.get("code"),
+            "status": error.get("status"),
+            "message_sha256": _sha256_text(message) if message else None,
+            "permission_refs": permissions,
+        }
+    return {
+        "code": None,
+        "status": None,
+        "message_sha256": None,
+        "permission_refs": [],
+    }
+
+
+def _test_permissions(project: str, token: str) -> tuple[int, tuple[str, ...]]:
+    required = (
+        "aiplatform.interactions.create",
+        "aiplatform.endpoints.predict",
+    )
+    status, body, _ = _http_json(
+        f"https://cloudresourcemanager.googleapis.com/v1/projects/{project}:testIamPermissions",
+        token,
+        {"permissions": list(required)},
+    )
+    granted = ()
+    if status == 200 and isinstance(body, dict):
+        granted = tuple(sorted(str(x) for x in (body.get("permissions") or [])))
+    return status, granted
+
 def main() -> int:
     project = os.environ.get("PROJECT_ID", "sov-hybrid-suite")
     project_number = os.environ.get("PROJECT_NUMBER", "257649435135")
@@ -121,6 +164,9 @@ def main() -> int:
     out = out_dir / "INTERACTIONS_V2_SEMANTIC_RECEIPT.json"
 
     token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
+    permission_test_http_status, granted_permissions = _test_permissions(project, token)
+    required_interaction_permission = "aiplatform.interactions.create"
+    interaction_permission_verified = required_interaction_permission in granted_permissions
     nonce = (
         f"FUSE-V2-{os.environ.get('GITHUB_RUN_ID', 'local')}-"
         f"{os.environ.get('GITHUB_RUN_ATTEMPT', '0')}-"
@@ -147,10 +193,42 @@ def main() -> int:
         f"{project}/locations/{location}/interactions"
     )
 
+    if not interaction_permission_verified:
+        receipt = {
+            "schema": "FUSE_GOOGLE_INTERACTIONS_V2_PERMISSION_RECEIPT_V1",
+            "source_sha": os.environ.get("GITHUB_SHA"),
+            "run_id": os.environ.get("GITHUB_RUN_ID"),
+            "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+            "project_id": project,
+            "project_number": project_number,
+            "provider_identity": "GOOGLE_VERTEX_AI",
+            "protocol": "VERTEX_AI_INTERACTIONS_REST",
+            "requested_model": model,
+            "credential_mode": "GITHUB_WIF_ADC",
+            "permission_test_http_status": permission_test_http_status,
+            "required_interaction_permission": required_interaction_permission,
+            "granted_permissions": list(granted_permissions),
+            "interaction_permission_verified": False,
+            "provider_call_attempted": False,
+            "semantic_verified": False,
+            "store": False,
+            "case_data_processed": False,
+            "provider_mutation_performed": False,
+            "iam_mutation_performed": False,
+            "secret_value_recorded": False,
+            "deployment_performed": False,
+            "traffic_change_performed": False,
+            "external_communication_performed": False,
+        }
+        _seal_receipt(receipt, out)
+        print(json.dumps(receipt, sort_keys=True))
+        return 2
+
     started = time.perf_counter()
     status, raw_body, headers = _http_json(endpoint, token, payload)
     latency_ms = round((time.perf_counter() - started) * 1000, 3)
     body, response_shape = _normalize_interaction_response(raw_body)
+    provider_error = _extract_provider_error(raw_body)
 
     texts: list[str] = []
     for step in body.get("steps") or []:
@@ -185,6 +263,12 @@ def main() -> int:
         "model_identity_source": "PROVIDER_RESPONSE" if body.get("model") else "BOUND_REQUEST",
         "credential_mode": "GITHUB_WIF_ADC",
         "http_status": status,
+        "permission_test_http_status": permission_test_http_status,
+        "required_interaction_permission": required_interaction_permission,
+        "granted_permissions": list(granted_permissions),
+        "interaction_permission_verified": interaction_permission_verified,
+        "provider_call_attempted": True,
+        "provider_error": provider_error,
         "interaction_id": interaction_id,
         "interaction_status": interaction_status,
         "provider_request_id": (
