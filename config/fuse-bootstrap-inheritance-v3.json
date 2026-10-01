@@ -52,6 +52,7 @@
     "HYPER_INTELLIGENCE_PERFORMANCE_BINDING",
     "HIPB_PRE_COMPILE",
     "GOOGLE_INTELLIGENCE_RUNTIME_BINDING",
+    "FORMATION_POWER_INHERITANCE",
     "FORMATION_SURFACE_LOAD_BALANCER",
     "ROUTE_COMPILE",
     "HIPB_PRE_EFFECT",
@@ -208,5 +209,20 @@
     "required_before_route_compilation": true,
     "applies_to": "ALL_MATERIAL_MISSIONS",
     "truth_boundary": "SURFACE_FORMATION_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=EFFECT_VERIFIED!=OWNER_VALUE!=COMPLETE"
+  },
+  "formation_power_inheritance": {
+    "contract_id": "FUSE-FORMATION-POWER-002",
+    "schema": "FUSE_FORMATION_POWER_INHERITANCE_V2",
+    "version": "2.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-formation-power-inheritance-v2.json",
+    "compiler_path": "federation/formation_power_inheritance_v2.py",
+    "authority_expansion": false,
+    "required_before_route_compilation": true,
+    "applies_to": "ALL_FUSE_WORKFLOWS",
+    "agentic_frontier_gene_pool": 53,
+    "max_mutating_lanes": 1,
+    "builder_self_certification": false,
+    "truth_boundary": "FORMATION_POWER_BOUND!=WORKFLOW_EXECUTED!=PROVIDER_EXECUTED!=EFFECT_READBACK!=INDEPENDENT_JUDGE!=OWNER_VALUE!=COMPLETE"
   }
 }
