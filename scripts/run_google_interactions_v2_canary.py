@@ -24,7 +24,7 @@ def _seal_receipt(receipt: dict, path: Path) -> None:
     path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def _http_json(url: str, token: str, payload: dict) -> tuple[int, dict, dict[str, str]]:
+def _http_json(url: str, token: str, payload: dict) -> tuple[int, object, dict[str, str]]:
     request = urllib.request.Request(
         url,
         data=json.dumps(payload, separators=(",", ":")).encode(),
@@ -50,6 +50,67 @@ def _http_json(url: str, token: str, payload: dict) -> tuple[int, dict, dict[str
             body = {"raw_sha256": _sha256_text(raw)}
         return int(exc.code), body, {k.lower(): v for k, v in exc.headers.items()}
 
+
+
+def _normalize_interaction_response(body: object) -> tuple[dict, dict]:
+    """Normalize documented and observed Interactions transport shapes.
+
+    Returns (interaction, structural_metadata). Ambiguous list/envelope shapes
+    fail closed by returning an empty interaction while preserving only
+    non-sensitive structural metadata for diagnostics.
+    """
+    meta: dict = {
+        "top_level_type": type(body).__name__,
+        "top_level_length": len(body) if isinstance(body, list) else None,
+        "wrapper": None,
+    }
+
+    if isinstance(body, dict):
+        if isinstance(body.get("interaction"), dict):
+            meta["wrapper"] = "interaction"
+            return dict(body["interaction"]), meta
+        return dict(body), meta
+
+    if isinstance(body, list):
+        # Some Vertex transports may return event/envelope lists. Accept only
+        # an unambiguous Interaction object or one explicitly nested as
+        # {"interaction": {...}}. Never infer completion from arbitrary rows.
+        candidates: list[dict] = []
+        for row in body:
+            if not isinstance(row, dict):
+                continue
+            nested = row.get("interaction")
+            if isinstance(nested, dict):
+                candidates.append(dict(nested))
+                continue
+            if any(k in row for k in ("id", "status", "steps", "model", "usage")):
+                candidates.append(dict(row))
+
+        # Prefer a single completed/current Interaction if exactly one is
+        # structurally identifiable after de-duplicating by id/body digest.
+        unique: dict[str, dict] = {}
+        for row in candidates:
+            key = str(row.get("id") or hashlib.sha256(
+                json.dumps(row, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest())
+            unique[key] = row
+
+        rows = list(unique.values())
+        if len(rows) == 1:
+            meta["wrapper"] = "list_single_interaction"
+            return rows[0], meta
+
+        completed = [row for row in rows if row.get("status") == "completed" and row.get("id")]
+        if len(completed) == 1:
+            meta["wrapper"] = "list_completed_interaction"
+            return completed[0], meta
+
+        meta["candidate_count"] = len(rows)
+        meta["wrapper"] = "ambiguous_list"
+        return {}, meta
+
+    meta["wrapper"] = "unsupported"
+    return {}, meta
 
 def main() -> int:
     project = os.environ.get("PROJECT_ID", "sov-hybrid-suite")
@@ -87,8 +148,9 @@ def main() -> int:
     )
 
     started = time.perf_counter()
-    status, body, headers = _http_json(endpoint, token, payload)
+    status, raw_body, headers = _http_json(endpoint, token, payload)
     latency_ms = round((time.perf_counter() - started) * 1000, 3)
+    body, response_shape = _normalize_interaction_response(raw_body)
 
     texts: list[str] = []
     for step in body.get("steps") or []:
@@ -134,8 +196,9 @@ def main() -> int:
         "expected_output_sha256": _sha256_text(expected),
         "response_text_sha256": _sha256_text(output) if output else None,
         "response_digest": hashlib.sha256(
-            json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+            json.dumps(raw_body, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest(),
+        "response_shape": response_shape,
         "semantic_verified": exact,
         "store": False,
         "usage": {
