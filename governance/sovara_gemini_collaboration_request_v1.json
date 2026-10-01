@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "FUSE-GOOGLE-INTELLIGENCE-V2-G3-TWO-LAYER-TRUST-CANARY-20261001-002",
+  "request_id": "FUSE-GOOGLE-INTELLIGENCE-V2-G3-COLD-START-EPHEMERAL-CANARY-20261001-003",
   "mode": "G3_PRIVATE_GATEWAY_CANARY",
   "execute": true,
   "promote": false,
@@ -26,6 +26,8 @@
     "WIF_HARDENING_DEBT_PRESERVED_WHEN_OPEN",
     "RUNTIME_ADC_VERIFIED",
     "RUNTIME_AIPLATFORM_USER",
+    "IMMUTABLE_IMAGE_DIGEST",
+    "COLD_START_CREATE_DELETE_PERMISSION_PREFLIGHT",
     "V1_GENERATECONTENT_EXACT_NONCE",
     "V2_INTERACTIONS_38_EXACT_NONCE",
     "INTERACTION_ID",
@@ -33,9 +35,9 @@
     "USAGE_METADATA",
     "STORE_FALSE",
     "RUNTIME_SERVICE_ACCOUNT_READBACK",
-    "ZERO_NORMAL_TRAFFIC",
-    "IMMUTABLE_IMAGE_DIGEST"
+    "ZERO_CANONICAL_PRODUCTION_TRAFFIC",
+    "EPHEMERAL_CANARY_DELETE_READBACK_WHEN_PRODUCTION_SERVICE_ABSENT"
   ],
-  "purpose": "Use the existing repository-scoped GitHub WIF only as bounded deployment transport, deploy the exact admitted FUSE Google Intelligence Runtime V2 gateway source as a private zero-traffic Cloud Run canary under superior-logic-runtime, and prove model authority independently through runtime ADC. Preserve any shared-WIF hardening gap as separate debt; do not grant Gemini model authority to the GitHub deployer.",
-  "truth_boundary": "G3 may proceed when either hardened WIF is verified or the current repository-scoped WIF exchange is proven sufficient only for bounded zero-traffic deployment, but runtime Gemini authority must independently pass ADC/service-account readback. A transport exception never promotes shared WIF hardening, never grants the deployer aiplatform.user, and does not authorize production promotion, public ingress, new IAM roles, service-account keys, case data, external communication, unrelated effects, or proof inheritance to other Google capability cells."
+  "purpose": "Prove FUSE Google Intelligence Runtime V2 through the existing private gateway without creating or routing traffic to the canonical production service during a cold start. If the canonical gateway service exists, use a tagged zero-traffic revision. If it does not exist, create a uniquely named IAM-protected ephemeral canary service under superior-logic-runtime, prove V1 generateContent and V2 Gemini 3.8 Interactions exact nonces, then delete the ephemeral service and verify absence. Preserve shared-WIF hardening debt separately.",
+  "truth_boundary": "G3 success requires bounded deployment transport, independently verified runtime ADC/model authority, exact semantic receipts, zero canonical production traffic, and verified cleanup of any ephemeral cold-start service. Ephemeral canary traffic is not production traffic and must be deleted before success. No production service creation, production traffic promotion, public unauthenticated access, new IAM role, service-account key, case data, external communication or proof inheritance is authorized."
 }

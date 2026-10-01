@@ -37,5 +37,13 @@
     "runtime_adc_role": "GOOGLE_MODEL_EXECUTION_AUTHORITY",
     "shared_wif_hardening": "SEPARATE_DEBT_WHEN_NOT_VERIFIED",
     "model_authority_inheritance_from_deployer": false
+  },
+  "cold_start_canary_strategy": {
+    "canonical_service_exists": "TAGGED_ZERO_TRAFFIC_REVISION",
+    "canonical_service_absent": "UNIQUE_IAM_PROTECTED_EPHEMERAL_SERVICE_THEN_DELETE",
+    "production_service_created_on_cold_start": false,
+    "production_service_traffic_percent": 0,
+    "ephemeral_cleanup_required": true,
+    "delete_permission_preflight_required": true
   }
 }
