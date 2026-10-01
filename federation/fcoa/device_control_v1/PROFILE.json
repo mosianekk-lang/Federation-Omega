@@ -1,0 +1,15 @@
+{
+  "schema": "FCOA-DEVICE-CONTROL-PROFILE-V1",
+  "agent_id": "FCOA-OMEGA",
+  "capabilities": ["device.screen.read","device.cursor.read","device.pointer.move","device.pointer.click","device.pointer.scroll","device.keyboard.key","device.keyboard.text","device.window.foreground.read","device.control.pause","device.control.emergency_stop"],
+  "physical_mode": "WINDOWS_OS_INPUT_INJECTION",
+  "virtual_mode": "DIRECT_ADAPTER_FIRST_THEN_DESKTOP_INPUT_FALLBACK",
+  "transport": "LOCALHOST_ONLY",
+  "session": "MISSION_SCOPED_TTL_LEASE",
+  "consequential_effects": "SEPARATE_AUTHORITY_RECEIPT_REQUIRED",
+  "secure_desktop_bypass": false,
+  "external_effect_authority_inherited": false,
+  "hardware_usb_hid": "NOT_DEPLOYED",
+  "source_zip_sha256": "7315aab34e5fcbf94db09edf59f5279eda974c15cb854871efa0212080c56a81",
+  "windows_exe_sha256": "c84d04b34a3d2c8106ab1febfc7dfa9d8e62aceba746117bde177d877177b4b8"
+}

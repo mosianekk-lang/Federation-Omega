@@ -1,0 +1,192 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/fuse_unified_service_catalog_v1.py",
+        "services/sol62_client_runtime/app.py",
+        "services/sol62_client_runtime/static/app.js",
+        "services/sol62_client_runtime/static/index.html",
+        "services/sol62_client_runtime/static/styles.css",
+        "scripts/fuse_one_os_browser_test.mjs",
+        "scripts/fuse_one_os_ui_fixture.py",
+        "scripts/verify_fuse_one_os.py",
+        "docs/architecture/FUSE_ONE_OS_INTEGRATION_V1.md",
+        "tests/test_fuse_one_os_api.py",
+        "tests/test_fuse_unified_service_catalog_v1.py",
+        "tests/test_fuse_one_os_browser_admission.py",
+        "tests/test_fuse_one_os_integration_admission.py",
+        "tests/test_proofos_fuse_one_os_mapping.py",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_os_integration_v1.json",
+        "sol_61_runtime/sol_62_complete_client_runtime.py",
+        "sol_61_runtime/sol_62_frontier_primitives.py",
+        "tests/test_sol62_atomic_owned_mission.py"
+      ],
+      "reason": "FUSE_ONE_SOURCE_PROJECTION_SESSION_ISOLATION_AND_REAL_BROWSER_API_REGRESSION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_ONE_OS_INTEGRATION_V1",
+      "patterns": [
+        "federation/fuse_unified_service_catalog_v1.py",
+        "services/sol62_client_runtime/app.py",
+        "services/sol62_client_runtime/static/app.js",
+        "services/sol62_client_runtime/static/index.html",
+        "services/sol62_client_runtime/static/styles.css",
+        "scripts/fuse_one_os_browser_test.mjs",
+        "scripts/fuse_one_os_ui_fixture.py",
+        "scripts/verify_fuse_one_os.py",
+        "docs/architecture/FUSE_ONE_OS_INTEGRATION_V1.md",
+        "tests/test_fuse_one_os_api.py",
+        "tests/test_fuse_unified_service_catalog_v1.py",
+        "tests/test_fuse_one_os_browser_admission.py",
+        "tests/test_fuse_one_os_integration_admission.py",
+        "tests/test_proofos_fuse_one_os_mapping.py",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_os_integration_v1.json",
+        "sol_61_runtime/sol_62_complete_client_runtime.py",
+        "sol_61_runtime/sol_62_frontier_primitives.py",
+        "tests/test_sol62_atomic_owned_mission.py"
+      ],
+      "depends_on": [
+        "SOL62",
+        "FUSE_ECOSYSTEM_V1"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_one_os_catalog",
+      "kind": "unittest_glob",
+      "target": "test_fuse_unified_service_catalog_v1.py",
+      "patterns": [
+        "federation/fuse_unified_service_catalog_v1.py",
+        "services/sol62_client_runtime/app.py",
+        "services/sol62_client_runtime/static/app.js",
+        "services/sol62_client_runtime/static/index.html",
+        "services/sol62_client_runtime/static/styles.css",
+        "scripts/fuse_one_os_browser_test.mjs",
+        "scripts/fuse_one_os_ui_fixture.py",
+        "scripts/verify_fuse_one_os.py",
+        "docs/architecture/FUSE_ONE_OS_INTEGRATION_V1.md",
+        "tests/test_fuse_one_os_api.py",
+        "tests/test_fuse_unified_service_catalog_v1.py",
+        "tests/test_fuse_one_os_browser_admission.py",
+        "tests/test_fuse_one_os_integration_admission.py",
+        "tests/test_proofos_fuse_one_os_mapping.py",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_os_integration_v1.json",
+        "sol_61_runtime/sol_62_complete_client_runtime.py",
+        "sol_61_runtime/sol_62_frontier_primitives.py",
+        "tests/test_sol62_atomic_owned_mission.py"
+      ],
+      "subsystems": [
+        "FUSE_ONE_OS_INTEGRATION_V1"
+      ],
+      "failure_class": "AUTHORITY_EXPANSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "fuse_one_os_integration_court",
+      "kind": "unittest_glob",
+      "target": "test_fuse_one_os_integration_admission.py",
+      "patterns": [
+        "federation/fuse_unified_service_catalog_v1.py",
+        "services/sol62_client_runtime/app.py",
+        "services/sol62_client_runtime/static/app.js",
+        "services/sol62_client_runtime/static/index.html",
+        "services/sol62_client_runtime/static/styles.css",
+        "scripts/fuse_one_os_browser_test.mjs",
+        "scripts/fuse_one_os_ui_fixture.py",
+        "scripts/verify_fuse_one_os.py",
+        "docs/architecture/FUSE_ONE_OS_INTEGRATION_V1.md",
+        "tests/test_fuse_one_os_api.py",
+        "tests/test_fuse_unified_service_catalog_v1.py",
+        "tests/test_fuse_one_os_browser_admission.py",
+        "tests/test_fuse_one_os_integration_admission.py",
+        "tests/test_proofos_fuse_one_os_mapping.py",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_os_integration_v1.json",
+        "sol_61_runtime/sol_62_complete_client_runtime.py",
+        "sol_61_runtime/sol_62_frontier_primitives.py",
+        "tests/test_sol62_atomic_owned_mission.py"
+      ],
+      "subsystems": [
+        "FUSE_ONE_OS_INTEGRATION_V1"
+      ],
+      "failure_class": "AUTHORITY_EXPANSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "fuse_one_os_browser_runtime",
+      "kind": "unittest_glob",
+      "target": "test_fuse_one_os_browser_admission.py",
+      "patterns": [
+        "federation/fuse_unified_service_catalog_v1.py",
+        "services/sol62_client_runtime/app.py",
+        "services/sol62_client_runtime/static/app.js",
+        "services/sol62_client_runtime/static/index.html",
+        "services/sol62_client_runtime/static/styles.css",
+        "scripts/fuse_one_os_browser_test.mjs",
+        "scripts/fuse_one_os_ui_fixture.py",
+        "scripts/verify_fuse_one_os.py",
+        "docs/architecture/FUSE_ONE_OS_INTEGRATION_V1.md",
+        "tests/test_fuse_one_os_api.py",
+        "tests/test_fuse_unified_service_catalog_v1.py",
+        "tests/test_fuse_one_os_browser_admission.py",
+        "tests/test_fuse_one_os_integration_admission.py",
+        "tests/test_proofos_fuse_one_os_mapping.py",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_os_integration_v1.json",
+        "sol_61_runtime/sol_62_complete_client_runtime.py",
+        "sol_61_runtime/sol_62_frontier_primitives.py",
+        "tests/test_sol62_atomic_owned_mission.py"
+      ],
+      "subsystems": [
+        "FUSE_ONE_OS_INTEGRATION_V1"
+      ],
+      "failure_class": "AUTHORITY_EXPANSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "proofos_fuse_one_os_mapping",
+      "kind": "unittest_glob",
+      "target": "test_proofos_fuse_one_os_mapping.py",
+      "patterns": [
+        "federation/fuse_unified_service_catalog_v1.py",
+        "services/sol62_client_runtime/app.py",
+        "services/sol62_client_runtime/static/app.js",
+        "services/sol62_client_runtime/static/index.html",
+        "services/sol62_client_runtime/static/styles.css",
+        "scripts/fuse_one_os_browser_test.mjs",
+        "scripts/fuse_one_os_ui_fixture.py",
+        "scripts/verify_fuse_one_os.py",
+        "docs/architecture/FUSE_ONE_OS_INTEGRATION_V1.md",
+        "tests/test_fuse_one_os_api.py",
+        "tests/test_fuse_unified_service_catalog_v1.py",
+        "tests/test_fuse_one_os_browser_admission.py",
+        "tests/test_fuse_one_os_integration_admission.py",
+        "tests/test_proofos_fuse_one_os_mapping.py",
+        "config/fuse-unified-capability-fabric-v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_os_integration_v1.json",
+        "sol_61_runtime/sol_62_complete_client_runtime.py",
+        "sol_61_runtime/sol_62_frontier_primitives.py",
+        "tests/test_sol62_atomic_owned_mission.py"
+      ],
+      "subsystems": [
+        "FUSE_ONE_OS_INTEGRATION_V1"
+      ],
+      "failure_class": "SOURCE_INTEGRITY_FAILURE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    }
+  ]
+}

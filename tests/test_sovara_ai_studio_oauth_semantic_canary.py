@@ -83,13 +83,18 @@ class SovaraAIStudioDualRouteSemanticCanaryTests(unittest.TestCase):
         self.assertIn("no inference attempted", self.workflow)
 
     def test_semantic_promotion_requires_exact_nonce_and_provider_receipt(self) -> None:
-        self.assertIn("exact=status==200 and text==expected", self.workflow)
+        self.assertIn("parsed.get('status')=='VERIFIED'", self.workflow)
+        self.assertIn("parsed.get('nonce')==nonce", self.workflow)
+        self.assertIn("'acceptance_mode':'STRUCTURED_JSON_SCHEMA_V1'", self.workflow)
+        self.assertNotIn("exact=status==200 and text==expected", self.workflow)
         for token in (
             "'semantic_verified':exact",
             "'provider_model_version':model_version",
             "'provider_request_id_or_equivalent':request_id",
             "'nonce_sha256'",
             "'response_text_sha256'",
+            "'structured_status'",
+            "'structured_nonce_sha256'",
             "'usage_metadata'",
         ):
             self.assertIn(token, self.workflow)

@@ -1,0 +1,423 @@
+name: FUSE Work Plane Private GCP Canary v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: fuse-work-plane-private-gcp-canary-v1
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_REPOSITORY: federation-omega
+  SERVICE: fuse-work-plane-runtime
+  STATE_BUCKET: fo-control-plane-sov-hybrid-suite
+
+jobs:
+  private-canary:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] WORK_PLANE_PRIVATE_GCP_CANARY_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact signed-main source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless deployer
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Re-prove deployment authority and existing private state bucket
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work-plane-provider-proof
+          ACTIVE="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          OBSERVED_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$ACTIVE" = "$DEPLOYER_SA"
+          test "$OBSERVED_NUMBER" = "$PROJECT_NUMBER"
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > work-plane-provider-proof/project-policy-pre.json
+          gcloud artifacts repositories get-iam-policy "$ARTIFACT_REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/repository-policy-pre.json
+          gcloud iam service-accounts get-iam-policy "$RUNTIME_SA" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/runtime-sa-policy-pre.json
+          gcloud storage buckets describe "gs://$STATE_BUCKET" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/state-bucket.json
+          for API in run.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com sts.googleapis.com storage.googleapis.com; do
+            test "$(gcloud services list --enabled --project "$PROJECT_ID" --filter="config.name=$API" --format='value(config.name)')" = "$API"
+          done
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          deployer='serviceAccount:'+os.environ['DEPLOYER_SA']
+          pp=json.loads(Path('work-plane-provider-proof/project-policy-pre.json').read_text())
+          rp=json.loads(Path('work-plane-provider-proof/repository-policy-pre.json').read_text())
+          sp=json.loads(Path('work-plane-provider-proof/runtime-sa-policy-pre.json').read_text())
+          bucket=json.loads(Path('work-plane-provider-proof/state-bucket.json').read_text())
+          def has(policy, role, member):
+              return any(b.get('role')==role and not b.get('condition') and member in (b.get('members') or []) for b in policy.get('bindings') or [])
+          run_developer=has(pp,'roles/run.developer',deployer)
+          ar_writer=has(pp,'roles/artifactregistry.writer',deployer) or has(rp,'roles/artifactregistry.writer',deployer)
+          sa_user=has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer)
+          assert run_developer, 'Cloud Run developer authority missing'
+          assert ar_writer, 'Artifact Registry writer authority missing'
+          assert sa_user, 'runtime service-account user authority missing'
+          assert bucket.get('name')==os.environ['STATE_BUCKET'], bucket
+          Path('work-plane-provider-proof/preflight.json').write_text(json.dumps({
+              'schema':'FUSE_WORK_PLANE_PRIVATE_GCP_PREFLIGHT_V1',
+              'project_id':os.environ['PROJECT_ID'],
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'active_account':os.environ['DEPLOYER_SA'],
+              'runtime_service_account':os.environ['RUNTIME_SA'],
+              'state_bucket':os.environ['STATE_BUCKET'],
+              'cloud_run_developer':run_developer,
+              'artifact_registry_writer':ar_writer,
+              'runtime_service_account_user':sa_user,
+              'iam_mutation_performed':False,
+              'api_enablement_performed':False,
+              'secret_payload_accessed':False,
+              'provider_mutation_performed':False,
+          },indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Capture service and IAM prestate
+        id: pre
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/service-pre.json 2>/dev/null; then
+            echo 'service_existed=true' >> "$GITHUB_OUTPUT"
+            gcloud run services get-iam-policy "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/service-policy-pre.json
+          else
+            echo '{}' > work-plane-provider-proof/service-pre.json
+            echo '{}' > work-plane-provider-proof/service-policy-pre.json
+            echo 'service_existed=false' >> "$GITHUB_OUTPUT"
+          fi
+          python - <<'PY'
+          import json
+          p=json.load(open('work-plane-provider-proof/service-policy-pre.json'))
+          public={'allUsers','allAuthenticatedUsers'}
+          for b in p.get('bindings') or []:
+              if b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'} and public.intersection(set(b.get('members') or [])):
+                  raise SystemExit('public invocation binding found; canary refuses to continue')
+          PY
+
+      - name: Build and push immutable Work Plane image
+        id: image
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-work-plane-runtime:$SOURCE_SHA"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build --pull --file deployments/work_plane/Dockerfile --tag "$IMAGE" .
+          docker push "$IMAGE" >/dev/null
+          gcloud artifacts docker images describe "$IMAGE" --format=json > work-plane-provider-proof/image.json
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy first private candidate revision
+        id: deploy_a
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          TAG="wpa-${SOURCE_SHA:0:8}"
+          OBJECT="work-plane/canary/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+          COMMON=(
+            "$SERVICE" --image "$IMAGE" --project "$PROJECT_ID" --region "$REGION"
+            --service-account "$RUNTIME_SA" --port 8080 --tag "$TAG"
+            --no-allow-unauthenticated --ingress all --max-instances 2
+            --set-env-vars "FUSE_WORK_PLANE_BUCKET=$STATE_BUCKET,FUSE_WORK_PLANE_OBJECT=$OBJECT,WORKPLANE_BOOT_EPOCH=A"
+            --quiet
+          )
+          if [[ "$SERVICE_EXISTED" == "true" ]]; then
+            gcloud run deploy "${COMMON[@]}" --no-traffic
+          else
+            gcloud run deploy "${COMMON[@]}"
+          fi
+          gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/service-a.json
+          REVISION="$(python - <<'PY'
+          import json
+          s=json.load(open('work-plane-provider-proof/service-a.json'))
+          print((s.get('status') or {}).get('latestCreatedRevisionName') or '')
+          PY
+          )"
+          test -n "$REVISION"
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "object=$OBJECT" >> "$GITHUB_OUTPUT"
+
+      - name: Prove private IAM and resolve revision A URL
+        id: endpoint_a
+        shell: bash
+        env:
+          TAG: ${{ steps.deploy_a.outputs.tag }}
+          REVISION: ${{ steps.deploy_a.outputs.revision }}
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+        run: |
+          set -euo pipefail
+          gcloud run services get-iam-policy "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/service-policy-post-a.json
+          python - <<'PY'
+          import json, os
+          p=json.load(open('work-plane-provider-proof/service-policy-post-a.json'))
+          public={'allUsers','allAuthenticatedUsers'}
+          assert not any(b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'} and public.intersection(set(b.get('members') or [])) for b in p.get('bindings') or [])
+          s=json.load(open('work-plane-provider-proof/service-a.json'))
+          template=(s.get('spec') or {}).get('template') or (s.get('template') or {})
+          # v1/v2 describe shapes vary; service-account is also re-read on the revision below.
+          PY
+          SERVICE_URL="$(python - <<'PY'
+          import json
+          s=json.load(open('work-plane-provider-proof/service-a.json'))
+          print((s.get('status') or {}).get('url') or '')
+          PY
+          )"
+          CANARY_URL="$(python - <<'PY'
+          import json, os
+          s=json.load(open('work-plane-provider-proof/service-a.json')); status=s.get('status') or {}; tag=os.environ['TAG']
+          for item in status.get('traffic') or []:
+              if item.get('tag')==tag and item.get('url'):
+                  print(item['url']); break
+          else: print(status.get('url') or '')
+          PY
+          )"
+          test -n "$SERVICE_URL"; test -n "$CANARY_URL"
+          gcloud run revisions describe "$REVISION" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/revision-a.json
+          python - <<'PY'
+          import json, os
+          r=json.load(open('work-plane-provider-proof/revision-a.json'))
+          sa=((r.get('spec') or {}).get('serviceAccountName') or (r.get('spec') or {}).get('serviceAccount') or '')
+          if not sa:
+              sa=((r.get('metadata') or {}).get('annotations') or {}).get('run.googleapis.com/service-account','')
+          assert sa==os.environ['RUNTIME_SA'], {'observed':sa,'expected':os.environ['RUNTIME_SA']}
+          PY
+          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
+          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Mint private identity token for revision A
+        id: auth_a
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: id_token
+          id_token_audience: ${{ steps.endpoint_a.outputs.service_url }}
+
+      - name: Execute GCS generation-CAS state-machine canary on revision A
+        id: court_a
+        shell: bash
+        env:
+          URL_A: ${{ steps.endpoint_a.outputs.canary_url }}
+          TOKEN_A: ${{ steps.auth_a.outputs.id_token }}
+          MISSION: wp-gcp-${{ github.run_id }}-${{ github.run_attempt }}
+          REVISION_A: ${{ steps.deploy_a.outputs.revision }}
+          REVISION_B: ${{ steps.deploy_b.outputs.revision }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, time, urllib.error, urllib.request
+          from pathlib import Path
+          base=os.environ['URL_A'].rstrip('/'); token=os.environ['TOKEN_A']; mission=os.environ['MISSION']
+          def call(path, body=None):
+              headers={'Authorization':'Bearer '+token,'accept':'application/json'}; data=None
+              if body is not None:
+                  headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
+              req=urllib.request.Request(base+path,data=data,headers=headers,method='POST' if body is not None else 'GET')
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as r: return r.status,json.loads(r.read())
+              except urllib.error.HTTPError as e:
+                  raw=e.read();
+                  try: body=json.loads(raw)
+                  except Exception: body={'error':'NON_JSON'}
+                  return e.code,body
+          hs,h=call('/health'); cs,c=call('/contract')
+          assert hs==200 and h.get('ok') is True and h.get('backend')=='GCS_SINGLE_OBJECT_GENERATION_CAS'
+          assert cs==200 and c.get('private_cloud_run_iam_required') is True and c.get('arbitrary_shell') is False
+          ops=[]
+          def exec_(body, expect=200):
+              status,p=call('/v1/execute',body); assert status==expect,(status,p); ops.append({'status':status,'body':p}); return p
+          p=exec_({'action':'PUBLISH','mission_id':mission,'actor':'A'})
+          q=exec_({'action':'CLAIM','mission_id':mission,'actor':'A','ttl_seconds':2}); fence=int(q['result']['fence'])
+          exec_({'action':'RUNNING','mission_id':mission,'actor':'A','fence':fence})
+          cp=exec_({'action':'CHECKPOINT','mission_id':mission,'actor':'A','fence':fence,'payload':{'checkpoint':'revision-a'}})
+          proj=exec_({'action':'PROJECTION','mission_id':mission,'actor':'reader'})
+          gens=[int(x['body']['committed_generation']) for x in ops if x['body'].get('operation')!='PROJECTION']
+          assert gens==sorted(gens) and len(set(gens))==len(gens),gens
+          receipt={'schema':'WORK_PLANE_PROVIDER_COURT_A_V1','mission_id':mission,'fence_a':fence,'generations':gens,'projection':proj['result'],'generation_monotonic':True,'runtime_service_account':os.environ['RUNTIME_SA'],'gcs_runtime_write_read_verified':True,'provider_effect_scope':'PRIVATE_SYNTHETIC_WORK_PLANE_STATE_ONLY'}
+          Path('work-plane-provider-proof/court-a.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Wait for lease expiry and deploy second private revision
+        id: deploy_b
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          SOURCE_SHA: ${{ github.sha }}
+          OBJECT: ${{ steps.deploy_a.outputs.object }}
+        run: |
+          set -euo pipefail
+          sleep 3
+          TAG="wpb-${SOURCE_SHA:0:8}"
+          gcloud run deploy "$SERVICE" --image "$IMAGE" --project "$PROJECT_ID" --region "$REGION" \
+            --service-account "$RUNTIME_SA" --port 8080 --tag "$TAG" --no-traffic \
+            --no-allow-unauthenticated --ingress all --max-instances 2 \
+            --set-env-vars "FUSE_WORK_PLANE_BUCKET=$STATE_BUCKET,FUSE_WORK_PLANE_OBJECT=$OBJECT,WORKPLANE_BOOT_EPOCH=B" --quiet
+          gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/service-b.json
+          REVISION="$(python - <<'PY'
+          import json
+          s=json.load(open('work-plane-provider-proof/service-b.json'))
+          print((s.get('status') or {}).get('latestCreatedRevisionName') or '')
+          PY
+          )"
+          test -n "$REVISION"
+          SERVICE_URL="$(python - <<'PY'
+          import json
+          s=json.load(open('work-plane-provider-proof/service-b.json')); print((s.get('status') or {}).get('url') or '')
+          PY
+          )"
+          CANARY_URL="$(python - <<'PY'
+          import json, os
+          s=json.load(open('work-plane-provider-proof/service-b.json')); status=s.get('status') or {}; tag=os.environ['TAG']
+          for item in status.get('traffic') or []:
+              if item.get('tag')==tag and item.get('url'):
+                  print(item['url']); break
+          else: print(status.get('url') or '')
+          PY
+          )"
+          test -n "$SERVICE_URL"; test -n "$CANARY_URL"
+          gcloud run revisions describe "$REVISION" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/revision-b.json
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
+          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Mint private identity token for revision B
+        id: auth_b
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: id_token
+          id_token_audience: ${{ steps.deploy_b.outputs.service_url }}
+
+      - name: Prove cross-revision hydration, takeover and stale-owner rejection
+        shell: bash
+        env:
+          URL_A: ${{ steps.endpoint_a.outputs.canary_url }}
+          URL_B: ${{ steps.deploy_b.outputs.canary_url }}
+          TOKEN_A: ${{ steps.auth_a.outputs.id_token }}
+          TOKEN_B: ${{ steps.auth_b.outputs.id_token }}
+          MISSION: wp-gcp-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, urllib.error, urllib.request
+          from pathlib import Path
+          mission=os.environ['MISSION']
+          def call(base,token,body):
+              req=urllib.request.Request(base.rstrip('/')+'/v1/execute',data=json.dumps(body,separators=(',',':')).encode(),headers={'Authorization':'Bearer '+token,'content-type':'application/json','accept':'application/json'},method='POST')
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as r: return r.status,json.loads(r.read())
+              except urllib.error.HTTPError as e:
+                  raw=e.read();
+                  try: body=json.loads(raw)
+                  except Exception: body={'error':'NON_JSON'}
+                  return e.code,body
+          sa,ta=os.environ['URL_A'],os.environ['TOKEN_A']; sb,tb=os.environ['URL_B'],os.environ['TOKEN_B']
+          s,p=call(sb,tb,{'action':'PROJECTION','mission_id':mission}); assert s==200,(s,p)
+          cross=bool(p['result'].get('checkpoint_hash')) and int(p['result'].get('fence') or 0)==1
+          assert cross,p
+          s,take=call(sb,tb,{'action':'RECOVER_ORPHAN','mission_id':mission,'actor':'B','ttl_seconds':120}); assert s==200,(s,take); fence_b=int(take['result']['fence']); assert fence_b==2,take
+          s,old=call(sa,ta,{'action':'CHECKPOINT','mission_id':mission,'actor':'A','fence':1,'payload':{'late':'stale'}}); assert s==409,(s,old)
+          assert 'ACTOR_MISMATCH' in str(old) or 'STALE_FENCE' in str(old),old
+          s,new=call(sb,tb,{'action':'CHECKPOINT','mission_id':mission,'actor':'B','fence':fence_b,'payload':{'checkpoint':'revision-b'}}); assert s==200,(s,new)
+          s,final=call(sb,tb,{'action':'PROJECTION','mission_id':mission}); assert s==200,(s,final); assert int(final['result']['fence'])==2
+          receipt={'schema':'WORK_PLANE_PROVIDER_CROSS_REVISION_COURT_V1','mission_id':mission,'cross_revision_projection_verified':cross,'takeover_fence':fence_b,'stale_actor_rejected':True,'new_actor_checkpoint_committed':True,'generation_monotonic':int(new['committed_generation'])>int(p['committed_generation']),'runtime_service_account':os.environ['RUNTIME_SA'],'revision_a':os.environ.get('REVISION_A'),'revision_b':os.environ.get('REVISION_B'),'provider_effect_scope':'PRIVATE_SYNTHETIC_WORK_PLANE_STATE_ONLY'}
+          assert receipt['generation_monotonic']
+          Path('work-plane-provider-proof/cross-revision.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Compile bounded provider receipt
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          REVISION_A: ${{ steps.deploy_a.outputs.revision }}
+          REVISION_B: ${{ steps.deploy_b.outputs.revision }}
+          OBJECT: ${{ steps.deploy_a.outputs.object }}
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+        run: |
+          set -euo pipefail
+          gcloud run services get-iam-policy "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > work-plane-provider-proof/service-policy-final.json
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          p=json.load(open('work-plane-provider-proof/service-policy-final.json'))
+          public={'allUsers','allAuthenticatedUsers'}
+          public_invoker=any(b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'} and public.intersection(set(b.get('members') or [])) for b in p.get('bindings') or [])
+          assert not public_invoker
+          a=json.load(open('work-plane-provider-proof/court-a.json'))
+          x=json.load(open('work-plane-provider-proof/cross-revision.json'))
+          receipt={
+              'schema':'FUSE_WORK_PLANE_PRIVATE_GCP_CANARY_RECEIPT_V1',
+              'source_sha':os.environ['GITHUB_SHA'],
+              'project_id':os.environ['PROJECT_ID'],
+              'region':os.environ['REGION'],
+              'service':os.environ['SERVICE'],
+              'runtime_service_account':os.environ['RUNTIME_SA'],
+              'state_bucket':os.environ['STATE_BUCKET'],
+              'state_object':os.environ['OBJECT'],
+              'image':os.environ['IMAGE'],
+              'revision_a':os.environ['REVISION_A'],
+              'revision_b':os.environ['REVISION_B'],
+              'service_existed_before':os.environ['SERVICE_EXISTED']=='true',
+              'public_invocation':False,
+              'gcs_runtime_write_read_verified':a['gcs_runtime_write_read_verified'],
+              'generation_monotonic':x['generation_monotonic'],
+              'cross_revision_projection_verified':x['cross_revision_projection_verified'],
+              'newer_fence_takeover_verified':x['takeover_fence']==2,
+              'stale_actor_rejected':x['stale_actor_rejected'],
+              'iam_mutation_performed':False,
+              'api_enablement_performed':False,
+              'secret_payload_accessed':False,
+              'production_traffic_promoted':False,
+              'persistent_24x7_host_proven':False,
+              'natural_ticks_proven':False,
+              'cross_host_dr_proven':False,
+              'value_verified':False,
+              'maturity':'PRIVATE_PROVIDER_CANARY_CROSS_REVISION_VERIFIED__NATURAL_DURABILITY_OPEN'
+          }
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          Path('work-plane-provider-proof/provider-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Upload immutable Work Plane provider proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-work-plane-private-gcp-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: work-plane-provider-proof/
+          if-no-files-found: error
+          retention-days: 90

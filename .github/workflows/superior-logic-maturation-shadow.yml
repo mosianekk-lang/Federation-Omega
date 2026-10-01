@@ -16,9 +16,13 @@ on:
       - "tests/test_bubbles_capability_activation.py"
       - "tests/test_bubbles_scheduler_provider_proof.py"
       - "tests/test_bubbles_authority_artifact_ingestion.py"
+      - "federation/durable_scheduler_bus_v1.py"
+      - "scheduler/github_issue_bus.py"
+      - "tests/test_durable_scheduler_bus_v1.py"
       - ".github/workflows/superior-logic-maturation-shadow.yml"
   schedule:
-    - cron: "37 */6 * * *"
+    - cron: "11 * * * *"       # FUSE durable mission lane
+    - cron: "37 */6 * * *"     # existing maturation shadow lane
   workflow_dispatch:
 
 permissions:
@@ -30,7 +34,63 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  durable-scheduler:
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'schedule' && github.event.schedule == '11 * * * *')
+    permissions:
+      contents: read
+      issues: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Execute FUSE durable mission queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-output/durable-scheduler
+          python - <<'PY'
+          import json
+          from scheduler.github_issue_bus import run_from_env
+          report = run_from_env("runtime-output/durable-scheduler/report.json")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          if report.get("state") != "BOUND":
+              raise SystemExit("DURABLE_SCHEDULER_NOT_BOUND")
+          PY
+          test -s runtime-output/durable-scheduler/report.json
+
+      - name: Publish durable scheduler summary
+        shell: bash
+        run: |
+          echo '## FUSE Durable Scheduler' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat runtime-output/durable-scheduler/report.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable durable scheduler receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-durable-scheduler-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime-output/durable-scheduler/report.json
+          if-no-files-found: error
+          retention-days: 90
+
   shadow:
+    if: >-
+      github.event_name != 'schedule' ||
+      github.event.schedule == '37 */6 * * *'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

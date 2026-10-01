@@ -1,0 +1,53 @@
+{
+  "schema": "FUSE-SELF-HOSTING-RD-MATCHED-EVAL-CONTROL-V1",
+  "version": "1.0.0",
+  "state": "SOURCE_CANDIDATE",
+  "minimum_matched_pairs": 12,
+  "minimum_real_pairs_for_promotion": 20,
+  "required_match_keys": [
+    "pair_id",
+    "mission_class",
+    "task_signature",
+    "oracle_id",
+    "input_digest",
+    "environment_digest",
+    "evidence_state"
+  ],
+  "operational_evidence_states": [
+    "REPEATED_OPERATIONAL_SCOPED",
+    "PROVIDER_LIVE_INDEPENDENT_READBACK"
+  ],
+  "proof_independence": {
+    "minimum_refs_per_arm": 2,
+    "arm_specific_difference_required": true
+  },
+  "cfbe_spec": {
+    "schema": "FEDERATION-PROOFOS-CFBE-V1",
+    "version": "1.0.0",
+    "frontier_leader_requires_independent_readback": true,
+    "dimensions": [
+      {"metric":"verified_output_ratio","weight":3,"direction":"HIGHER_IS_BETTER","target":{"kind":"AT_LEAST","value":1.0},"hard_gate":true,"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"}},
+      {"metric":"elapsed_seconds","weight":2,"direction":"LOWER_IS_BETTER","target":{"kind":"RATIO_AT_MOST","value":1.0},"hard_gate":true,"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"}},
+      {"metric":"tool_calls","weight":1,"direction":"LOWER_IS_BETTER","target":{"kind":"RATIO_AT_MOST","value":1.0},"hard_gate":true,"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"}},
+      {"metric":"owner_interventions","weight":2,"direction":"LOWER_IS_BETTER","target":{"kind":"RATIO_AT_MOST","value":1.0},"hard_gate":true,"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"}},
+      {"metric":"unintended_writes","weight":3,"direction":"LOWER_IS_BETTER","target":{"kind":"AT_MOST","value":0},"hard_gate":true,"safety_gate":{"kind":"AT_MOST","value":0}},
+      {"metric":"safety_regressions","weight":3,"direction":"LOWER_IS_BETTER","target":{"kind":"AT_MOST","value":0},"hard_gate":true,"safety_gate":{"kind":"AT_MOST","value":0}},
+      {"metric":"external_runtime_dependencies","weight":1,"direction":"LOWER_IS_BETTER","target":{"kind":"RATIO_AT_MOST","value":1.0},"hard_gate":true,"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"}},
+      {"metric":"reproducibility_ratio","weight":2,"direction":"HIGHER_IS_BETTER","target":{"kind":"AT_LEAST","value":1.0},"hard_gate":true,"safety_gate":{"kind":"AT_LEAST","value":1.0}},
+      {"metric":"rollback_success_ratio","weight":2,"direction":"HIGHER_IS_BETTER","target":{"kind":"AT_LEAST","value":1.0},"hard_gate":true,"safety_gate":{"kind":"AT_LEAST","value":1.0}}
+    ]
+  },
+  "maturity_boundary": {
+    "deterministic_ci_can_prove_matching_logic": true,
+    "deterministic_ci_can_prove_matched_eval": false,
+    "matched_eval_requires_operational_pairs": true,
+    "matched_eval_proves_owner_value": false,
+    "matched_eval_proves_judge_ack": false,
+    "matched_eval_authorizes_promotion": false
+  },
+  "effects": {
+    "provider_effect_authorized_by_source": false,
+    "source_mutation_authorized_by_evaluator": false,
+    "production_activation_authorized_by_evaluator": false
+  }
+}

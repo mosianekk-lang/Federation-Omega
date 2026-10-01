@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable, Mapping, Sequence
 
+from federation.capability_truth_v1 import CapabilitySurfaceState
+
 
 class SurfaceState(str, Enum):
     VERIFIED_OPERATIONAL = "VERIFIED_OPERATIONAL"
@@ -165,6 +167,90 @@ class PlatformSpecialistCorps:
                 )
             )
         return tuple(decisions)
+
+
+    def route_with_currentness(
+        self,
+        request: CapabilityRequest,
+        snapshots: Mapping[str, PlatformCapabilitySnapshot],
+        currentness: Mapping[str, CapabilitySurfaceState],
+    ) -> tuple[SpecialistRouteDecision, ...]:
+        """Apply shared Capability Truth/currentness as a fail-closed overlay.
+
+        Platform-specific snapshots still define read/write/native-AI semantics.
+        Currentness never upgrades those semantics; it can only preserve or
+        downgrade a route until the shared estate evidence is fresh enough.
+        """
+        base = self.route(request, snapshots)
+        gated: list[SpecialistRouteDecision] = []
+        for decision in base:
+            state = currentness.get(decision.platform)
+            if state is None:
+                gated.append(
+                    SpecialistRouteDecision(
+                        platform=decision.platform,
+                        role_id=decision.role_id,
+                        selected=False,
+                        mode="CURRENTNESS_REQUIRED",
+                        missing_domains=decision.missing_domains,
+                        ao_cra_builds=decision.ao_cra_builds + (
+                            f"AO-CRA:PLATFORM:{decision.platform}:CURRENTNESS_REFRESH",
+                        ),
+                        owner_gate=decision.owner_gate,
+                        reason="SHARED_CAPABILITY_TRUTH_CURRENTNESS_REQUIRED",
+                    )
+                )
+                continue
+
+            if state in {
+                CapabilitySurfaceState.STALE_REQUALIFICATION_REQUIRED,
+                CapabilitySurfaceState.SOURCE_ONLY,
+                CapabilitySurfaceState.BOUND_PARTIAL,
+                CapabilitySurfaceState.UNKNOWN_NOT_ABSENT,
+                CapabilitySurfaceState.ABSENT_AFTER_ESTATE_CENSUS,
+            }:
+                if state is CapabilitySurfaceState.ABSENT_AFTER_ESTATE_CENSUS:
+                    next_build = f"AO-CRA:PLATFORM:{decision.platform}:HARVEST_OR_BUILD"
+                    reason = "CAPABILITY_ABSENT_AFTER_ESTATE_CENSUS"
+                elif state is CapabilitySurfaceState.UNKNOWN_NOT_ABSENT:
+                    next_build = f"AO-CRA:PLATFORM:{decision.platform}:ESTATE_CENSUS"
+                    reason = "CURRENTNESS_UNKNOWN_NOT_ABSENT"
+                else:
+                    next_build = f"AO-CRA:PLATFORM:{decision.platform}:REQUALIFY_CURRENTNESS"
+                    reason = f"CURRENTNESS_{state.value}_NOT_SELECTABLE"
+                gated.append(
+                    SpecialistRouteDecision(
+                        platform=decision.platform,
+                        role_id=decision.role_id,
+                        selected=False,
+                        mode=state.value,
+                        missing_domains=decision.missing_domains,
+                        ao_cra_builds=decision.ao_cra_builds + (next_build,),
+                        owner_gate=decision.owner_gate,
+                        reason=reason,
+                    )
+                )
+                continue
+
+            # LIVE/LIVE_PARTIAL may preserve the platform route, but can never
+            # override the platform snapshot's owner gates or semantic mode.
+            gated.append(
+                SpecialistRouteDecision(
+                    platform=decision.platform,
+                    role_id=decision.role_id,
+                    selected=decision.selected,
+                    mode=decision.mode,
+                    missing_domains=decision.missing_domains,
+                    ao_cra_builds=decision.ao_cra_builds,
+                    owner_gate=decision.owner_gate,
+                    reason=(
+                        "SHARED_CAPABILITY_TRUTH_LIVE"
+                        if state is CapabilitySurfaceState.LIVE
+                        else "SHARED_CAPABILITY_TRUTH_LIVE_PARTIAL"
+                    ) if decision.selected else decision.reason,
+                )
+            )
+        return tuple(gated)
 
 
 CORE_PLATFORM_ROLES: dict[str, PlatformSpecialistRole] = {

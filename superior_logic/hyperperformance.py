@@ -5,7 +5,15 @@ from typing import Iterable, Sequence
 
 from .digital_twin import FederationDigitalTwin, RouteCandidate
 from .evidence_distillation import EvidenceDistiller, EvidenceReceipt
+from .hypercube_adaptive_response import AdaptiveBottleneckRuntime, AdaptiveResponseDecision
+from .hypercube_bottleneck_resolver import (
+    BottleneckKind,
+    BottleneckResolution,
+    BottleneckSignal,
+    HypercubeBottleneckResolver,
+)
 from .mission_ir import HyperSchedule, MissionCompiler, MissionIR, MissionNode
+from .opportunity_discovery import OpportunityDiscoveryEngine
 from .shadow_evolution import PromotionDecision, ShadowEvolutionEngine, TrialScore
 
 
@@ -41,6 +49,9 @@ class HyperperformanceController:
         self.twin = twin or FederationDigitalTwin()
         self.evolution = evolution or ShadowEvolutionEngine()
         self.distiller = EvidenceDistiller()
+        self.opportunity_discovery = OpportunityDiscoveryEngine()
+        self.bottlenecks = HypercubeBottleneckResolver()
+        self.adaptive_responses = AdaptiveBottleneckRuntime(resolver=self.bottlenecks)
 
     def plan(
         self,
@@ -108,5 +119,108 @@ class HyperperformanceController:
     def evaluate_challenger(self, **kwargs) -> PromotionDecision:
         return self.evolution.compare(**kwargs)
 
+    def resolve_bottlenecks(
+        self,
+        signals: Sequence[BottleneckSignal],
+    ) -> tuple[BottleneckResolution, ...]:
+        """Resolve supplied bottlenecks through Hypercube's harvest/compose/invent loop."""
+        return self.bottlenecks.resolve_many(signals)
 
-__all__ = ["CounterfactualRoute", "HyperperformanceController", "MissionPlan"]
+    def adaptive_bottleneck_response(
+        self,
+        *,
+        signal: BottleneckSignal,
+        fingerprint: str,
+        current_state_signature: str,
+        previous_state_signature: str | None = None,
+        same_semantic_failures: int = 0,
+        invalidation_changed: bool = False,
+        external_wait: bool = False,
+        hard_gate: bool = False,
+        route_memory: Sequence[dict[str, object]] = (),
+        failure_memory: Sequence[dict[str, object]] = (),
+        learning_memory: Sequence[dict[str, object]] = (),
+    ) -> AdaptiveResponseDecision:
+        """Select the next bottleneck action from learned route/failure memory.
+
+        The runtime remains effect-free.  It suppresses unchanged retries, reuses a
+        proven champion when valid, forces a changed mechanism after recurrence,
+        escalates persistent gaps into harvest/build-residual, and emits learning-ready
+        deterministic decisions.  Existing authority/effect planes still own execution.
+        """
+        self.adaptive_responses.load_memory(
+            route_memory=route_memory,
+            failure_memory=failure_memory,
+            learning_memory=learning_memory,
+        )
+        return self.adaptive_responses.decide(
+            signal=signal,
+            fingerprint=fingerprint,
+            current_state_signature=current_state_signature,
+            previous_state_signature=previous_state_signature,
+            same_semantic_failures=same_semantic_failures,
+            invalidation_changed=invalidation_changed,
+            external_wait=external_wait,
+            hard_gate=hard_gate,
+        )
+
+    def discover_and_resolve_bottlenecks(
+        self,
+        *,
+        missions: Sequence[MissionIR] = (),
+        required_capabilities: Iterable[tuple[str, str]] = (),
+    ) -> tuple[BottleneckResolution, ...]:
+        """Detect current digital-twin opportunities and immediately compile resolution routes.
+
+        Discovery is intentionally conservative; generated metrics are evidence-shaped
+        priors for shadow selection, not production measurements.
+        """
+        opportunities = self.opportunity_discovery.discover(
+            twin=self.twin,
+            missions=missions,
+            required_capabilities=required_capabilities,
+        )
+        signals: list[BottleneckSignal] = []
+        for item in opportunities:
+            kind = {
+                "LATENCY_BOTTLENECK": BottleneckKind.SERIAL_DEPENDENCY,
+                "CAPABILITY_GAP": BottleneckKind.UNKNOWN,
+                "REVERSIBILITY_OR_RISK_GAP": BottleneckKind.AUTHORITY,
+                "SERIAL_DEPENDENCY_BOTTLENECK": BottleneckKind.SERIAL_DEPENDENCY,
+                "PROOF_EVIDENCE_BOTTLENECK": BottleneckKind.PROOF_EVIDENCE,
+                "COST_RESOURCE_BOTTLENECK": BottleneckKind.COST_RESOURCE,
+                "AUTHORITY_BOTTLENECK": BottleneckKind.AUTHORITY,
+                "ARCHITECTURAL_DUPLICATION_BOTTLENECK": BottleneckKind.ARCHITECTURAL_DUPLICATION,
+            }.get(item.kind, BottleneckKind.UNKNOWN)
+            leverage = max(0.0, min(1.0, float(item.expected_leverage)))
+            signals.append(
+                BottleneckSignal(
+                    bottleneck_id=item.opportunity_id,
+                    kind=kind,
+                    summary=item.description,
+                    evidence_refs=item.evidence or (f"opportunity:{item.opportunity_id}",),
+                    throughput_drag=leverage,
+                    latency_share=leverage if item.kind in {"LATENCY_BOTTLENECK", "SERIAL_DEPENDENCY_BOTTLENECK"} else 0.25 * leverage,
+                    queue_wait_share=0.55 * leverage if item.kind == "SERIAL_DEPENDENCY_BOTTLENECK" else 0.30 * leverage,
+                    failure_recurrence=0.35 * leverage if item.kind == "PROOF_EVIDENCE_BOTTLENECK" else 0.25 * leverage,
+                    dependency_centrality=0.85 * leverage if item.kind == "SERIAL_DEPENDENCY_BOTTLENECK" else 0.55 * leverage,
+                    owner_burden=0.50 * leverage if item.kind in {"SERIAL_DEPENDENCY_BOTTLENECK", "ARCHITECTURAL_DUPLICATION_BOTTLENECK"} else 0.35 * leverage,
+                    cost_pressure=0.85 * leverage if item.kind == "COST_RESOURCE_BOTTLENECK" else 0.25 * leverage,
+                    proof_gap=0.75 * leverage if item.kind == "PROOF_EVIDENCE_BOTTLENECK" else (0.45 if item.kind == "CAPABILITY_GAP" else 0.25),
+                    risk=0.65 * leverage if item.kind in {"REVERSIBILITY_OR_RISK_GAP", "AUTHORITY_BOTTLENECK"} else 0.25,
+                    commercial_leverage=0.60 * leverage,
+                    differentiation_potential=0.50 * leverage,
+                    internal_coverage=0.15 if item.kind == "CAPABILITY_GAP" else 0.50,
+                    external_boundary=False,
+                    affected_missions=1,
+                    internal_capabilities=(),
+                )
+            )
+        return self.bottlenecks.resolve_many(tuple(signals))
+
+
+__all__ = [
+    "CounterfactualRoute",
+    "HyperperformanceController",
+    "MissionPlan",
+]

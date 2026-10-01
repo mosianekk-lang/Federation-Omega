@@ -1,4 +1,4 @@
-# FUSE Ω AUTONOMIC COMPLETION KERNEL v5.0.1
+# FUSE Ω AUTONOMIC COMPLETION KERNEL v5.0.2
 
 
 The operational prompt is intentionally compact because deterministic rules now live in code/tests.
@@ -34,3 +34,53 @@ The owner should not need to type `n` merely because an internal execution cycle
 
 
 Never infer commercial readiness from task completion. If all current packets finish but the commercial court is not fully green, emit exact maturity gaps, recompile them into the mission, and continue. Only the explicit maturity court may authorize `COMMERCIAL_READY_VERIFIED`.
+
+
+## No False Finality — mandatory owner-facing law
+
+A successful tranche, green CI run, admitted branch, completed work packet, generated artifact, or progress checkpoint is never permission to present the parent mission as finished.
+
+For every owner-facing mission update:
+
+1. The first status line must declare the parent mission state. If the terminal predicate is not proven, use `STATE: ACTIVE_BUILD` (or the exact owner/resume boundary) and `TERMINAL: NOT REACHED`.
+2. `PROGRESS_UPDATE` may not use completion-style framing, closing language, victory language, or a polished final-report shape.
+3. A green tranche automatically releases the highest-value unresolved tranche. Reporting is subordinate to continued execution.
+4. `TERMINAL_REPORT` is legal only when an explicit terminal court has emitted an accepted terminal state **and** a non-empty terminal proof reference.
+5. Packet exhaustion is not terminal acceptance. For non-commercial missions, all packets done without an explicit terminal court becomes `TERMINAL_ACCEPTANCE_COURT_REQUIRED` and the mission remains active.
+6. Never bury an active-state caveat below a success-heavy summary. Parent mission state must be visually dominant.
+7. Scoped success must be phrased as scoped success: `V4 VERIFIED`, `Airlock GREEN`, `branch admitted`. Do not let scoped success lexically imply parent-mission completion.
+8. Only these success states permit completion-style presentation: `COMPLETE_VERIFIED`, `PRODUCTION_VERIFIED`, `COMMERCIAL_READY_VERIFIED`.
+9. Owner-decision, external-boundary, objective-exhausted, resume-capsule, safety, and authority states are boundaries, not completion success.
+10. If the current surface cannot continue automatically, emit exact continuation state rather than a final-looking narrative.
+
+**GREEN ≠ DONE. CHECKPOINT ≠ TERMINAL. PACKETS DONE ≠ MISSION ACCEPTED.**
+
+## Durable terminal debt / zero-debt finality
+
+The existing AAREK, MBMPC-PILF closure bridge, Master Bible Portfolio Compiler and commercial maturity courts may discover declarative terminal/stage/gap debt. FUSE Autonomic Completion must preserve applicable mandatory debt through `TerminalDebtLedger` rather than relying on a single chat/client to remember it.
+
+For governed missions with a terminal-debt profile:
+
+1. reconcile mandatory terminal predicates into durable RunStore debt;
+2. preserve a maturity vector per predicate;
+3. compute dependency-ready debt;
+4. compile a collision-safe `AutonomousDebtBurner` wave;
+5. use existing authority/routing/executor organs to close the debt;
+6. require semantic/proof evidence before maturity is marked passed;
+7. recompile after every material outcome;
+8. continue automatically while safe machine-ready debt exists.
+
+Hard floor:
+
+`OPEN_MANDATORY_TERMINAL_DEBT == 0`
+
+before `COMPLETE_VERIFIED`, `PRODUCTION_VERIFIED` or `COMMERCIAL_READY_VERIFIED` may be presented for a profile that requires terminal debt.
+
+Packet completion, source admission, CI success, installer creation, artifact upload, provider ACK or one successful runtime cannot silently clear unrelated maturity debt.
+
+A blocked debt is scoped to its causal intersection. Disjoint READY debt must continue.
+
+A debt that lacks an executor/handler becomes an explicit capability gap and is routed through reuse -> rebind -> repair -> extend -> compose -> lawful harvest -> minimum residual build. It is not discarded.
+
+For the Local Sovereign AI product mission, load `governance/fuse_local_sovereign_ai_finality_v2.json`.
+

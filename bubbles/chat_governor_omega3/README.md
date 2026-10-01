@@ -1,6 +1,6 @@
-# Bubbles Adaptive Chat Governor Ω3.4
+# Bubbles Adaptive Chat Governor Ω3.5
 
-Ω3.4 is the executable middleware evolution of the Bubbles chat-performance governor, adding a deterministic PRE_FINAL_RESPONSE integrity gate to the existing continuity, completion-witness and cognitive-precision controls.
+Ω3.5 extends the executable PRE_FINAL_RESPONSE integrity gate with a no-false-finality presentation interlock so active missions cannot be rendered like completed missions.
 
 ## Core contract
 
@@ -36,6 +36,8 @@
 - material maturity language gate for words such as `implemented`, `operational`, `deployed`, `resolved`, `verified`, `fully`, and `universal`
 - mandatory-control coverage checks that detect rules declared mandatory but missing at required enforcement points or lacking regression proof
 - durable pre-final decision receipts and EWMA metrics for blocked finalizations, actionable gaps, rewrite demand and genuine owner decisions
+- no-false-finality presentation gate: verified completion requires a terminal proof reference; non-terminal responses must lead with an active/resume/owner state banner and `TERMINAL: NOT REACHED`
+- green-tranche continuation semantics: scoped success may be reported, but report formatting cannot substitute for continuing the parent mission
 - deterministic regressions for the above controls
 
 ## PRE_FINAL_RESPONSE integrity target
@@ -73,6 +75,8 @@ Durable checkpoint + decision metrics
 
 This is the ChatGov analogue of a deterministic agent Stop/termination hook. It prevents a routed host from treating “I know what remains” as a valid completion state when the system can still safely act.
 
+It also prevents a subtler failure: a polished checkpoint, green tranche, or closing paragraph cannot visually impersonate parent-mission completion. `VERIFIED_COMPLETE` must carry terminal proof; active/resume/owner boundaries use non-terminal presentation.
+
 ## Cognitive Precision target
 
 ```text
@@ -104,7 +108,7 @@ The kernel does not force every task into deep analysis. It is intended for mate
 
 ## Truth boundary
 
-Ω3.4 is **not** claimed to modify hidden ChatGPT context management, model weights, OpenAI serving infrastructure, mobile-client performance or connector calls that bypass this middleware. `PRE_FINAL_RESPONSE` is enforceable only in hosts/executors that actually call the interlock. A source-level Stop gate is not proof that native ChatGPT, Gemini, Copilot or any other unbound provider is mechanically controlled by it. Cognitive scores and claim snapshots remain bounded decision/proof inputs, not authority grants or provider-effect proof.
+Ω3.5 is **not** claimed to modify hidden ChatGPT context management, model weights, OpenAI serving infrastructure, mobile-client performance or connector calls that bypass this middleware. `PRE_FINAL_RESPONSE` is enforceable only in hosts/executors that actually call the interlock. A source-level Stop gate is not proof that native ChatGPT, Gemini, Copilot or any other unbound provider is mechanically controlled by it. Cognitive scores and claim snapshots remain bounded decision/proof inputs, not authority grants or provider-effect proof.
 
 ## Legal Team Integration target
 

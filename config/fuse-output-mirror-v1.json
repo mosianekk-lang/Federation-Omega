@@ -1,0 +1,23 @@
+{
+  "schema": "FUSE_OUTPUT_MIRROR_POLICY_V1",
+  "version": "1.1.0",
+  "enabled": true,
+  "question": "Did I give the best and most powerful solution available to me as ChatGPT / AI assistant for representing OpenAI and what the user actually asked for?",
+  "release_requires_yes": true,
+  "deterministic_challenge_first": true,
+  "expensive_reasoning_fallback": false,
+  "compare_latest_user_intent": true,
+  "strongest_available_capability_check": true,
+  "machine_safe_execution_over_explanation": true,
+  "verify_material_claims": true,
+  "hard_boundaries_preserved": true,
+  "no_capability_or_completion_overclaim": true,
+  "pass_states": [
+    "PASS_BEST_AVAILABLE_RESULT",
+    "PASS_BEST_AVAILABLE_WITH_HARD_BOUNDARY"
+  ],
+  "failure_state": "FAIL_RECOMPILE_OUTPUT",
+  "position": "EXECUTE -> READBACK -> VERIFY -> JUDGE -> OUTPUT_MIRROR -> TERMINAL_DELIVERY",
+  "failure_return_stages": ["REASON", "RETRIEVE", "ROUTE", "EXECUTE", "VERIFY"],
+  "truth_boundary": "POLICY_SOURCE_DOES_NOT_PROVE_RUNTIME_ENFORCEMENT"
+}

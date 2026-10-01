@@ -1,0 +1,102 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/formation_surface_load_balancer_v1.py",
+        "federation/omnisurface_fabric_v2.py",
+        "config/fuse-formation-surface-load-balancer-v1.json",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "tests/test_formation_surface_load_balancer_v1.py",
+        "tests/test_fuse_formation_surface_bootstrap_v1.py",
+        "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json",
+        "tests/test_omnisurface_formation_bridge_v1.py"
+      ],
+      "reason": "GLOBAL_FORMATION_SURFACE_ROUTING_BOOTSTRAP_AUTHORITY_PRIVACY_COST_PARALLELISM_AND_PROOF_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+      "patterns": [
+        "federation/formation_surface_load_balancer_v1.py",
+        "federation/omnisurface_fabric_v2.py",
+        "config/fuse-formation-surface-load-balancer-v1.json",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "tests/test_formation_surface_load_balancer_v1.py",
+        "tests/test_fuse_formation_surface_bootstrap_v1.py",
+        "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json",
+        "tests/test_omnisurface_formation_bridge_v1.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "RESPAWN",
+        "SOVARA",
+        "FUSE_GOOGLE_INTELLIGENCE_RUNTIME_V2"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "formation_surface_load_balancer_v1",
+      "kind": "unittest_glob",
+      "target": "test_formation_surface_load_balancer_v1.py",
+      "patterns": [
+        "federation/formation_surface_load_balancer_v1.py",
+        "config/fuse-formation-surface-load-balancer-v1.json",
+        "tests/test_formation_surface_load_balancer_v1.py",
+        "governance/proofos_omega_policy_extension_formation_surface_load_balancer_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "formation_surface_bootstrap_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_formation_surface_bootstrap_v1.py",
+      "patterns": [
+        "config/fuse-formation-surface-load-balancer-v1.json",
+        "config/fuse-bootstrap-inheritance-v3.json",
+        "respawn/federation_manifest.json",
+        "respawn/bootstrap_service.py",
+        "tests/test_fuse_formation_surface_bootstrap_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+        "RESPAWN"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "omnisurface_registry_v2",
+      "kind": "unittest_glob",
+      "target": "test_omnisurface_formation_bridge_v1.py",
+      "patterns": [
+        "federation/omnisurface_fabric_v2.py",
+        "config/fuse-formation-surface-load-balancer-v1.json",
+        "tests/test_omnisurface_formation_bridge_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}

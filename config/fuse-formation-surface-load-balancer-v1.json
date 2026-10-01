@@ -1,0 +1,144 @@
+{
+  "schema": "FUSE_FORMATION_SURFACE_LOAD_BALANCER_V1",
+  "version": "1.0.0",
+  "contract_id": "FUSE-FORMATION-SURFACE-LB-001",
+  "enabled": true,
+  "authority": "START:FUSE_ONE",
+  "applies_to": "ALL_MATERIAL_MISSIONS",
+  "mission_reuse": "MISSION-FUSE-GLOBAL-REROUTE-ALL-WORK-001",
+  "planner_path": "federation/formation_surface_load_balancer_v1.py",
+  "registry_path": "federation/omnisurface_fabric_v2.py",
+  "governance_path": "governance/federation_omnisurface_fabric_v2.json",
+  "creates_new_controller": false,
+  "creates_new_scheduler": false,
+  "creates_new_mission_bus": false,
+  "creates_new_authority_root": false,
+  "creates_new_truth_memory_proof_root": false,
+  "external_effect_authority": false,
+  "provider_execution_authority": false,
+  "formation_principle": "MINIMUM_SUFFICIENT_PROVEN_PORTFOLIO",
+  "default_max_parallel_surfaces": 4,
+  "global_stall_on_single_surface_failure": false,
+  "current_provider_readback_required": true,
+  "independence_requires_distinct_provider_and_correlation_domain": true,
+  "provider_diversity_is_not_truth": true,
+  "surface_failure_is_local": true,
+  "all_surfaces_invoked_every_task": false,
+  "core_requested_surfaces": [
+    "GOOGLE-APPS-SCRIPT",
+    "GOOGLE-CLOUD",
+    "GOOGLE-AI-STUDIO-GEMINI",
+    "CANVA",
+    "OPENROUTER"
+  ],
+  "extended_surface_pool": [
+    "OPENAI-GPT6-ASTRA",
+    "OPENAI-GPT56-LUNA",
+    "GITHUB",
+    "GITHUB-COPILOT",
+    "GOOGLE-DRIVE",
+    "GMAIL",
+    "GOOGLE-CALENDAR",
+    "GOOGLE-CONTACTS",
+    "ADOBE",
+    "MICROSOFT-COPILOT-STUDIO",
+    "OUTLOOK-EMAIL",
+    "OUTLOOK-CALENDAR",
+    "WINDOWS-FEDERATION-PLANE",
+    "LUNO-OBSERVER",
+    "LONA-TRADING-ASSISTANT",
+    "BOOKING-COM"
+  ],
+  "specialist_roles": {
+    "GOOGLE-APPS-SCRIPT": [
+      "workspace_automation",
+      "lightweight_orchestration",
+      "workspace_triggers"
+    ],
+    "GOOGLE-CLOUD": [
+      "private_runtime",
+      "serverless_compute",
+      "eventing",
+      "storage",
+      "observability"
+    ],
+    "GOOGLE-AI-STUDIO-GEMINI": [
+      "google_cognition",
+      "multimodal",
+      "function_calling",
+      "prototype_engineering"
+    ],
+    "CANVA": [
+      "visual_design",
+      "presentation",
+      "brand_assets",
+      "creative_layout"
+    ],
+    "OPENROUTER": [
+      "challenger_models",
+      "model_diversity",
+      "provider_marketplace",
+      "benchmarking"
+    ],
+    "OPENAI-GPT6-ASTRA": [
+      "reasoning",
+      "coding",
+      "research",
+      "tool_orchestration"
+    ],
+    "GITHUB": [
+      "source_control",
+      "ci",
+      "provenance",
+      "admission"
+    ],
+    "GOOGLE-DRIVE": [
+      "knowledge",
+      "documents",
+      "spreadsheets",
+      "durable_artifacts"
+    ],
+    "ADOBE": [
+      "high_fidelity_creative",
+      "pdf",
+      "image_video",
+      "production_assets"
+    ],
+    "WINDOWS-FEDERATION-PLANE": [
+      "private_local_execution",
+      "desktop_automation"
+    ],
+    "MICROSOFT-COPILOT-STUDIO": [
+      "enterprise_agents",
+      "power_platform",
+      "enterprise_workflows"
+    ]
+  },
+  "hard_gates": [
+    "AUTHORITY",
+    "PRIVACY",
+    "CURRENTNESS",
+    "PROOF",
+    "HEALTH",
+    "QUOTA",
+    "CIRCUIT",
+    "EFFECT_CEILING",
+    "BUDGET"
+  ],
+  "route_metrics": [
+    "CAPABILITY_COVERAGE",
+    "QUALITY",
+    "RELIABILITY",
+    "PROOF_STRENGTH",
+    "REVERSIBILITY",
+    "LATENCY",
+    "COST",
+    "OWNER_BURDEN",
+    "PRIVACY_COST",
+    "MAINTENANCE_COST",
+    "STRATEGIC_VALUE"
+  ],
+  "effect_path": "FORMATION_PLAN->FDOF_LEASE->SICF_EFFECT_CONTRACT->PROVIDER->READBACK->PROOFOS_REALITY_JUDGE",
+  "failure_path": "FINGERPRINT->LOCAL_CIRCUIT->REROUTE_DISJOINT_ELIGIBLE_SURFACE->CHANGED_MECHANISM_ON_REPEAT",
+  "truth_boundary": "SURFACE_FORMATION_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=EFFECT_VERIFIED!=OWNER_VALUE!=COMPLETE"
+}

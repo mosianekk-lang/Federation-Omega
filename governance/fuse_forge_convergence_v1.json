@@ -1,0 +1,91 @@
+{
+  "schema": "FUSE-FORGE-CONVERGENCE-V1",
+  "version": "1.3.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "source_of_truth": "FUSE_ONE_EXISTING_CONTROL_PLANES",
+  "runtime_hard_dependencies": [
+    "PYTHON",
+    "GIT"
+  ],
+  "optional_witness_surfaces": [
+    "GITHUB",
+    "GITLAB",
+    "AZURE_DEVOPS",
+    "BITBUCKET"
+  ],
+  "virtual_executor": {
+    "identity": "FUSE-VIRTUAL-FORGE-001",
+    "class": "EPHEMERAL_VIRTUAL_GENERAL_EXECUTOR",
+    "physical_device_claim": false,
+    "persistent_host_claim": false,
+    "capabilities": [
+      "artifact",
+      "build",
+      "git",
+      "local_git_cas",
+      "proof",
+      "python",
+      "recovery",
+      "source_protection",
+      "test"
+    ]
+  },
+  "physical_windows": {
+    "required_for_forge_inner_loop": false,
+    "separate_capability_court": true
+  },
+  "mutation_roots": [
+    "HUMAN_OWNER",
+    "SOVARA_SOL62",
+    "FDOF"
+  ],
+  "proof_rule": "NO_MATURITY_INHERITANCE",
+  "source_protection": {
+    "identity": "FUSE-FORGE-SOVEREIGN-PROTECTION-001",
+    "provider_neutral": true,
+    "github_admin_required": false,
+    "core_effect_authority": false,
+    "merge_effect_owner": "FDOF_OR_AUTHORIZED_REPOSITORY_ADAPTER",
+    "mechanisms": [
+      "SIGNED_HEAD_VALIDATION",
+      "FRESH_MAIN_CAS",
+      "FENCED_WRITER_LEASE",
+      "REQUIRED_PROOF_COURTS",
+      "DETERMINISTIC_DEPENDENCY_MERGE_QUEUE",
+      "MERGE_PERMIT_DIGEST",
+      "POST_MERGE_READBACK",
+      "ROLLBACK_TARGET",
+      "APPEND_ONLY_AUDIT_RECEIPT"
+    ],
+    "provider_native_protection_equivalence_claim": false,
+    "local_git_adapter": {
+      "identity": "FUSE-FORGE-LOCAL-GIT-ADAPTER-001",
+      "source_ref": "federation/fuse_forge_git_repository_adapter_v1.py",
+      "network_required": false,
+      "github_runtime_required": false,
+      "permit_required": true,
+      "mutation_ref": "refs/heads/main",
+      "atomic_compare_and_swap": "git update-ref refs/heads/main NEW OLD",
+      "post_mutation_readback_required": true,
+      "rollback_required": true,
+      "provider_native_protection_equivalence_claim": false
+    }
+  },
+  "source_admission_route": {
+    "default": "PROTECTED_LOCAL_GIT_CAS",
+    "executor": "FUSE-VIRTUAL-FORGE-001",
+    "permit_engine": "FUSE-FORGE-SOVEREIGN-PROTECTION-001",
+    "repository_adapter": "FUSE-FORGE-LOCAL-GIT-ADAPTER-001",
+    "generic_git_main_mutation": "FORBIDDEN",
+    "raw_git_dir_override_on_mutator": "FORBIDDEN",
+    "required_checks": [
+      "admission",
+      "contract",
+      "scan"
+    ],
+    "post_mutation_readback_required": true,
+    "rollback_required": true,
+    "provider_native_protection_equivalence_claim": false
+  }
+}

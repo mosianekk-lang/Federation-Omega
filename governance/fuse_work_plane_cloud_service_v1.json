@@ -1,0 +1,45 @@
+{
+  "schema": "FUSE-WORK-PLANE-CLOUD-SERVICE-CONTROL-V1",
+  "version": "1.0.0",
+  "source_of_truth": "FUSE_WORK_PLANE_MISSION_BUS_EVENTS",
+  "service": "fuse-work-plane-runtime",
+  "project": "sov-hybrid-suite",
+  "region": "africa-south1",
+  "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "state_bucket": "fo-control-plane-sov-hybrid-suite",
+  "state_object_class": "work-plane/canary/<run-id>.json",
+  "ingress": "CLOUD_RUN_IAM_AUTHENTICATED_ONLY",
+  "public_invocation": false,
+  "production_traffic_promotion": false,
+  "provider_effect_authorized_by_source": false,
+  "allowed_actions": [
+    "PUBLISH", "CLAIM", "HEARTBEAT", "RUNNING", "CHECKPOINT",
+    "EFFECT_UNKNOWN", "RESULT_READY", "RECOVER_ORPHAN",
+    "CONFIRM_EFFECT_READBACK", "IMPORT_EXTERNAL_RESULT", "PROJECTION"
+  ],
+  "denied_capabilities": [
+    "arbitrary-shell", "python-c", "source-mutation", "IAM-mutation",
+    "secret-payload-read", "public-invocation", "traffic-promotion"
+  ],
+  "provider_canary": {
+    "workflow": ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+    "issue_title": "[FO-DISPATCH] WORK_PLANE_PRIVATE_GCP_CANARY_V1",
+    "private_only": true,
+    "new_service_first_revision_may_serve_only_authenticated_canary_traffic": true,
+    "existing_service_candidate_traffic_percent": 0,
+    "required_courts": [
+      "runtime identity and deployment authority",
+      "private IAM and no public invoker",
+      "GCS runtime-service-account write/read generation CAS",
+      "cross-revision projection hydration",
+      "newer-fence stale-owner takeover",
+      "late stale actor rejection"
+    ]
+  },
+  "proof_boundary": {
+    "source_admission_proves_provider_deployment": false,
+    "provider_canary_proves_24x7": false,
+    "two_revisions_prove_multi_host_dr": false,
+    "canary_proves_value": false
+  }
+}

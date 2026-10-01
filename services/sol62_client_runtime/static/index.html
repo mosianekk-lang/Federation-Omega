@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>FUSE-ONE — Your intelligence workspace</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to workspace</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Workspace navigation">
+      <a class="brand" href="#overview"><span class="brandmark" aria-hidden="true">F</span><span>FUSE<span class="brand-one">—ONE</span><small>Intelligence, working together.</small></span></a>
+      <p class="nav-label">WORKSPACE</p>
+      <nav aria-label="Main">
+        <button class="nav-item active" data-view="overview" aria-current="page"><span aria-hidden="true">▦</span> Overview</button>
+        <button class="nav-item" data-view="chat"><span aria-hidden="true">✧</span> Assistant</button>
+        <button class="nav-item" data-view="missions"><span aria-hidden="true">◎</span> Missions</button>
+        <button class="nav-item" data-view="connections"><span aria-hidden="true">⌘</span> Connections</button>
+        <button class="nav-item" data-view="catalog"><span aria-hidden="true">▤</span> Service catalog</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="plane-card"><span class="plane-dot" aria-hidden="true"></span><div><strong>One workspace. One authority.</strong><p>Existing FUSE sovereign plane<br>SOL 6.2 runtime</p></div></div>
+        <button id="openSession" class="session-button"><span class="avatar" aria-hidden="true">F</span><span>Workspace session<small id="sidebarSession">Not connected</small></span><span aria-hidden="true">↗</span></button>
+      </div>
+    </aside>
+
+    <main id="main" class="main" tabindex="-1">
+      <header class="topbar"><div class="breadcrumb">WORKSPACE <span>/</span> <strong id="viewName">Overview</strong></div><div class="top-actions"><span id="health" class="status-pill" role="status">Checking runtime…</span><button id="openSessionTop" class="top-session" aria-label="Open workspace session">Session</button><button id="refreshWorkspace" class="icon-button" aria-label="Refresh workspace">↻</button></div></header>
+      <div class="content">
+        <section id="sessionPanel" class="session-panel" hidden aria-labelledby="sessionTitle">
+          <div><p class="eyebrow">WORKSPACE ACCESS</p><h2 id="sessionTitle">Connect your session</h2><p>Use an existing FUSE session. Provider credentials stay with their server-side bindings.</p></div>
+          <form id="sessionForm"><label for="token">FUSE session token</label><div class="inline-form"><input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Existing session token"><button id="saveToken" type="submit" class="primary">Use session</button><button id="clearToken" type="button" class="secondary">Clear</button></div></form>
+          <p id="sessionNotice" class="form-note" role="status">Stored only in this browser tab.</p>
+        </section>
+        <div id="globalNotice" class="notice" role="status" hidden></div>
+
+        <section id="overviewPanel" class="view" aria-labelledby="overviewTitle">
+          <div class="page-heading"><div><p class="eyebrow">YOUR UNIFIED WORKSPACE</p><h1 id="overviewTitle">Bring your next idea to life.</h1><p>Think, build and coordinate work through your existing FUSE systems.</p></div><span class="edition">FUSE-ONE / SOL 6.2</span></div>
+          <div class="hero">
+            <div class="hero-copy"><span class="hero-kicker">FROM INTENT TO EVIDENCE</span><h2>Many capabilities.<br>One place to work.</h2><p>Start with an objective. Explore your connected routes, track a durable mission, and see the evidence behind each step.</p><div class="hero-actions"><button class="primary dark" data-go="chat">Open assistant <span aria-hidden="true">↗</span></button><button class="text-button" data-go="missions">Create a mission <span aria-hidden="true">→</span></button></div></div>
+            <div class="orbit" aria-hidden="true"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><span class="orbit-node node-one">Think</span><span class="orbit-node node-two">Build</span><span class="orbit-node node-three">Verify</span><div class="orbit-core">F<span>ONE</span></div></div>
+          </div>
+          <div class="metrics" aria-label="Catalog source coverage"><article><span>Services in catalog</span><strong id="serviceCount">—</strong><small>Registered in existing source</small></article><article><span>Source available</span><strong id="sourceCount">—</strong><small>Definitions or mapped aliases</small></article><article><span>Definitions to reconcile</span><strong id="gapCount">—</strong><small>Source coverage still needed</small></article></div>
+          <div class="overview-grid"><section class="panel readiness"><div class="section-heading"><h2>Runtime readiness</h2><span class="eyebrow">READBACK</span></div><p class="section-description">Each signal is reported separately.</p><dl id="readinessList"><div><dt>Runtime response</dt><dd id="runtimeReady">Checking…</dd></div><div><dt>Event integrity</dt><dd id="integrityReady">Not assessed</dd></div><div><dt>Session service</dt><dd id="sessionReady">Not assessed</dd></div><div><dt>Execution binding</dt><dd id="executionReady">Not assessed</dd></div></dl><p id="readinessNote" class="form-note">Readiness does not certify provider execution or production release.</p></section>
+          <section class="panel next-work"><div class="section-heading"><h2>Where will you start?</h2><span class="eyebrow">WORKFLOWS</span></div><button class="workflow-link" data-go="chat"><span class="workflow-icon">✧</span><span><strong>Explore an idea</strong><small>Reason, research or prepare a build with FUSE.</small></span><span aria-hidden="true">↗</span></button><button class="workflow-link" data-go="missions"><span class="workflow-icon">◎</span><span><strong>Carry work forward</strong><small>Create or resume a mission by its ID.</small></span><span aria-hidden="true">↗</span></button><button class="workflow-link" data-go="connections"><span class="workflow-icon">⌘</span><span><strong>Understand your connections</strong><small>Inspect routes, maturity and binding requirements.</small></span><span aria-hidden="true">↗</span></button></section></div>
+          <p class="footnote">FUSE-OWNED CLIENT / RUNTIME · Source coverage and runtime verification remain distinct.</p>
+        </section>
+
+        <section id="chatPanel" class="view" hidden aria-labelledby="chatTitle">
+          <div class="page-heading"><div><p class="eyebrow">YOUR INTERACTIVE WORKSPACE</p><h1 id="chatTitle">Work with FUSE.</h1><p>Send an objective through the existing FUSE gateway.</p></div><span class="edition">Read-only assistance</span></div>
+          <div class="assistant-workspace panel"><div id="chatLog" class="chatlog" role="log" aria-label="Conversation" aria-live="polite"><div id="chatEmpty" class="chat-empty"><div class="assistant-mark" aria-hidden="true">✧</div><h2>What would you like to move forward?</h2><p>A clear objective gives your intelligence a direction.</p><div class="prompt-suggestions"><button data-prompt="Help me turn an idea into a concrete, testable plan.">Shape an idea</button><button data-prompt="Review the available evidence and identify the strongest next step.">Find the next step</button><button data-prompt="Help me define acceptance criteria and a verification plan for my project.">Plan verification</button></div></div></div>
+          <form id="chatForm" class="composer"><label for="chatIntent" class="visually-hidden">Your objective</label><textarea id="chatIntent" required maxlength="100000" rows="3" placeholder="Describe what you want to achieve…"></textarea><div class="composer-toolbar"><label for="chatMode" class="visually-hidden">Assistance mode</label><select id="chatMode"><option value="AUTO">Auto route</option value="THINK">Think</option value="RESEARCH">Research</option value="BUILD">Build</option><option value="CREATE">Create</option></select><span class="composer-note">Existing route policies apply</span><button id="sendChat" type="submit" class="primary">Send objective <span aria-hidden="true">↑</span></button></div><p id="chatNotice" class="form-note" role="status"></p></form></div>
+        </section>
+
+        <section id="missionsPanel" class="view" hidden aria-labelledby="missionsTitle">
+          <div class="page-heading"><div><p class="eyebrow">WORK THAT KEEPS ITS CONTEXT</p><h1 id="missionsTitle">Durable missions.</h1><p>Define the outcome, then track the state held by your existing runtime.</p></div></div>
+          <div class="mission-layout"><section class="panel"><h2>Start with the outcome</h2><form id="missionForm"><label for="objective">What should this mission achieve?</label><textarea id="objective" required maxlength="20000" rows="5" placeholder="Describe a specific outcome and how you will know it is achieved."></textarea><details class="advanced"><summary>Advanced state configuration</summary><div class="grid"><label for="initialState">Initial state<textarea id="initialState" spellcheck="false">{"state":"OPEN"}</textarea></label><label for="targetState">Target state<textarea id="targetState" spellcheck="false">{"state":"DONE"}</textarea></label></div><p class="form-note">JSON objects describe desired states; they do not prove the outcome.</p></details><button id="createMission" class="primary" type="submit">Create mission <span aria-hidden="true">→</span></button><p id="missionNotice" class="form-note" role="status"></p></form></section>
+          <section class="panel"><h2>Resume existing work</h2><p class="section-description">Read a mission using its exact ID. Access remains scoped to your session.</p><form id="lookupForm"><label for="lookupMission">Mission ID</label><input id="lookupMission" required autocomplete="off" placeholder="sol62-…"><button id="loadMission" type="submit" class="secondary">Read mission</button></form><p class="form-note">Reading a mission does not restart it.</p></section></div>
+          <section id="missionCard" class="panel mission" hidden><div class="section-heading"><div><p class="eyebrow">CURRENT MISSION</p><h2 id="missionId"></h2></div><span id="missionState" class="badge">Readback pending</span></div><p id="missionSummary" class="section-description"></p><div class="inline-form"><button id="refreshMission" class="secondary">Refresh state</button><button id="wakeMission" class="primary">Request durable wake</button></div><p id="wakeNotice" class="form-note" role="status">A wake request enters the existing executor path; it does not establish completion.</p><details class="advanced"><summary>Inspect runtime readback</summary><pre id="missionStatus"></pre></details></section>
+        </section>
+
+        <section id="connectionsPanel" class="view" hidden aria-labelledby="connectionsTitle">
+          <div class="page-heading"><div><p class="eyebrow">YOUR CAPABILITY FABRIC</p><h1 id="connectionsTitle">See how it connects.</h1><p>Inspect the routes reported by the runtime without invoking providers.</p></div></div>
+          <div class="filterbar"><label class="search-field" for="connectionSearch"><span aria-hidden="true">⌕</span><input id="connectionSearch" type="search" placeholder="Search Google, Canva, local models…"></label><label for="connectionFilter" class="visually-hidden">Filter connections</label><select id="connectionFilter"><option value="all">All connections</option><option value="native">Native adapters</option><option value="client">Client routes</option><option value="discovery">Estate discovery</option></select></div>
+          <p id="connectionSummary" class="result-summary" role="status">Connect a session to read the capability registry.</p><div id="connectionsList" class="card-grid"></div><p class="footnote">A registry entry identifies a route. Exact action authority and provider readback are required before use.</p>
+        </section>
+
+        <section id="catalogPanel" class="view" hidden aria-labelledby="catalogTitle">
+          <div class="page-heading"><div><p class="eyebrow">EXISTING SYSTEMS, ONE VIEW</p><h1 id="catalogTitle">The service catalog.</h1><p>Discover source definitions and the capabilities each service requires.</p></div></div>
+          <div class="filterbar"><label class="search-field" for="serviceSearch"><span aria-hidden="true">⌕</span><input id="serviceSearch" type="search" placeholder="Search services or capabilities…"></label><label for="serviceFilter" class="visually-hidden">Filter services</label><select id="serviceFilter"><option value="all">All services</option><option value="available">Source available</option><option value="missing">Definition needed</option></select></div>
+          <p id="serviceSummary" class="result-summary" role="status">Connect a session to read the source catalog.</p><div id="serviceList" class="card-grid"></div><p class="footnote">Source availability does not imply a callable, deployed or commercially certified service.</p>
+        </section>
+      </div>
+      <footer class="workspace-footer"><span>FUSE-ONE</span><span id="lastReadback">Awaiting runtime readback</span></footer>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

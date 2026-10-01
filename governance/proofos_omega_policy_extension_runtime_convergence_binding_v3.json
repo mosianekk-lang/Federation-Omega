@@ -1,0 +1,60 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/formation_foundry_binding_v1.py",
+        "federation/runtime_convergence_binding_v3.py",
+        "evidenceops/innovation_engine/of50_adapter.py",
+        "tests/test_runtime_convergence_binding_v3.py",
+        "governance/runtime_convergence_binding_v3.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v3.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V3.md"
+      ],
+      "reason": "FUSE_FORMATION_FOUNDRY_RECEIPT_AND_RUNTIME_CONVERGENCE_BINDING_V3"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_RUNTIME_CONVERGENCE_BINDING_V3",
+      "patterns": [
+        "federation/formation_foundry_binding_v1.py",
+        "federation/runtime_convergence_binding_v3.py",
+        "tests/test_runtime_convergence_binding_v3.py",
+        "governance/runtime_convergence_binding_v3.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v3.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V3.md"
+      ],
+      "depends_on": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V2",
+        "EVIDENCEOPS",
+        "FUSE_OF50_ACE_V1",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "runtime_convergence_binding_v3",
+      "kind": "unittest_glob",
+      "target": "test_runtime_convergence_binding_v3.py",
+      "patterns": [
+        "federation/formation_foundry_binding_v1.py",
+        "federation/runtime_convergence_binding_v3.py",
+        "evidenceops/innovation_engine/of50_adapter.py",
+        "tests/test_runtime_convergence_binding_v3.py",
+        "governance/runtime_convergence_binding_v3.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v3.json"
+      ],
+      "subsystems": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V3"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}

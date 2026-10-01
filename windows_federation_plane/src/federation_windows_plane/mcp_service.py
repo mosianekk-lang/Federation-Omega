@@ -214,13 +214,8 @@ def build_agent_only_server(*, relay: Any) -> MCPServer:
 
 
 def server_from_env() -> MCPServer:
-    if not os.environ.get("GOOGLE_CLOUD_PROJECT"): raise RuntimeError("MISSING_REQUIRED_ENV:GOOGLE_CLOUD_PROJECT")
-    relay = FirestoreRelay(project=os.environ["GOOGLE_CLOUD_PROJECT"], root_secret=os.environ.get("FUSE_RELAY_ROOT_SECRET"))
-    issuer = os.environ.get("FUSE_OIDC_ISSUER"); jwks = os.environ.get("FUSE_OIDC_JWKS_URL"); mode = relay_mode(oidc_issuer=issuer, oidc_jwks_url=jwks)
-    if mode == "AGENT_ONLY_BOOTSTRAP": return build_agent_only_server(relay=relay)
-    resource = os.environ.get("FUSE_MCP_RESOURCE_URL")
-    if not resource: raise RuntimeError("MISSING_REQUIRED_ENV:FUSE_MCP_RESOURCE_URL")
-    return build_server(relay=relay, issuer=str(issuer), resource_url=resource, jwks_url=str(jwks))
+    from .pairing_service import server_from_env as pairing_server_from_env
+    return pairing_server_from_env()
 
 
 def main() -> None:

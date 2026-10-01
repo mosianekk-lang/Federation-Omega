@@ -1,0 +1,101 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/durable_scheduler_bus_v1.py",
+        "federation/durable_scheduler_virtual_org_v1.py",
+        "scheduler/github_issue_bus.py",
+        "virtual-org/operate.py",
+        "virtual-org/durable-queue/**",
+        "governance/proofos_omega_policy_extension_durable_scheduler_bus_v1.json"
+      ],
+      "reason": "DURABLE_MISSION_SCHEDULING_LEASE_IDEMPOTENCY_AND_EXECUTION_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "DURABLE_SCHEDULER_BUS_V1",
+      "patterns": [
+        "federation/durable_scheduler_bus_v1.py",
+        "federation/durable_scheduler_virtual_org_v1.py",
+        "scheduler/github_issue_bus.py",
+        "virtual-org/operate.py",
+        "virtual-org/durable-queue/**",
+        "governance/proofos_omega_policy_extension_durable_scheduler_bus_v1.json"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        "federation/durable_scheduler_bus_v1.py",
+        "federation/durable_scheduler_virtual_org_v1.py",
+        "scheduler/github_issue_bus.py",
+        "virtual-org/operate.py",
+        "virtual-org/durable-queue/**"
+      ],
+      "tests": [
+        "durable_scheduler_bus_v1_core",
+        "durable_scheduler_virtual_org_v1",
+        "durable_scheduler_proofos_mapping_v1"
+      ],
+      "evidence": "PR1649_UNMAPPED_PRODUCTION_FULL_FALLBACK_20260922"
+    }
+  ],
+  "tests": [
+    {
+      "id": "durable_scheduler_bus_v1_core",
+      "kind": "unittest_glob",
+      "target": "test_durable_scheduler_bus_v1.py",
+      "patterns": [
+        "federation/durable_scheduler_bus_v1.py",
+        "scheduler/github_issue_bus.py"
+      ],
+      "subsystems": [
+        "DURABLE_SCHEDULER_BUS_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "durable_scheduler_virtual_org_v1",
+      "kind": "unittest_glob",
+      "target": "test_durable_scheduler_virtual_org_v1.py",
+      "patterns": [
+        "federation/durable_scheduler_virtual_org_v1.py",
+        "virtual-org/operate.py",
+        "virtual-org/durable-queue/**"
+      ],
+      "subsystems": [
+        "DURABLE_SCHEDULER_BUS_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "durable_scheduler_proofos_mapping_v1",
+      "kind": "unittest_glob",
+      "target": "test_proofos_durable_scheduler_bus_v1_mapping.py",
+      "patterns": [
+        "governance/proofos_omega_policy_extension_durable_scheduler_bus_v1.json",
+        "federation/durable_scheduler_bus_v1.py",
+        "federation/durable_scheduler_virtual_org_v1.py",
+        "scheduler/github_issue_bus.py",
+        "virtual-org/operate.py",
+        "virtual-org/durable-queue/**"
+      ],
+      "subsystems": [
+        "DURABLE_SCHEDULER_BUS_V1"
+      ],
+      "failure_class": "SELECTOR_ESCAPE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    }
+  ]
+}

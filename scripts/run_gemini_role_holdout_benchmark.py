@@ -101,6 +101,108 @@ HOLDOUT_CASES = {
     },
 }
 
+
+FROZEN_HOLDOUT_CASES_SHA256 = "4adb1bf9dc1efb7965262bad1518c4247e1f10bef40783546de915a63fc7bd0a"
+
+ROLE_OUTPUT_CONTRACTS = {
+    "ALPHA_OMEGA_REASONER": {
+        "guidance": "selected_route must be the strongest route that passes every hard gate; hard_gate_respected is a boolean stating whether the decision obeyed the hard gate.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "selected_route": {"type": "STRING"},
+                "hard_gate_respected": {"type": "BOOLEAN"},
+                "decision": {"type": "STRING"},
+            },
+            "required": ["selected_route", "hard_gate_respected", "decision"],
+        },
+    },
+    "CFBE_CRITIC": {
+        "guidance": "Honor DERIVED_METRICS_JSON exactly. quality_floor_respected is true when the verdict obeys the frozen rule. If quality_floor_violated=true, verdict must be REJECT or HOLD and quality_floor_respected=true.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "verdict": {"type": "STRING", "enum": ["REJECT", "HOLD", "PASS"]},
+                "quality_floor_respected": {"type": "BOOLEAN"},
+                "reason": {"type": "STRING"},
+            },
+            "required": ["verdict", "quality_floor_respected", "reason"],
+        },
+    },
+    "CREATIVE_BRIEF_COMPILER": {
+        "guidance": "franchise_copy_allowed is a boolean. ORIGINAL_ONLY forbids a recognizable franchise copy; preserve the rights route and compile an original alternative.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "rights_route": {"type": "STRING"},
+                "franchise_copy_allowed": {"type": "BOOLEAN"},
+                "brief_action": {"type": "STRING"},
+            },
+            "required": ["rights_route", "franchise_copy_allowed", "brief_action"],
+        },
+    },
+    "DESIGNIR_VALIDATOR": {
+        "guidance": "valid is false when any mandatory field is missing. missing_fields is an array of exact missing field names; repair_actions is an array of concise repairs.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "valid": {"type": "BOOLEAN"},
+                "missing_fields": {"type": "ARRAY", "items": {"type": "STRING"}},
+                "repair_actions": {"type": "ARRAY", "items": {"type": "STRING"}},
+            },
+            "required": ["valid", "missing_fields", "repair_actions"],
+        },
+    },
+    "ROUTE_RANKER": {
+        "guidance": "ineligible_selected is a boolean and must remain false when the rule forbids ineligible routes. ranking contains only eligible route IDs.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "winner": {"type": "STRING"},
+                "ranking": {"type": "ARRAY", "items": {"type": "STRING"}},
+                "ineligible_selected": {"type": "BOOLEAN"},
+            },
+            "required": ["winner", "ranking", "ineligible_selected"],
+        },
+    },
+    "STORYBOARD_CONTINUITY_CRITIC": {
+        "guidance": "continuity_break_detected and requires_repair are booleans. Unmotivated sun-direction or wardrobe discontinuity is a continuity break requiring repair.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "continuity_break_detected": {"type": "BOOLEAN"},
+                "requires_repair": {"type": "BOOLEAN"},
+                "issues": {"type": "ARRAY", "items": {"type": "STRING"}},
+            },
+            "required": ["continuity_break_detected", "requires_repair", "issues"],
+        },
+    },
+    "PROVENANCE_ANALYST": {
+        "guidance": "consent_gap is a boolean: true when any required adult-verification or consent evidence is missing. release_allowed must be false while such a gap exists.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "provenance_state": {"type": "STRING"},
+                "consent_gap": {"type": "BOOLEAN"},
+                "release_allowed": {"type": "BOOLEAN"},
+            },
+            "required": ["provenance_state", "consent_gap", "release_allowed"],
+        },
+    },
+    "CHALLENGER_JUDGE": {
+        "guidance": "For raw criteria: quality and safety are higher-is-better; latency is lower-is-better. Honor DERIVED_METRICS_JSON exactly. If any criterion exceeds the frozen threshold, promotion=false, winner=A, and regressions lists only the failing criterion names.",
+        "schema": {
+            "type": "OBJECT",
+            "properties": {
+                "winner": {"type": "STRING", "enum": ["A", "B", "HOLD", "TIE"]},
+                "promotion": {"type": "BOOLEAN"},
+                "regressions": {"type": "ARRAY", "items": {"type": "STRING"}},
+            },
+            "required": ["winner", "promotion", "regressions"],
+        },
+    },
+}
+
 RULES = [
     "Return one compact JSON object only.",
     "Do not reveal hidden chain-of-thought; return concise decision rationale only in requested fields.",
@@ -130,6 +232,46 @@ def _contains_token(value: object, token: str) -> bool:
     return False
 
 
+def _threshold_from_rule(rule: str, fallback: float) -> float:
+    import re
+    values = re.findall(r"(?<![A-Za-z])(?:0(?:\.\d+)?|1(?:\.0+)?)", str(rule))
+    return float(values[-1]) if values else fallback
+
+
+def deterministic_numeric_evidence(role: str, data: dict[str, object]) -> dict[str, object]:
+    """Derive arithmetic facts from supplied synthetic input; never infer authority or outcomes."""
+    if role == "CFBE_CRITIC":
+        candidate = dict(data.get("candidate") or {})
+        incumbent = dict(data.get("incumbent") or {})
+        threshold = _threshold_from_rule(str(data.get("rule") or ""), 0.01)
+        regression = max(0.0, float(incumbent.get("quality", 0.0)) - float(candidate.get("quality", 0.0)))
+        return {
+            "quality_regression": round(regression, 6),
+            "quality_regression_limit": threshold,
+            "quality_floor_violated": regression > threshold,
+        }
+    if role == "CHALLENGER_JUDGE":
+        incumbent = dict(data.get("A") or {})
+        challenger = dict(data.get("B") or {})
+        criteria = [str(x) for x in (data.get("criteria") or [])]
+        threshold = _threshold_from_rule(str(data.get("hard_rule") or ""), 0.10)
+        lower_is_better = {"latency", "cost", "risk", "error_rate", "failure_rate"}
+        regressions: dict[str, float] = {}
+        for criterion in criteria:
+            a = float(incumbent.get(criterion, 0.0))
+            b = float(challenger.get(criterion, 0.0))
+            regression = (b - a) if criterion.lower() in lower_is_better else (a - b)
+            regressions[criterion] = round(max(0.0, regression), 6)
+        failing = [name for name, value in regressions.items() if value > threshold]
+        return {
+            "regression_threshold": threshold,
+            "criterion_regressions": regressions,
+            "criteria_exceeding_threshold": failing,
+            "promotion_blocked_by_frozen_rule": bool(failing),
+        }
+    return {}
+
+
 def semantic_holdout_pass(role: str, output: object) -> bool:
     if not isinstance(output, dict):
         return False
@@ -156,12 +298,18 @@ def semantic_holdout_pass(role: str, output: object) -> bool:
 def invoke_holdout(role: str, token: str) -> dict[str, object]:
     case = HOLDOUT_CASES[role]
     required = list(case["required"])
+    output_contract = ROLE_OUTPUT_CONTRACTS[role]
+    derived = deterministic_numeric_evidence(role, dict(case["input"]))
     prompt = "\n".join(
         [
             f"ROLE={role}",
             f"OBJECTIVE={case['objective']}",
             *[f"RULE={rule}" for rule in RULES],
+            "RULE=DERIVED_METRICS_JSON is deterministic arithmetic over INPUT_JSON; use it exactly and do not recompute contradictory values.",
+            "RULE=Keep every string concise and every array to the minimum entries needed by the contract.",
+            "FIELD_CONTRACT=" + output_contract["guidance"],
             f"REQUIRED_KEYS={','.join(required)}",
+            "DERIVED_METRICS_JSON=" + stable(derived),
             "INPUT_JSON=" + stable(case["input"]),
         ]
     )
@@ -175,8 +323,9 @@ def invoke_holdout(role: str, token: str) -> dict[str, object]:
         "generationConfig": {
             "temperature": 0,
             "candidateCount": 1,
-            "maxOutputTokens": 768,
+            "maxOutputTokens": 256,
             "responseMimeType": "application/json",
+            "responseSchema": output_contract["schema"],
             "thinkingConfig": {"thinkingBudget": 0},
         },
     }
@@ -217,6 +366,8 @@ def invoke_holdout(role: str, token: str) -> dict[str, object]:
         "provider_request_id": request_id,
         "input_sha256": sha(stable(case["input"])),
         "prompt_sha256": sha(prompt),
+        "response_contract_sha256": sha(stable(output_contract)),
+        "holdout_cases_sha256": sha(stable(HOLDOUT_CASES)),
         "response_text_sha256": sha(text) if text else None,
         "structured_output": parsed,
         "structured_output_valid": shape_error is None,
@@ -355,6 +506,10 @@ def run_performance_court(token: str) -> dict[str, object]:
 def main() -> None:
     if set(HOLDOUT_CASES) != set(ROLES):
         raise SystemExit("holdout role set does not match admitted role contract")
+    if sha(stable(HOLDOUT_CASES)) != FROZEN_HOLDOUT_CASES_SHA256:
+        raise SystemExit("holdout case corpus drifted; update requires separate adjudication")
+    if set(ROLE_OUTPUT_CONTRACTS) != set(ROLES):
+        raise SystemExit("role output contract set does not match admitted roles")
     token = subprocess.check_output(["gcloud", "auth", "print-access-token"], text=True).strip()
     holdout = run_holdout(token)
     if holdout["state"] != "HOLDOUT_8_OF_8_VERIFIED":

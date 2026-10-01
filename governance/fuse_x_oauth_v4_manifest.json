@@ -1,0 +1,31 @@
+{
+  "callback": "http://127.0.0.1:8080/callback",
+  "candidate_kind": "SOURCE_INDEPENDENT_AUTH_CUSTODY_RECOVERY",
+  "client_secret": false,
+  "docs_delta": "OPENAPI_SECURITY_SCOPE_ORDER_ONLY_84_OF_84_HUNKS",
+  "f313_preserved": true,
+  "official_x_docs_head": "0df2c1043ac5ba0ca12130f3df23849913acd072",
+  "persistent_token_custody": "WINDOWS_CURRENT_USER_DPAPI_ONLY",
+  "pkce": "S256",
+  "predecessor_v3_sha256": "7e6670fdf44189339c9c94bf4f133115586e3aede3818aa03596dda9db5774aa",
+  "prior_docs_head": "d91c54eec8c5ca5da9f0f7da7f1e279c05a9350e",
+  "profile_mutation_api": "UNVERIFIED",
+  "provider_authenticated": false,
+  "public_client": true,
+  "read_endpoints": [
+    "/2/users/me",
+    "/2/users/{id}/timelines/reverse_chronological",
+    "/2/tweets/search/recent"
+  ],
+  "schema": "FUSE_X_OAUTH_CUSTODY_STABLE_V4",
+  "self_serve_entitlement": {
+    "follow_unfollow_like_unlike": "ENTERPRISE_ONLY",
+    "ordinary_post": "SEPARATE_POLICY_COST_ACTION_AUTHORITY_GATE",
+    "quote_post": "NOT_SELF_SERVE"
+  },
+  "source_admitted": false,
+  "users_email_requested": false,
+  "version": "4.0.0",
+  "write_authority": "ACTION_SPECIFIC_OWNER_AND_POLICY_AUTHORITY_REQUIRED",
+  "x_account_effect": false
+}

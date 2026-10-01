@@ -1,0 +1,56 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/kdv_read_continuity_v1.py",
+        "tests/test_kdv_read_continuity_v1.py",
+        "governance/kdv_read_continuity_v1.json",
+        "governance/proofos_omega_policy_extension_kdv_read_continuity_v1.json",
+        "docs/architecture/KDV_READ_CONTINUITY_V1.md"
+      ],
+      "reason": "KDV_NONAUTHORITATIVE_PROVIDER_NEUTRAL_READ_CONTINUITY_AND_CURRENTNESS_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "KDV_READ_CONTINUITY_V1",
+      "patterns": [
+        "federation/kdv_read_continuity_v1.py",
+        "tests/test_kdv_read_continuity_v1.py",
+        "governance/kdv_read_continuity_v1.json",
+        "governance/proofos_omega_policy_extension_kdv_read_continuity_v1.json",
+        "docs/architecture/KDV_READ_CONTINUITY_V1.md"
+      ],
+      "depends_on": [
+        "FKCM_V1",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "kdv_read_continuity_v1",
+      "kind": "unittest_glob",
+      "target": "test_kdv_read_continuity_v1.py",
+      "patterns": [
+        "federation/kdv_read_continuity_v1.py",
+        "tests/test_kdv_read_continuity_v1.py",
+        "governance/kdv_read_continuity_v1.json",
+        "governance/proofos_omega_policy_extension_kdv_read_continuity_v1.json",
+        "docs/architecture/KDV_READ_CONTINUITY_V1.md"
+      ],
+      "subsystems": [
+        "KDV_READ_CONTINUITY_V1",
+        "FKCM_V1",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}

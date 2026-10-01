@@ -1,0 +1,54 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "products/fuse_localllm_desktop/**",
+        ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+        "governance/fuse_localllm_desktop_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_localllm_desktop_v1.json",
+        "tests/test_fuse_localllm_desktop_source_v1.py"
+      ],
+      "reason": "FUSE_LOCALLLM_DESKTOP_WINDOWS_PRODUCT_SOURCE_CUSTODY_AND_BUILD"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_LOCALLLM_DESKTOP",
+      "patterns": [
+        "products/fuse_localllm_desktop/**",
+        ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+        "governance/fuse_localllm_desktop_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_localllm_desktop_v1.json",
+        "tests/test_fuse_localllm_desktop_source_v1.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_localllm_desktop_source_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_localllm_desktop_source_v1.py",
+      "patterns": [
+        "products/fuse_localllm_desktop/**",
+        ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+        "governance/fuse_localllm_desktop_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_localllm_desktop_v1.json",
+        "tests/test_fuse_localllm_desktop_source_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_LOCALLLM_DESKTOP",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}

@@ -7,6 +7,7 @@ external_effect_default: false
 predecessor: FEDOMEGA-N-DIRECTIVE-V2@2.1.0
 mission_compiler: governance/cfbe_parallel_mission_compiler_v4.json
 prompt_scientist: governance/cfbe_prompt_scientist_v1.json
+agentic_frontier_compiler: benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py
 
 exact_trigger:
   input: n
@@ -16,6 +17,7 @@ exact_trigger:
     - do not restart proven work unless its proof has been invalidated
     - preserve exact objective strength and action verbs
     - invoke the Formation Engine and Alpha-to-Omega Foundry
+    - compile every non-trivial mission through the agentic frontier compiler and automatically select eligible AGF capability genes
     - compile unfinished work into a finite dependency DAG
     - identify the production critical path
     - split independent eligible work into collision-safe work packets
@@ -35,6 +37,24 @@ exact_trigger:
     - recalculate maturity through the existing strict proof gates
     - continue eligible safe work while another lane is blocked
     - stop only at COMPLETE_VERIFIED, PRODUCTION_VERIFIED or a genuine owner-reserved decision
+
+
+frontier_capability_adoption:
+  compiler: benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py
+  full_gene_range: AGF-001..AGF-053
+  latest_clean_room_residuals: AGF-041..AGF-053
+  auto_select:
+    - long_running
+    - multi_agent
+    - tool_heavy
+    - browser_or_computer
+    - requires_dynamic_models
+    - requires_release
+  clean_room_only: true
+  proprietary_weights_imported: false
+  undocumented_vendor_internals_imported: false
+  model_provider_authority: PROPOSAL_ONLY
+  provider_runtime_and_owner_value_proof_remain_separate: true
 
 non_dilution:
   BUILD: must_not_become_DESIGN_ONLY

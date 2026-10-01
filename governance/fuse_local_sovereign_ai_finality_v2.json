@@ -1,0 +1,676 @@
+{
+  "schema": "FUSE_LOCAL_SOVEREIGN_AI_FINALITY_V2",
+  "version": "2.0.0",
+  "profile_id": "FUSE-LOCAL-SOVEREIGN-AI-FINALITY-001",
+  "mission_target": "COMMERCIAL_READY_VERIFIED",
+  "purpose": "Drive FUSE LocalLLM/FUSE.exe from current estate state to a portable Windows sovereign AI workstation with zero mandatory terminal debt, OpenAI-disabled core operation, Google Drive distribution, cross-PC install, recovery and commercial-readiness proof.",
+  "authority": {
+    "sovereign_kernel": "FUSE_SOVEREIGN_PLANE_R59",
+    "cognition": "FUSE-HIPB-001>=2.0.0",
+    "autonomic_completion": "FUSE-AUTONOMIC-COMPLETION-FABRIC-V5",
+    "source_arbiter": "FDOF",
+    "state_integrity": "SICF",
+    "proof": "PROOFOS_REALITY_JUDGE",
+    "terminal_delivery": "OUTPUT_MIRROR_V3",
+    "authority_expansion": false
+  },
+  "completion_rule": {
+    "mandatory_open_terminal_debt": 0,
+    "packet_completion_is_not_finality": true,
+    "source_admission_is_not_runtime": true,
+    "runtime_is_not_owner_value": true,
+    "installer_exists_is_not_cross_pc_install": true,
+    "google_drive_upload_is_not_drive_release_readback": true,
+    "commercial_ready_requires_all_applicable_gates": true
+  },
+  "maturity_stages": [
+    "DESIGN",
+    "SOURCE",
+    "BUILD",
+    "TEST",
+    "INTEGRATION",
+    "RUNTIME",
+    "SEMANTIC",
+    "RECOVERY",
+    "SECURITY",
+    "UX",
+    "OWNER_VALUE"
+  ],
+  "terminal_predicates": [
+    {
+      "id": "ESTATE_CENSUS_COMPLETE",
+      "family": "CENSUS",
+      "deps": [],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "SEMANTIC"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "ALL_VALID_FUSE_COMPONENTS_RESOLVED",
+      "family": "INTEGRATION",
+      "deps": [
+        "ESTATE_CENSUS_COMPLETE"
+      ],
+      "maturity": [
+        "DESIGN",
+        "SOURCE",
+        "INTEGRATION",
+        "SEMANTIC"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "FUSE_EXE_WINDOWS_PRODUCT",
+      "family": "WINDOWS_PRODUCT",
+      "deps": [
+        "ALL_VALID_FUSE_COMPONENTS_RESOLVED"
+      ],
+      "maturity": [
+        "DESIGN",
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "UX"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "LOCALLLM_MODEL_FABRIC",
+      "family": "MODEL",
+      "deps": [
+        "FUSE_EXE_WINDOWS_PRODUCT"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY"
+      ],
+      "priority": 98
+    },
+    {
+      "id": "HARDWARE_ADAPTIVE_MODEL_ROUTING",
+      "family": "MODEL",
+      "deps": [
+        "LOCALLLM_MODEL_FABRIC"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "UX"
+      ],
+      "priority": 94
+    },
+    {
+      "id": "LOCAL_CHAT",
+      "family": "CHAT",
+      "deps": [
+        "LOCALLLM_MODEL_FABRIC"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "LOCAL_REASONING",
+      "family": "MODEL",
+      "deps": [
+        "LOCALLLM_MODEL_FABRIC"
+      ],
+      "maturity": [
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "OWNER_VALUE"
+      ],
+      "priority": 99
+    },
+    {
+      "id": "DURABLE_MEMORY",
+      "family": "MEMORY",
+      "deps": [
+        "FUSE_EXE_WINDOWS_PRODUCT"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY",
+        "UX"
+      ],
+      "priority": 96
+    },
+    {
+      "id": "LOCAL_KNOWLEDGE_SEARCH",
+      "family": "KNOWLEDGE",
+      "deps": [
+        "DURABLE_MEMORY"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "UX"
+      ],
+      "priority": 92
+    },
+    {
+      "id": "LOCAL_TOOL_EXECUTION",
+      "family": "TOOLS",
+      "deps": [
+        "FUSE_EXE_WINDOWS_PRODUCT"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "SECURITY"
+      ],
+      "priority": 98
+    },
+    {
+      "id": "LOCAL_AGENT_RUNTIME",
+      "family": "AGENTS",
+      "deps": [
+        "LOCAL_TOOL_EXECUTION",
+        "DURABLE_MEMORY"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 96
+    },
+    {
+      "id": "LOCAL_AUTOMATION_RUNTIME",
+      "family": "AUTOMATION",
+      "deps": [
+        "LOCAL_AGENT_RUNTIME"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY",
+        "UX"
+      ],
+      "priority": 94
+    },
+    {
+      "id": "WORK_PRODUCTIVITY_SUITE",
+      "family": "PRODUCTIVITY",
+      "deps": [
+        "LOCAL_TOOL_EXECUTION"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 88
+    },
+    {
+      "id": "CODE_FORGE_WORKFLOW",
+      "family": "CODE",
+      "deps": [
+        "LOCAL_AGENT_RUNTIME"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY",
+        "OWNER_VALUE"
+      ],
+      "priority": 90
+    },
+    {
+      "id": "CREATIVE_STUDIO_BASELINE",
+      "family": "CREATIVE",
+      "deps": [
+        "LOCALLLM_MODEL_FABRIC"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 84
+    },
+    {
+      "id": "BROWSER_AUTOMATION",
+      "family": "BROWSER",
+      "deps": [
+        "LOCAL_AGENT_RUNTIME"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 84
+    },
+    {
+      "id": "WINDOWS_DEVICE_CONTROL",
+      "family": "DEVICE",
+      "deps": [
+        "LOCAL_AGENT_RUNTIME"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 86
+    },
+    {
+      "id": "DATA_ANALYTICS",
+      "family": "DATA",
+      "deps": [
+        "LOCAL_TOOL_EXECUTION"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 80
+    },
+    {
+      "id": "SELF_DIAGNOSTICS",
+      "family": "RELIABILITY",
+      "deps": [
+        "FUSE_EXE_WINDOWS_PRODUCT"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "UX"
+      ],
+      "priority": 92
+    },
+    {
+      "id": "SELF_REPAIR",
+      "family": "RELIABILITY",
+      "deps": [
+        "SELF_DIAGNOSTICS"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY"
+      ],
+      "priority": 94
+    },
+    {
+      "id": "AUTOMATIC_STARTUP",
+      "family": "WINDOWS_PRODUCT",
+      "deps": [
+        "FUSE_EXE_WINDOWS_PRODUCT"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "UX"
+      ],
+      "priority": 90
+    },
+    {
+      "id": "INSTALLER_REPAIR_UNINSTALL",
+      "family": "INSTALLER",
+      "deps": [
+        "FUSE_EXE_WINDOWS_PRODUCT"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY",
+        "UX"
+      ],
+      "priority": 97
+    },
+    {
+      "id": "COMPONENT_AUTO_PROVISIONING",
+      "family": "INSTALLER",
+      "deps": [
+        "INSTALLER_REPAIR_UNINSTALL",
+        "LOCALLLM_MODEL_FABRIC"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 96
+    },
+    {
+      "id": "OPENAI_DISABLED_VERIFIED",
+      "family": "SOVEREIGNTY",
+      "deps": [
+        "LOCAL_CHAT",
+        "LOCAL_REASONING",
+        "LOCAL_TOOL_EXECUTION",
+        "DURABLE_MEMORY"
+      ],
+      "maturity": [
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "OWNER_VALUE"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "OFFLINE_CORE_VERIFIED",
+      "family": "SOVEREIGNTY",
+      "deps": [
+        "OPENAI_DISABLED_VERIFIED"
+      ],
+      "maturity": [
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "OWNER_VALUE"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "BACKUP_RESTORE",
+      "family": "RECOVERY",
+      "deps": [
+        "DURABLE_MEMORY",
+        "SELF_REPAIR"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 88
+    },
+    {
+      "id": "UPDATE_ROLLBACK_LKG",
+      "family": "UPDATE",
+      "deps": [
+        "INSTALLER_REPAIR_UNINSTALL",
+        "SELF_DIAGNOSTICS"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 94
+    },
+    {
+      "id": "SUPPLY_CHAIN_PROVENANCE",
+      "family": "SECURITY",
+      "deps": [
+        "COMPONENT_AUTO_PROVISIONING"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "INTEGRATION",
+        "SECURITY",
+        "SEMANTIC"
+      ],
+      "priority": 95
+    },
+    {
+      "id": "LICENSE_COMMERCIAL_RIGHTS",
+      "family": "LICENSING",
+      "deps": [
+        "ESTATE_CENSUS_COMPLETE",
+        "SUPPLY_CHAIN_PROVENANCE"
+      ],
+      "maturity": [
+        "SOURCE",
+        "TEST",
+        "SEMANTIC"
+      ],
+      "priority": 94
+    },
+    {
+      "id": "SECURITY_PRIVACY_COURTS",
+      "family": "SECURITY",
+      "deps": [
+        "SELF_REPAIR",
+        "SUPPLY_CHAIN_PROVENANCE"
+      ],
+      "maturity": [
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 96
+    },
+    {
+      "id": "GOOGLE_DRIVE_RELEASE",
+      "family": "DISTRIBUTION",
+      "deps": [
+        "INSTALLER_REPAIR_UNINSTALL",
+        "UPDATE_ROLLBACK_LKG",
+        "SUPPLY_CHAIN_PROVENANCE"
+      ],
+      "maturity": [
+        "BUILD",
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 91
+    },
+    {
+      "id": "CROSS_PC_INSTALL",
+      "family": "DISTRIBUTION",
+      "deps": [
+        "GOOGLE_DRIVE_RELEASE",
+        "COMPONENT_AUTO_PROVISIONING"
+      ],
+      "maturity": [
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "CROSS_HARDWARE_COMPATIBILITY",
+      "family": "DISTRIBUTION",
+      "deps": [
+        "CROSS_PC_INSTALL",
+        "HARDWARE_ADAPTIVE_MODEL_ROUTING"
+      ],
+      "maturity": [
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "OWNER_VALUE"
+      ],
+      "priority": 88
+    },
+    {
+      "id": "NATURAL_OWNER_WORKLOAD",
+      "family": "VALUE",
+      "deps": [
+        "OPENAI_DISABLED_VERIFIED",
+        "WORK_PRODUCTIVITY_SUITE",
+        "CODE_FORGE_WORKFLOW",
+        "LOCAL_AGENT_RUNTIME"
+      ],
+      "maturity": [
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 100
+    },
+    {
+      "id": "COMMERCIAL_PRODUCT_UX",
+      "family": "COMMERCIAL",
+      "deps": [
+        "NATURAL_OWNER_WORKLOAD",
+        "CROSS_PC_INSTALL"
+      ],
+      "maturity": [
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 90
+    },
+    {
+      "id": "COMMERCIAL_RELEASE_ENGINEERING",
+      "family": "COMMERCIAL",
+      "deps": [
+        "GOOGLE_DRIVE_RELEASE",
+        "LICENSE_COMMERCIAL_RIGHTS",
+        "SECURITY_PRIVACY_COURTS"
+      ],
+      "maturity": [
+        "SOURCE",
+        "BUILD",
+        "TEST",
+        "INTEGRATION",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY"
+      ],
+      "priority": 92
+    },
+    {
+      "id": "COMMERCIAL_READY_VERIFIED",
+      "family": "COMMERCIAL",
+      "deps": [
+        "COMMERCIAL_PRODUCT_UX",
+        "COMMERCIAL_RELEASE_ENGINEERING",
+        "CROSS_HARDWARE_COMPATIBILITY"
+      ],
+      "maturity": [
+        "TEST",
+        "RUNTIME",
+        "SEMANTIC",
+        "RECOVERY",
+        "SECURITY",
+        "UX",
+        "OWNER_VALUE"
+      ],
+      "priority": 100
+    }
+  ],
+  "autonomy": {
+    "zero_owner_routine_debugging": true,
+    "continue_while_machine_safe_ready_work_exists": true,
+    "persistent_runner_preferred": true,
+    "blocked_lane_is_local": true,
+    "second_same_semantic_failure_requires_changed_mechanism": true,
+    "terminal_success_requires_zero_mandatory_debt": true,
+    "owner_action_only_after_machine_prerequisites": true
+  },
+  "truth_boundary": "PROFILE_BOUND != DEBT_CLOSED != SOURCE_ADMITTED != WINDOWS_RUNTIME_VERIFIED != CROSS_PC_VERIFIED != COMMERCIAL_READY_VERIFIED"
+}

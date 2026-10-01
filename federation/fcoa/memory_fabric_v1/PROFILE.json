@@ -1,0 +1,16 @@
+{
+  "schema": "FCOA-BMF-NODE-PROFILE-V1",
+  "agent_id": "FCOA-OMEGA",
+  "node_id": "NODE-SYS-FCOA-OMEGA",
+  "controlling_fabric": "CFBE_BIBLE_MEMORY_FABRIC_V1",
+  "role": "BIDIRECTIONAL_CONSUMER_PRODUCER_NOT_MEMORY_ROOT",
+  "ingest": "PORTABLE_GLOBAL_VERIFIED_ONLY",
+  "proposal_truth_class": "DERIVED_INTERPRETATION",
+  "accepted_truth_class": "DERIVED_VERIFIED",
+  "independent_verification_required": true,
+  "self_verification_forbidden": true,
+  "receiver_scope": "ALL_ACTIVE_REGISTERED_FUSE_SYSTEMS_DYNAMIC",
+  "receiver_convergence": "DIGEST_BOUND_ACKS",
+  "privacy": "P1_GLOBAL_METADATA_AND_POINTERS_ONLY",
+  "external_effect_authority_inherited": false
+}

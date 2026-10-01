@@ -17,9 +17,9 @@ POLICY = ROOT / "governance" / "github_airlock_policy.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "sol62-wif-hardening-lease.yml"
 REPOSITORY_SLUG = "mosianekk-lang/Federation-Omega"
 MAIN_REF = "refs/heads/main"
-EXPECTED_COUNT = 19
-EXPECTED_SET_SHA256 = "8fa0450fdf8b69913b11e42d37fb10ece6da2d3d9ffac731ac8eb063d7ccd2ec"
-EXPECTED_TRUST_CONTRACT_SHA256 = "38fa68df85d793f5491f480ddcf04e46e6e9ffc50dcf1abd67e934714ff98b1e"
+EXPECTED_COUNT = 23
+EXPECTED_SET_SHA256 = "618ad18e7b6d72be1b6309dccb9914e4562b13e97e36180217051993c8804811"
+EXPECTED_TRUST_CONTRACT_SHA256 = "5def4def519d40738aef8f578868d423572dce98b50a36160a0936a6bee0a38e"
 
 
 FAKE_GCLOUD = r'''#!/usr/bin/env python3
@@ -128,18 +128,30 @@ def trust_contract_hash(paths: list[str], allowed_events: dict[str, list[str]]) 
 
 
 def generated_condition(paths: list[str], allowed_events: dict[str, list[str]]) -> str:
-    pairs = []
-    for path in paths:
+    groups: dict[tuple[str, ...], list[str]] = {}
+    for path in sorted(paths):
         ref = f"{REPOSITORY_SLUG}/{path}@{MAIN_REF}"
-        event_expr = " || ".join(
-            f"assertion.event_name=='{event}'" for event in sorted(allowed_events[path])
+        events = tuple(sorted(allowed_events[path]))
+        groups.setdefault(events, []).append(ref)
+    clauses = []
+    for events, refs in sorted(groups.items()):
+        refs = sorted(refs)
+        refs_expr = (
+            f"assertion.workflow_ref=='{refs[0]}'"
+            if len(refs) == 1
+            else "assertion.workflow_ref in [" + ",".join(repr(x) for x in refs) + "]"
         )
-        pairs.append(f"(assertion.workflow_ref=='{ref}' && ({event_expr}))")
+        events_expr = (
+            f"assertion.event_name=='{events[0]}'"
+            if len(events) == 1
+            else "assertion.event_name in [" + ",".join(repr(x) for x in events) + "]"
+        )
+        clauses.append(f"({refs_expr} && {events_expr})")
     return (
         "assertion.repository_id=='1292795464' && "
         "assertion.repository_owner_id=='261966700' && "
         "assertion.ref=='refs/heads/main' && ("
-        + " || ".join(pairs)
+        + " || ".join(clauses)
         + ")"
     )
 
@@ -161,8 +173,10 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
             "assertion.repository_id=='{repository_id}'",
             "assertion.repository_owner_id=='{owner_id}'",
             "assertion.ref=='{main_ref}'",
-            "assertion.workflow_ref=='{workflow_ref}'",
-            "assertion.event_name=='{event}'",
+            "assertion.workflow_ref=='{ordered_refs[0]}'",
+            "assertion.event_name=='{events[0]}'",
+            "assertion.workflow_ref in [",
+            "assertion.event_name in [",
             "attribute.repository_id=assertion.repository_id",
             "attribute.repository_owner_id=assertion.repository_owner_id",
             "attribute.event_name=assertion.event_name",
@@ -221,6 +235,24 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         self.assertIn("assertion.event_name", condition)
         self.assertLessEqual(len(condition), 4096)
         self.assertIn("if ((${#EXPECTED_CONDITION} > 4096)); then", self.source)
+
+    def test_grouped_condition_preserves_exact_workflow_event_authorization_surface(self) -> None:
+        condition = generated_condition(self.paths, self.allowed_events)
+        self.assertIn("assertion.workflow_ref in [", condition)
+        self.assertIn("assertion.event_name in [", condition)
+        expected = {
+            (ref, event)
+            for path, ref in zip(self.paths, self.refs)
+            for event in self.allowed_events[path]
+        }
+        grouped = set()
+        buckets: dict[tuple[str, ...], list[str]] = {}
+        for path, ref in zip(self.paths, self.refs):
+            buckets.setdefault(tuple(sorted(self.allowed_events[path])), []).append(ref)
+        for events, refs in buckets.items():
+            grouped.update((ref, event) for ref in refs for event in events)
+        self.assertEqual(expected, grouped)
+        self.assertLessEqual(len(condition), 4096)
 
     def test_every_oidc_workflow_has_nonempty_event_contract(self) -> None:
         for path in self.paths:

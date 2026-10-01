@@ -1,0 +1,46 @@
+{
+  "schema": "FUSE-WORK-PLANE-DISCONNECTED-REBUILD-CONTROL-V1",
+  "version": "1.0.0",
+  "state": "SOURCE_CANDIDATE",
+  "target": "FUSE_WORK_PLANE",
+  "reuse": [
+    "SOVARA-SOVEREIGN-BACKUP-PIPELINE-1",
+    "FUSE-WORK-PLANE-RUNTIME-V1",
+    "FUSE-WORK-PLANE-GCS-BUNDLE-V1",
+    "FUSE-FORGE-LOCAL-GIT-ADAPTER-001"
+  ],
+  "snapshot_paths": [
+    "federation/fuse_work_plane_runtime_v1.py",
+    "respawn/work_plane_gcs_runtime.py",
+    "tests/test_work_plane_gcs_runtime.py",
+    "governance/fuse_work_plane_respawn_gcs_v1.json",
+    "governance/fuse_work_plane_cloud_service_v1.json",
+    "governance/proofos_omega_policy_extension_work_plane_respawn_gcs_v1.json"
+  ],
+  "required_courts": [
+    "deterministic full archive",
+    "archive SHA-256 and CRC readback",
+    "two independent fresh-workspace restores",
+    "exact restored file-set and SHA-256 equality",
+    "network socket deny canary",
+    "compileall over restored source",
+    "existing Work Plane generation-CAS/recovery tests from restored source",
+    "deliberate corruption then exact rollback restore"
+  ],
+  "claim_boundary": {
+    "disconnected_work_plane_core_rebuild_may_be_proven": true,
+    "gcs_live_proven_by_this_court": false,
+    "cloud_run_proven_by_this_court": false,
+    "google_identity_proven_by_this_court": false,
+    "persistent_24x7_proven_by_this_court": false,
+    "cross_host_dr_proven_by_this_court": false,
+    "owner_value_proven_by_this_court": false
+  },
+  "effects": {
+    "workspace": "TEMPORARY_LOCAL_ONLY",
+    "provider_effect_authorized": false,
+    "provider_mutation_authorized": false,
+    "production_activation_authorized": false,
+    "iam_mutation_authorized": false
+  }
+}

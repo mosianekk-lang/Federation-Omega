@@ -80,10 +80,10 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
             "npx expo-doctor",
             "npm run export:android",
             "npm run prebuild:android",
-            "./gradlew assembleDebug --no-daemon",
-            "app-debug.apk",
+            "./gradlew assembleRelease --no-daemon",
+            "app-release.apk",
             "sha256sum",
-            "ANDROID_DEBUG_APK_GENERATED_VERIFIED",
+            "ANDROID_STANDALONE_TEST_APK_GENERATED_VERIFIED",
             "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
         ):
             self.assertIn(required, text)
@@ -92,7 +92,7 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         workflow = self._workflow_text_or_skip_export()
         scanner = self._scanner_path_or_skip_export().read_text(encoding="utf-8")
         self.assertIn("python lab/scan_apk.py", workflow)
-        self.assertIn("--apk android/app/build/outputs/apk/debug/app-debug.apk", workflow)
+        self.assertIn("--apk android/app/build/outputs/apk/release/app-release.apk", workflow)
         self.assertIn("--output fuse-mobile-apk-security-scan.json", workflow)
         self.assertIn("APK_CREDENTIAL_SCAN_CLEAN", workflow)
         self.assertIn("fuse-mobile-apk-security-scan.json", workflow)

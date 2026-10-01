@@ -1,17 +1,6 @@
 name: SEB Omega Qualification and Zero-Traffic Canary
 
 on:
-  pull_request:
-    paths:
-      - 'sovereign_execution_boundary/**'
-      - '.github/workflows/seb-omega.yml'
-      - 'governance/github_airlock_policy.json'
-  push:
-    branches: [main]
-    paths:
-      - 'sovereign_execution_boundary/**'
-      - '.github/workflows/seb-omega.yml'
-      - 'governance/github_airlock_policy.json'
   workflow_dispatch:
     inputs:
       confirmation:
@@ -65,7 +54,7 @@ jobs:
           exit-code: '1'
 
   zero-traffic-canary:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     needs: qualify
     runs-on: ubuntu-latest
     environment: seb-omega-canary

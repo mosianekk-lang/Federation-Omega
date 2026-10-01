@@ -1,0 +1,20 @@
+{
+  "schema": "FUSE-LOCAL-LLM-DESKTOP-FAILURE-HARVEST-V2",
+  "events": [
+    {
+      "schema": "FUSE-LOCAL-LLM-DESKTOP-FAILURE-HARVEST-V1",
+      "failure": "SOURCE_PRODUCT_REGRESSION_TEST_FALSE_NEGATIVE",
+      "first_divergence": "launcher test searched for a final concatenated command literal that cannot exist verbatim in C++ source",
+      "root_cause": "test asserted representation rather than launcher behavior/mechanism",
+      "repair": "assert CREATE_NO_WINDOW, --app= argument construction and loopback URL independently",
+      "prevention": "product tests must target semantic/mechanism invariants rather than post-runtime string concatenation artifacts"
+    },
+    {
+      "failure": "TEST_REPAIR_ESCAPED_NEWLINES_AS_LITERAL_TEXT",
+      "first_divergence": "test_product.py import failed with SyntaxError because repair wrote literal backslash-n sequences",
+      "root_cause": "string replacement was used for a structured source rewrite",
+      "changed_mechanism": "rewrite the entire focused test module as a clean source artifact rather than escaping inline replacements",
+      "prevention": "for source edits affecting syntax structure, regenerate/parse the whole small file and run syntax/import check before packaging"
+    }
+  ]
+}

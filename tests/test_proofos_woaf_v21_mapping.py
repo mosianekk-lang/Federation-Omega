@@ -13,6 +13,7 @@ HEAD = "2" * 40
 
 WOAF_PRODUCTION_PATHS = [
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
     "governance/fuse_windows_execution_plane_v1.json",
     "governance/proofos_omega_policy_extension_woaf_v21.json",
     "windows_federation_plane/src/federation_windows_plane/mcp_service.py",
@@ -24,11 +25,7 @@ WOAF_PRODUCTION_PATHS = [
 def compile_for(paths: list[str]):
     policy = ProofPolicy.from_path(POLICY)
     impact = ImpactCompiler(policy).assess(paths)
-    manifest = ProofSelector(policy).compile_manifest(
-        base_sha=BASE,
-        head_sha=HEAD,
-        impact=impact,
-    )
+    manifest = ProofSelector(policy).compile_manifest(base_sha=BASE, head_sha=HEAD, impact=impact)
     return policy, impact, manifest
 
 
@@ -39,6 +36,7 @@ class WoafV21ProofOSMappingTests(unittest.TestCase):
         self.assertIn("WOAF_V21", impact.direct_subsystems)
         self.assertFalse(impact.unmapped_production_paths)
         self.assertIn("woaf_v21_source_contract", selected)
+        self.assertIn("woaf_h1_provider_relay_v2_contract", selected)
         self.assertIn("woaf_v21_proofos_mapping", selected)
         self.assertNotIn("full_federation_fallback", selected)
         self.assertFalse(manifest.selector_state["fallback_full_suite_activated"])
@@ -47,20 +45,28 @@ class WoafV21ProofOSMappingTests(unittest.TestCase):
         policy, _, _ = compile_for(WOAF_PRODUCTION_PATHS)
         registered = set(policy.tests)
         self.assertIn("woaf_v21_source_contract", registered)
+        self.assertIn("woaf_h1_provider_relay_v2_contract", registered)
         self.assertIn("woaf_v21_proofos_mapping", registered)
         self.assertIn("full_federation_fallback", registered)
+
+    def test_provider_relay_path_preserves_additive_subsystems(self):
+        _, impact, manifest = compile_for([".github/workflows/fuse-windows-h1-provider-relay-v2.yml"])
+        selected = {item.test_id for item in manifest.selected_tests}
+        self.assertIn("WOAF_V21", impact.direct_subsystems)
+        self.assertIn("WORKFLOW_CONTROL", impact.direct_subsystems)
+        self.assertFalse(impact.unmapped_production_paths)
+        self.assertIn("woaf_h1_provider_relay_v2_contract", selected)
+        self.assertIn("woaf_v21_proofos_mapping", selected)
+        self.assertNotIn("full_federation_fallback", selected)
 
     def test_unknown_production_path_still_fails_safe_to_full_fallback(self):
         _, impact, manifest = compile_for(["future_woaf_unknown/new_runtime.py"])
         selected = {item.test_id for item in manifest.selected_tests}
-        self.assertEqual(
-            ("future_woaf_unknown/new_runtime.py",),
-            impact.unmapped_production_paths,
-        )
+        self.assertEqual(("future_woaf_unknown/new_runtime.py",), impact.unmapped_production_paths)
         self.assertIn("full_federation_fallback", selected)
         self.assertTrue(manifest.selector_state["fallback_full_suite_activated"])
 
-    def test_woaf_mapping_is_additive_and_keeps_internal_authority_ceiling(self):
+    def test_woaf_mapping_keeps_internal_authority_ceiling(self):
         policy, _, _ = compile_for(WOAF_PRODUCTION_PATHS)
         self.assertEqual("A1_INTERNAL", policy.raw["authority_ceiling"])
         self.assertFalse(policy.raw["external_effect_default"])

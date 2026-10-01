@@ -258,3 +258,217 @@ jobs:
           path: provider-authority-output/receipt.json
           if-no-files-found: error
           retention-days: 90
+
+  kms-p256-metadata:
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.issue.title == '[FO-READ] FUSE_PROVIDER_METADATA_KMS_P256_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless metadata reader
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Read KMS P-256 signer metadata only
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p provider-metadata-output
+          python3 - <<'PY'
+          from __future__ import annotations
+          import base64, hashlib, json, os, re, subprocess, tempfile
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from typing import Any
+
+          project=os.environ['PROJECT_ID']
+          expected_number=os.environ['EXPECTED_PROJECT_NUMBER']
+          locations=('global','africa-south1')
+
+          def classify_error(stderr:str)->str|None:
+              text=(stderr or '').lower()
+              if not text:
+                  return None
+              if any(marker in text for marker in (
+                  'has not been used in project',
+                  'is disabled',
+                  'access not configured',
+                  'service cloudkms.googleapis.com is disabled',
+              )):
+                  return 'API_DISABLED_OR_NOT_USED'
+              if ('permission' in text and 'denied' in text) or 'permission_denied' in text or 'does not have permission' in text:
+                  return 'PERMISSION_DENIED'
+              if any(marker in text for marker in ('not found','invalid argument','invalid location','location is invalid')):
+                  return 'RESOURCE_OR_LOCATION_INVALID'
+              return 'OTHER_REDACTED_ERROR'
+
+          def run(args:list[str], timeout:int=45)->dict[str,Any]:
+              p=subprocess.run(args,text=True,capture_output=True,timeout=timeout)
+              return {
+                  'ok':p.returncode==0,
+                  'exit_code':p.returncode,
+                  'stdout':p.stdout.strip(),
+                  'stderr_sha256':hashlib.sha256(p.stderr.encode()).hexdigest() if p.stderr else None,
+                  'stderr_class':classify_error(p.stderr),
+              }
+
+          def gcloud(*args:str, timeout:int=45)->dict[str,Any]:
+              return run(['gcloud',*args,'--project',project],timeout=timeout)
+
+          def parsed(result:dict[str,Any])->Any:
+              if not result.get('ok'): return []
+              try: return json.loads(result.get('stdout') or '[]')
+              except Exception: return []
+
+          project_read=gcloud('projects','describe',project,'--format=json(projectId,projectNumber,lifecycleState)')
+          if not project_read['ok']:
+              raise SystemExit('PROJECT_READ_FAILED')
+          project_obj=json.loads(project_read['stdout'])
+          if str(project_obj.get('projectNumber') or '') != expected_number:
+              raise SystemExit('PROJECT_NUMBER_MISMATCH')
+
+          service_result=gcloud('services','list','--enabled','--filter=config.name=cloudkms.googleapis.com','--format=json(config.name,state)')
+          service_rows=parsed(service_result)
+          cloudkms_api_enabled=bool(service_result.get('ok') and isinstance(service_rows,list) and len(service_rows)>0)
+
+          location_status={}
+          candidates=[]
+          visible_versions=[]
+          for location in locations:
+              rings_result=gcloud('kms','keyrings','list','--location',location,'--format=json(name)')
+              location_status[location]={
+                  'keyrings_list_ok':bool(rings_result['ok']),
+                  'keyrings_error_sha256':rings_result.get('stderr_sha256'),
+                  'keyrings_error_class':rings_result.get('stderr_class'),
+              }
+              rings=parsed(rings_result)
+              for ring_obj in rings if isinstance(rings,list) else []:
+                  ring_resource=str(ring_obj.get('name') or '')
+                  ring_id=ring_resource.rsplit('/',1)[-1]
+                  if not ring_id: continue
+                  keys_result=gcloud('kms','keys','list','--keyring',ring_id,'--location',location,'--format=json(name,purpose,primary.name,primary.algorithm,primary.state)')
+                  if not keys_result['ok']:
+                      continue
+                  keys=parsed(keys_result)
+                  for key_obj in keys if isinstance(keys,list) else []:
+                      if str(key_obj.get('purpose') or '') != 'ASYMMETRIC_SIGN':
+                          continue
+                      key_resource=str(key_obj.get('name') or '')
+                      key_id=key_resource.rsplit('/',1)[-1]
+                      if not key_id: continue
+                      versions_result=gcloud('kms','keys','versions','list','--key',key_id,'--keyring',ring_id,'--location',location,'--filter=state=ENABLED','--format=json(name,algorithm,state,createTime)')
+                      if not versions_result['ok']:
+                          continue
+                      versions=parsed(versions_result)
+                      for version_obj in versions if isinstance(versions,list) else []:
+                          resource=str(version_obj.get('name') or '')
+                          algorithm=str(version_obj.get('algorithm') or '')
+                          state=str(version_obj.get('state') or '')
+                          if algorithm != 'EC_SIGN_P256_SHA256' or state != 'ENABLED':
+                              continue
+                          version_id=resource.rsplit('/',1)[-1]
+                          visible_versions.append({
+                              'resource':resource,'location':location,'keyring':ring_id,'key':key_id,
+                              'version':version_id,'algorithm':algorithm,'state':state,
+                          })
+                          with tempfile.TemporaryDirectory(prefix='fuse-kms-public-') as tmp:
+                              pem_path=Path(tmp)/'public.pem'
+                              pub_result=gcloud('kms','keys','versions','get-public-key',version_id,'--key',key_id,'--keyring',ring_id,'--location',location,'--public-key-format=pem','--output-file',str(pem_path))
+                              if not pub_result['ok'] or not pem_path.exists():
+                                  continue
+                              pem=pem_path.read_bytes()
+                              text=subprocess.run(['openssl','pkey','-pubin','-in',str(pem_path),'-text','-noout'],text=True,capture_output=True,check=True).stdout
+                              match=re.search(r'pub:\s*\n(?P<body>(?:\s*[0-9a-fA-F:]+\s*\n)+)\s*(?:ASN1 OID|NIST CURVE)',text)
+                              if not match:
+                                  raise SystemExit('P256_PUBLIC_POINT_PARSE_FAILED')
+                              point=bytes.fromhex(re.sub(r'[^0-9a-fA-F]','',match.group('body')))
+                              if len(point)!=65 or point[0]!=4:
+                                  raise SystemExit('P256_PUBLIC_POINT_INVALID')
+                              enc=lambda b:base64.urlsafe_b64encode(b).decode().rstrip('=')
+                              jwk={'kty':'EC','crv':'P-256','x':enc(point[1:33]),'y':enc(point[33:65])}
+                              canonical=json.dumps(jwk,sort_keys=True,separators=(',',':')).encode()
+                              candidates.append({
+                                  'resource':resource,'location':location,'keyring':ring_id,'key':key_id,
+                                  'version':version_id,'algorithm':algorithm,'state':state,
+                                  'public_jwk_sha256':hashlib.sha256(canonical).hexdigest(),
+                                  'public_pem_sha256':hashlib.sha256(pem).hexdigest(),
+                              })
+
+          readable_locations=sum(1 for v in location_status.values() if v['keyrings_list_ok'])
+          denial_classes={str(v.get('keyrings_error_class') or '') for v in location_status.values() if not v['keyrings_list_ok']}
+          if service_result.get('ok') and not cloudkms_api_enabled:
+              classification='KMS_API_DISABLED_OR_NOT_ENABLED'
+          elif denial_classes and denial_classes == {'PERMISSION_DENIED'}:
+              classification='KMS_METADATA_PERMISSION_DENIED'
+          elif 'API_DISABLED_OR_NOT_USED' in denial_classes:
+              classification='KMS_API_DISABLED_OR_NOT_ENABLED'
+          elif readable_locations==len(locations) and candidates:
+              classification='REUSABLE_P256_CANDIDATES_FOUND'
+          elif readable_locations==len(locations) and not visible_versions:
+              classification='NO_REUSABLE_P256_CANDIDATES'
+          elif readable_locations==len(locations):
+              classification='P256_VERSIONS_VISIBLE_PUBLIC_KEY_READ_INCOMPLETE'
+          else:
+              classification='KMS_METADATA_READ_PARTIAL_OR_DENIED'
+
+          receipt={
+              'schema':'FUSE-PROVIDER-METADATA-RECEIPT-V2',
+              'query':'KMS_P256_SIGNERS',
+              'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'project_id':project,
+              'project_number':expected_number,
+              'locations':list(locations),
+              'classification':classification,
+              'cloudkms_service_read_ok':bool(service_result.get('ok')),
+              'cloudkms_api_enabled':cloudkms_api_enabled,
+              'cloudkms_service_error_sha256':service_result.get('stderr_sha256'),
+              'cloudkms_service_error_class':service_result.get('stderr_class'),
+              'location_status':location_status,
+              'visible_enabled_p256_version_count':len(visible_versions),
+              'candidate_count':len(candidates),
+              'candidates':sorted(candidates,key=lambda x:x['resource']),
+              'secret_values_recorded':False,
+              'private_key_accessed':False,
+              'provider_mutation_performed':False,
+              'iam_mutation_performed':False,
+              'service_enablement_performed':False,
+              'deployment_performed':False,
+              'traffic_change_performed':False,
+              'customer_effect':False,
+              'owner_pc_effect':False,
+              'raw_public_pem_recorded':False,
+              'raw_error_recorded':False,
+              'truth_boundary':'Read-only Cloud KMS/Service Usage metadata and public-key fingerprint discovery. Provider errors are reduced to SHA-256 plus bounded enum only; no raw error, secret/private key access, or provider mutation.',
+          }
+          body=dict(receipt)
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          Path('provider-metadata-output/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({'classification':classification,'cloudkms_api_enabled':cloudkms_api_enabled,'candidate_count':len(candidates),'provider_mutation_performed':False},sort_keys=True))
+          PY
+
+      - name: Upload immutable KMS metadata receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-provider-metadata-kms-p256-${{ github.run_id }}-${{ github.run_attempt }}
+          path: provider-metadata-output/receipt.json
+          if-no-files-found: error
+          retention-days: 90

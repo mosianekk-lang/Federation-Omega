@@ -1,0 +1,61 @@
+{
+  "schema": "FUSE-SELF-HOSTING-RD-PROSPECTIVE-OBSERVATION-CONTROL-V1",
+  "version": "1.0.0",
+  "state": "SOURCE_CANDIDATE",
+  "reuse": [
+    "CFBE-PROSPECTIVE-OWNER-VALUE-COHORT-V1",
+    "CFBE-PASSIVE-OBSERVATION-COLLECTOR-V1",
+    "SELF_HOSTING_RD_MATCHED_EVAL_V1"
+  ],
+  "cohorts": {
+    "count": 2,
+    "slots_per_cohort": 10,
+    "total_prospective_capacity": 20,
+    "generated_at_current_source_epoch": true
+  },
+  "eligibility": {
+    "real_mission_required": true,
+    "real_observation_required": true,
+    "synthetic_prohibited": true,
+    "shadow_prohibited": true,
+    "replayed_prohibited": true,
+    "trusted_evidence_receipts_required": true,
+    "independent_readback_required": true
+  },
+  "identity": {
+    "collector_source_epoch_common_to_pair": true,
+    "arm_source_head_sha_proof_bound_separately": true,
+    "input_digest_required": true,
+    "environment_digest_required": true,
+    "task_signature_required": true,
+    "oracle_binding_required": true
+  },
+  "metrics": {
+    "inference_forbidden": true,
+    "required_engineering_metrics": [
+      "verified_output_ratio",
+      "elapsed_seconds",
+      "tool_calls",
+      "owner_interventions",
+      "unintended_writes",
+      "safety_regressions",
+      "external_runtime_dependencies",
+      "reproducibility_ratio",
+      "rollback_success_ratio"
+    ]
+  },
+  "effects": {
+    "watcher_created": false,
+    "scheduler_created": false,
+    "provider_effect_authorized": false,
+    "external_effect": false,
+    "stable_promotion_allowed": false
+  },
+  "maturity_boundary": {
+    "source_adapter_is_not_deployed_collector": true,
+    "empty_cohort_is_not_observation": true,
+    "pair_ready_is_not_matched_eval": true,
+    "matched_eval_is_not_owner_value": true,
+    "owner_value_is_not_judge_ack": true
+  }
+}

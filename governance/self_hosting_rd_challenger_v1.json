@@ -1,0 +1,51 @@
+{
+  "schema": "FUSE-SELF-HOSTING-RD-CHALLENGER-CONTROL-V1",
+  "version": "1.0.0",
+  "state": "SOURCE_CANDIDATE",
+  "executor": "FUSE-VIRTUAL-FORGE-SELF-HOSTING-RD-001",
+  "authority_ceiling": "A1_INTERNAL",
+  "effect_ceiling": "LOCAL_WORKSPACE",
+  "allowed_python_modules": ["compileall", "unittest"],
+  "forbidden": [
+    "shell",
+    "inline-python-c",
+    "network-url",
+    "provider-effect",
+    "provider-mutation",
+    "source-main-mutation",
+    "IAM-mutation",
+    "public-invocation",
+    "production-activation",
+    "secret-bearing-env"
+  ],
+  "required_plan_fields": [
+    "candidate_id",
+    "source_epoch",
+    "owner_goal_digest",
+    "build_tasks",
+    "test_tasks",
+    "artifacts",
+    "rollback_ref"
+  ],
+  "readiness": {
+    "all_tasks_succeeded": true,
+    "artifact_sha256_match": true,
+    "declared_external_runtime_dependencies_empty": true,
+    "disconnected_required": true,
+    "rollback_ref_required": true
+  },
+  "maturity_boundary": {
+    "challenger_ready_is_source_independent_local_evidence_only": true,
+    "matched_eval_proven": false,
+    "owner_value_proven": false,
+    "independent_judge_ack": false,
+    "runtime_production_proven": false
+  },
+  "promotion": {
+    "fdof_required_for_source": true,
+    "matched_incumbent_challenger_eval_required": true,
+    "quality_nonnegative_required": true,
+    "owner_value_gain_required": true,
+    "independent_judge_required": true
+  }
+}

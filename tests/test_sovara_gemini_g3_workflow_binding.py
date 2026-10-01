@@ -62,6 +62,18 @@ class SovaraGeminiG3WorkflowBindingTests(unittest.TestCase):
         self.assertIn("private_gateway_canary.sh", g3_block)
         self.assertNotIn("gemini_architecture_challenge.py", g3_block)
 
+    def test_g3_requires_cleanup_finality_for_ephemeral_cold_start(self) -> None:
+        for needle in (
+            "gemini_private_canary_cleanup_verified",
+            "gemini_private_canary_ephemeral_service",
+            "gemini_private_canary_ephemeral_service_deleted",
+            "gemini_private_canary_production_service_mutated",
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.workflow)
+        self.assertIn(".gemini_private_canary_cleanup_verified == true", self.workflow)
+        self.assertIn(".gemini_private_canary_ephemeral_service_deleted == true", self.workflow)
+
     def test_existing_modes_are_preserved(self) -> None:
         for mode in (
             "G0_READ_ONLY_VERIFY",
@@ -73,6 +85,36 @@ class SovaraGeminiG3WorkflowBindingTests(unittest.TestCase):
         ):
             with self.subTest(mode=mode):
                 self.assertIn(mode, self.workflow)
+
+
+    def test_g3_two_layer_trust_allows_bounded_transport_without_inheriting_wif_hardening(self) -> None:
+        for needle in (
+            "g3_deployment_transport_sufficient",
+            "wif_g3_transport_sufficient",
+            "wif_hardening_debt_preserved",
+            "issuer_verified",
+            "repository_scope_verified",
+            "transport_mapping_verified",
+        ):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, self.workflow)
+
+        self.assertIn(
+            '(.wif_verified == true or .wif_g3_transport_sufficient == true)',
+            self.workflow,
+        )
+        self.assertIn(".adc_verified == true", self.workflow)
+        self.assertIn(".gemini_private_canary_verified == true", self.workflow)
+
+    def test_g3_transport_exception_is_not_global_wif_promotion(self) -> None:
+        verifier = self.workflow.split(
+            "- name: Verify exact canonical WIF provider contract", 1
+        )[1].split("- name: Reconcile Gemini ADC runtime identity contract", 1)[0]
+        self.assertIn("scope=='G3_PRIVATE_GATEWAY_CANARY'", verifier)
+        self.assertIn("not contract_match", verifier)
+        self.assertIn("'state':'VERIFIED' if contract_match else 'DRIFT_DETECTED'", verifier)
+        self.assertIn("'hardened_contract_verified':contract_match", verifier)
+        self.assertIn("'wif_hardening_debt_preserved':not contract_match", verifier)
 
 
 if __name__ == "__main__":

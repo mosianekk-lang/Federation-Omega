@@ -1,10 +1,14 @@
 import ast
 import pathlib
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import run_gemini_role_holdout_benchmark as holdout
 COURT = ROOT / "scripts/run_gemini_role_holdout_benchmark.py"
 BASE = ROOT / "scripts/run_gemini_role_matrix.py"
+WORKFLOW = ROOT / ".github/workflows/sovara-ai-studio-semantic-canary.yml"
 
 ROLES = (
     "ALPHA_OMEGA_REASONER",
@@ -44,6 +48,83 @@ class GeminiHoldoutPerformanceTests(unittest.TestCase):
         ):
             self.assertIn(token, s)
 
+
+    def test_holdout_case_corpus_is_frozen(self):
+        self.assertEqual(
+            "4adb1bf9dc1efb7965262bad1518c4247e1f10bef40783546de915a63fc7bd0a",
+            holdout.FROZEN_HOLDOUT_CASES_SHA256,
+        )
+        self.assertEqual(
+            holdout.FROZEN_HOLDOUT_CASES_SHA256,
+            holdout.sha(holdout.stable(holdout.HOLDOUT_CASES)),
+        )
+
+    def test_typed_role_contracts_cover_every_holdout(self):
+        self.assertEqual(set(ROLES), set(holdout.ROLE_OUTPUT_CONTRACTS))
+        for role in ROLES:
+            schema = holdout.ROLE_OUTPUT_CONTRACTS[role]["schema"]
+            self.assertEqual("OBJECT", schema["type"])
+            self.assertEqual(set(holdout.HOLDOUT_CASES[role]["required"]), set(schema["required"]))
+            self.assertIn("guidance", holdout.ROLE_OUTPUT_CONTRACTS[role])
+
+    def test_failed_role_oracles_remain_strict(self):
+        self.assertTrue(holdout.semantic_holdout_pass(
+            "CFBE_CRITIC",
+            {"verdict": "REJECT", "quality_floor_respected": True, "reason": "frozen gate"},
+        ))
+        self.assertFalse(holdout.semantic_holdout_pass(
+            "CFBE_CRITIC",
+            {"verdict": "REJECT", "quality_floor_respected": False, "reason": "wrong field semantics"},
+        ))
+        self.assertTrue(holdout.semantic_holdout_pass(
+            "PROVENANCE_ANALYST",
+            {"provenance_state": "HOLD", "consent_gap": True, "release_allowed": False},
+        ))
+        self.assertFalse(holdout.semantic_holdout_pass(
+            "PROVENANCE_ANALYST",
+            {"provenance_state": "HOLD", "consent_gap": "missing", "release_allowed": False},
+        ))
+        self.assertTrue(holdout.semantic_holdout_pass(
+            "CHALLENGER_JUDGE",
+            {"winner": "A", "promotion": False, "regressions": ["safety", "latency"]},
+        ))
+        self.assertFalse(holdout.semantic_holdout_pass(
+            "CHALLENGER_JUDGE",
+            {"winner": "B", "promotion": True, "regressions": []},
+        ))
+
+    def test_failed_role_field_semantics_are_explicit(self):
+        s = COURT.read_text(encoding="utf-8")
+        for token in (
+            "Honor DERIVED_METRICS_JSON exactly",
+            "consent_gap is a boolean",
+            "quality and safety are higher-is-better; latency is lower-is-better",
+            '"responseSchema": output_contract["schema"]',
+        ):
+            self.assertIn(token, s)
+
+    def test_deterministic_numeric_evidence_prevents_recalculation_drift(self):
+        critic = holdout.deterministic_numeric_evidence(
+            "CFBE_CRITIC", dict(holdout.HOLDOUT_CASES["CFBE_CRITIC"]["input"])
+        )
+        self.assertEqual(0.04, critic["quality_regression"])
+        self.assertEqual(0.01, critic["quality_regression_limit"])
+        self.assertTrue(critic["quality_floor_violated"])
+
+        judge = holdout.deterministic_numeric_evidence(
+            "CHALLENGER_JUDGE", dict(holdout.HOLDOUT_CASES["CHALLENGER_JUDGE"]["input"])
+        )
+        self.assertEqual(0.10, judge["regression_threshold"])
+        self.assertEqual(0.23, judge["criterion_regressions"]["latency"])
+        self.assertEqual(0.15, judge["criterion_regressions"]["safety"])
+        self.assertEqual(["latency", "safety"], judge["criteria_exceeding_threshold"])
+        self.assertTrue(judge["promotion_blocked_by_frozen_rule"])
+
+    def test_holdout_output_budget_is_compact(self):
+        s = COURT.read_text(encoding="utf-8")
+        self.assertIn('"maxOutputTokens": 256', s)
+        self.assertIn("Keep every string concise", s)
+
     def test_no_hidden_chain_of_thought_request(self):
         self.assertIn("Do not reveal hidden chain-of-thought", COURT.read_text(encoding="utf-8"))
 
@@ -73,6 +154,12 @@ class GeminiHoldoutPerformanceTests(unittest.TestCase):
             '"traffic_change_performed": False',
         ):
             self.assertIn(token, s)
+
+    def test_workflow_reexecutes_when_holdout_harness_changes(self):
+        if not WORKFLOW.exists():
+            self.skipTest("Phoenix Core export intentionally excludes repository workflow controls")
+        s = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('scripts/run_gemini_role_holdout_benchmark.py', s)
 
     def test_base_runner_invokes_extended_court_only_in_admitted_workflow(self):
         s = BASE.read_text(encoding="utf-8")

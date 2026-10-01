@@ -10,9 +10,9 @@ REPOSITORY_ID="1292795464"
 OWNER_ID="261966700"
 REPOSITORY_SLUG="mosianekk-lang/Federation-Omega"
 MAIN_REF="refs/heads/main"
-EXPECTED_OIDC_WORKFLOW_COUNT=19
-EXPECTED_OIDC_WORKFLOW_SET_SHA256="8fa0450fdf8b69913b11e42d37fb10ece6da2d3d9ffac731ac8eb063d7ccd2ec"
-EXPECTED_TRUST_CONTRACT_SHA256="38fa68df85d793f5491f480ddcf04e46e6e9ffc50dcf1abd67e934714ff98b1e"
+EXPECTED_OIDC_WORKFLOW_COUNT=23
+EXPECTED_OIDC_WORKFLOW_SET_SHA256="618ad18e7b6d72be1b6309dccb9914e4562b13e97e36180217051993c8804811"
+EXPECTED_TRUST_CONTRACT_SHA256="5def4def519d40738aef8f578868d423572dce98b50a36160a0936a6bee0a38e"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 AIRLOCK_POLICY="${AIRLOCK_POLICY:-${SCRIPT_DIR}/../governance/github_airlock_policy.json}"
 POOL_RESOURCE="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}"
@@ -127,7 +127,7 @@ if not isinstance(allowed,dict):
 
 refs=[]
 records=[]
-pairs=[]
+groups={}
 for path in sorted(paths):
     if not isinstance(path,str) or not re.fullmatch(r'\.github/workflows/[A-Za-z0-9._/-]+\.(?:yml|yaml)', path):
         raise SystemExit(f'OIDC_WORKFLOW_PATH_INVALID:{path!r}')
@@ -146,16 +146,29 @@ for path in sorted(paths):
         {'workflow_ref':workflow_ref,'events':sorted_events},
         sort_keys=True,separators=(',',':')
     ))
-    event_expr=' || '.join(f"assertion.event_name=='{event}'" for event in sorted_events)
-    pairs.append(f"(assertion.workflow_ref=='{workflow_ref}' && ({event_expr}))")
+    groups.setdefault(tuple(sorted_events), []).append(workflow_ref)
 
 refs_blob='\n'.join(sorted(refs))+'\n'
 contract_blob='\n'.join(records)+'\n'
+clauses=[]
+for events, workflow_refs in sorted(groups.items()):
+    ordered_refs=sorted(workflow_refs)
+    refs_expr=(
+        f"assertion.workflow_ref=='{ordered_refs[0]}'"
+        if len(ordered_refs)==1
+        else "assertion.workflow_ref in [" + ",".join(repr(x) for x in ordered_refs) + "]"
+    )
+    events_expr=(
+        f"assertion.event_name=='{events[0]}'"
+        if len(events)==1
+        else "assertion.event_name in [" + ",".join(repr(x) for x in events) + "]"
+    )
+    clauses.append(f"({refs_expr} && {events_expr})")
 condition=(
     f"assertion.repository_id=='{repository_id}' && "
     f"assertion.repository_owner_id=='{owner_id}' && "
     f"assertion.ref=='{main_ref}' && ("
-    + ' || '.join(pairs)
+    + ' || '.join(clauses)
     + ')'
 )
 print(json.dumps({

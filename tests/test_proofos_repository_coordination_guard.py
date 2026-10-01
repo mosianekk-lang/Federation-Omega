@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from proofos_omega.repository_coordination import (
     CLAIM_SCHEMA,
@@ -225,12 +227,42 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
     def test_hosted_pull_request_honours_active_repository_lease(self):
         if not AIRLOCK_WORKFLOW.exists():
             self.skipTest("workflow-free export excludes repository coordination enforcement surface")
-        assessment = evaluate_hosted_pull_request(ROOT)
+
+        # Keep this regression court hermetic.  It verifies the hosted wrapper's
+        # event parsing + exact active-lease claim path, while the dedicated V3
+        # hosted court owns live scoped-registry/provider readback.  Reading the
+        # live legacy lock here makes an unrelated disjoint active lease pollute
+        # this V2 unit regression and serialises otherwise-safe work.
+        hosted_lease = lease(expires_at="2099-09-02T23:19:04+02:00")
+        event = {
+            "pull_request": {
+                "base": {"sha": BASE},
+                "body": json.dumps(claim()),
+            }
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            event_path = Path(tmp) / "event.json"
+            event_path.write_text(json.dumps(event), encoding="utf-8")
+            with patch.dict(
+                os.environ,
+                {
+                    "GITHUB_ACTIONS": "true",
+                    "GITHUB_EVENT_NAME": "pull_request",
+                    "GITHUB_EVENT_PATH": str(event_path),
+                },
+                clear=False,
+            ), patch(
+                "proofos_omega.repository_coordination._runtime_lease",
+                return_value=(LEASE_SHA, lease_message(hosted_lease), True),
+            ):
+                assessment = evaluate_hosted_pull_request(ROOT)
+
         self.assertEqual(
             "PASS",
             assessment["status"],
             json.dumps(assessment, indent=2, sort_keys=True),
         )
+        self.assertEqual("ACTIVE_LEASE_CLAIM_VERIFIED", assessment["state"])
 
 
 if __name__ == "__main__":

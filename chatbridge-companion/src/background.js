@@ -7,9 +7,9 @@ const edgeEgress = globalThis.ChatBridgeEdgeEgress;
 const DEFAULTS = Object.freeze({
   autoSend: true,
   maxReplayChars: 28000,
-  tokenThreshold: 65000,
-  messageThreshold: 80,
-  captureIntervalMs: 30000
+  tokenThreshold: 24000,
+  messageThreshold: 32,
+  captureIntervalMs: 10000
 });
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -210,6 +210,7 @@ async function buildManifest(ledger) {
     pathGroups: ["browser-rendered-dom"],
     chainHeadSha256: ledger.lastEventHash || "",
     terminalObserved: Boolean(ledger.terminalObserved),
+    estimatedTranscriptTokens: core.estimateTokens(latest.map((event) => event.content || "").join("\n")),
     truthBoundary: "Rendered browser messages are captured and hash-chained. Hidden provider events and uncaptured legacy content are not inferred."
   };
 }
@@ -250,7 +251,9 @@ async function handleMessage(request, sender) {
   if (request.type === "CHATBRIDGE_EDGE_EGRESS_STATUS") {
     const ledger = await loadLedger(request.conversationKey);
     if (!ledger) throw new Error("LEDGER_NOT_FOUND");
-    return edgeEgress ? edgeEgress.flushLedger(ledger, {reason: "STATUS_OR_CATCHUP"}) : {ok: false, state: "EDGE_EGRESS_MODULE_MISSING"};
+    return edgeEgress
+      ? edgeEgress.flushLedger(ledger, {reason: String(request.reason || "STATUS_OR_CATCHUP")})
+      : {ok: false, state: "EDGE_EGRESS_MODULE_MISSING"};
   }
 
   if (request.type === "CHATBRIDGE_EXPORT_LEDGER") {
@@ -269,9 +272,39 @@ async function handleMessage(request, sender) {
   if (request.type === "CHATBRIDGE_OPEN") {
     const ledger = await loadLedger(request.conversationKey);
     if (!ledger) throw new Error("LEDGER_NOT_FOUND");
+
+    const priorStored = await chrome.storage.session.get("pendingChatBridgeTransfer");
+    const prior = priorStored.pendingChatBridgeTransfer;
+    if (prior && prior.conversationKey === ledger.conversationKey && prior.currentIndex < prior.prompts.length) {
+      let targetStillOpen = false;
+      if (prior.targetTabId != null) {
+        try {
+          await chrome.tabs.get(prior.targetTabId);
+          targetStillOpen = true;
+        } catch (_) {}
+      }
+      if (targetStillOpen) {
+        return {
+          ok: true,
+          reused: true,
+          transferId: prior.transferId,
+          tabId: prior.targetTabId,
+          packetCount: prior.prompts.length,
+          restoreMode: prior.restoreMode || "UNKNOWN"
+        };
+      }
+    }
+
     const stored = await chrome.storage.local.get("chatbridgeSettings");
     const settings = Object.assign({}, DEFAULTS, stored.chatbridgeSettings || {});
-    const prompts = core.buildReplayPrompts(ledger, settings.maxReplayChars);
+    const reason = String(request.reason || "UNSPECIFIED");
+    const capacitySafe = /CAPACITY|LIMIT|PRE_LIMIT|TERMINAL/i.test(reason);
+    const prompts = capacitySafe
+      ? core.buildWorkingSetPrompts(ledger, {
+          maxChars: Math.min(Number(settings.maxReplayChars) || 28000, 16000),
+          maxEvents: 12
+        })
+      : core.buildReplayPrompts(ledger, settings.maxReplayChars);
     const pending = {
       transferId: `CBT-${Date.now()}-${ledger.conversationKey}`,
       conversationKey: ledger.conversationKey,
@@ -279,13 +312,15 @@ async function handleMessage(request, sender) {
       prompts,
       currentIndex: 0,
       targetTabId: null,
+      reason,
+      restoreMode: capacitySafe ? "CAPACITY_SAFE_WORKING_SET" : "FULL_TRANSCRIPT_REPLAY",
       createdAt: new Date().toISOString()
     };
     await chrome.storage.session.set({pendingChatBridgeTransfer: pending});
     const tab = await chrome.tabs.create({url: pending.targetUrl, active: true});
     pending.targetTabId = tab.id;
     await chrome.storage.session.set({pendingChatBridgeTransfer: pending});
-    return {ok: true, transferId: pending.transferId, tabId: tab.id, packetCount: prompts.length};
+    return {ok: true, reused: false, transferId: pending.transferId, tabId: tab.id, packetCount: prompts.length, restoreMode: pending.restoreMode};
   }
 
   if (request.type === "CHATBRIDGE_GET_PENDING") {

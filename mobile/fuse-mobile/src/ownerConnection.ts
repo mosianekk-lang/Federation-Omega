@@ -2,9 +2,14 @@ import {
   createFuseSession,
   enrollOwner,
   FederationGatewayError,
+  fetchVisionContext,
+  fetchWorkspaceStatus,
   sendFuseMessage,
+  visionImageSource,
   type FuseChatResponse,
   type FuseMessageRequest,
+  type VisionContext,
+  type WorkspaceStatus,
 } from './federation';
 import { captureEvolutionOutcome, type EvolutionReceipt } from './evolutionRuntime';
 import { getIapIdentityToken } from './iap';
@@ -176,4 +181,23 @@ export async function sendOwnerFuseMessage(
     });
     throw error;
   }
+}
+
+
+export async function getOwnerWorkspaceStatus(): Promise<WorkspaceStatus> {
+  const session = await ensureOwnerSession();
+  const iapIdentityToken = await getIapIdentityToken(false);
+  return fetchWorkspaceStatus(iapIdentityToken, session.accessToken);
+}
+
+export async function getOwnerVisionContext(): Promise<VisionContext> {
+  const session = await ensureOwnerSession();
+  const iapIdentityToken = await getIapIdentityToken(false);
+  return fetchVisionContext(iapIdentityToken, session.accessToken);
+}
+
+export async function getOwnerVisionImageSource(): Promise<{ uri: string; headers: Record<string, string> }> {
+  const session = await ensureOwnerSession();
+  const iapIdentityToken = await getIapIdentityToken(false);
+  return visionImageSource(iapIdentityToken, session.accessToken);
 }

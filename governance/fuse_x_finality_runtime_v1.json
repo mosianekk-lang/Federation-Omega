@@ -1,0 +1,12 @@
+{
+  "schema":"FUSE-X-FINALITY-RUNTIME-CONTROL-V1",
+  "version":"1.0.0",
+  "state":"SOURCE_CANDIDATE",
+  "effect_boundary":"READ_ONLY_X_OBSERVATION",
+  "transport_policy":"FUSE_OWNED_DIRECT_X_API_V2_PRIMARY__OFFICIAL_AUTHORIZED_ADAPTER_OPTIONAL__NO_BROWSER_SCRAPING",
+  "credential_policy":"NO_CREDENTIAL_OR_TOKEN_MATERIAL_IN_AGENT_CONTEXT",
+  "required_finality_predicates":["X_AUTHORIZED_TRANSPORT_VERIFIED","X_READ_ONLY_CANARY_VERIFIED","X_HOME_TIMELINE_INGESTION_VERIFIED","X_DURABLE_CURSOR_VERIFIED","X_EXACTLY_ONCE_VERIFIED","X_RESTART_RECOVERY_VERIFIED","X_PRIVATE_STORE_VERIFIED","X_SEMANTIC_INDEX_VERIFIED","X_VERIFY_PIPELINE_VERIFIED","X_DERIVED_FEED_VERIFIED","X_LOSS_CONTINUITY_VERIFIED","OWNER_ROUTINE_ACTION_FALSE"],
+  "effects":{"provider_write_authorized":false,"account_mutation_authorized":false,"iam_mutation_authorized":false,"production_activation_authorized":false},
+  "maturity_boundary":{"source_admission_proves_live_x":false,"local_tests_prove_live_x":false,"live_provider_readback_required":true,"recovery_proof_required":true,"independent_judge_required_for_finality":true},
+  "privacy":{"sensitive_trait_inference_from_feed":false,"political_preference_inference_from_feed":false}
+}

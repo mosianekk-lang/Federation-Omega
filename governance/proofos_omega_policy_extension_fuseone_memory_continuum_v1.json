@@ -1,0 +1,60 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSEONE_MEMORY_CONTINUUM_V1",
+      "patterns": [
+        "federation_consolidation/fuseone_memory_continuum.py",
+        "governance/proofos_omega_policy_extension_fuseone_memory_continuum_v1.json"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        "federation_consolidation/fuseone_memory_continuum.py",
+        "governance/proofos_omega_policy_extension_fuseone_memory_continuum_v1.json"
+      ],
+      "tests": [
+        "fuseone_memory_continuum_v1_source_contract",
+        "fuseone_memory_continuum_v1_proofos_mapping"
+      ],
+      "evidence": "F255_PR1522_AIRLOCK_34728474820_UNMAPPED_PRODUCTION_FALLBACK_20260913"
+    }
+  ],
+  "tests": [
+    {
+      "id": "fuseone_memory_continuum_v1_source_contract",
+      "kind": "unittest_glob",
+      "target": "test_fuseone_memory_continuum.py",
+      "patterns": [
+        "federation_consolidation/fuseone_memory_continuum.py"
+      ],
+      "subsystems": [
+        "FUSEONE_MEMORY_CONTINUUM_V1"
+      ],
+      "optional_if_missing": true,
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "fuseone_memory_continuum_v1_proofos_mapping",
+      "kind": "unittest_glob",
+      "target": "test_proofos_fuseone_memory_continuum_mapping.py",
+      "patterns": [
+        "governance/proofos_omega_policy_extension_fuseone_memory_continuum_v1.json",
+        "federation_consolidation/fuseone_memory_continuum.py"
+      ],
+      "subsystems": [
+        "FUSEONE_MEMORY_CONTINUUM_V1"
+      ],
+      "failure_class": "SELECTOR_ESCAPE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    }
+  ]
+}

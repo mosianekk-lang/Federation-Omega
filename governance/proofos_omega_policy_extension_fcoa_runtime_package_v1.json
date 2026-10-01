@@ -1,0 +1,56 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "federation/fcoa/memory_fabric_v1/**",
+        "federation/fcoa/surface_census_v1/**",
+        "governance/proofos_omega_policy_extension_fcoa_runtime_package_v1.json"
+      ],
+      "reason": "FCOA_RUNTIME_PACKAGE_IMPORT_AND_SHARED_AGENT_BINDING"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FCOA_RUNTIME_PACKAGE_V1",
+      "patterns": [
+        "federation/fcoa/memory_fabric_v1/**",
+        "federation/fcoa/surface_census_v1/**",
+        "governance/proofos_omega_policy_extension_fcoa_runtime_package_v1.json"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        "federation/fcoa/memory_fabric_v1/**",
+        "federation/fcoa/surface_census_v1/**"
+      ],
+      "tests": [
+        "fcoa_runtime_package_repair_v1"
+      ],
+      "evidence": "PR1649_COMPILEALL_EXPOSED_LITERAL_BACKSLASH_N_INITIALIZERS_20260922"
+    }
+  ],
+  "tests": [
+    {
+      "id": "fcoa_runtime_package_repair_v1",
+      "kind": "unittest_glob",
+      "target": "test_fcoa_runtime_package_repair_v1.py",
+      "patterns": [
+        "federation/fcoa/memory_fabric_v1/**",
+        "federation/fcoa/surface_census_v1/**",
+        "governance/proofos_omega_policy_extension_fcoa_runtime_package_v1.json"
+      ],
+      "subsystems": [
+        "FCOA_RUNTIME_PACKAGE_V1"
+      ],
+      "failure_class": "SOURCE_INTEGRITY_FAILURE",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    }
+  ]
+}

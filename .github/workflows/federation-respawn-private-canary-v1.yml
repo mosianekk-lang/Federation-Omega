@@ -1,0 +1,493 @@
+name: Federation Respawn Private MCP Canary v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: federation-respawn-private-mcp-canary-v1
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_REPOSITORY: federation-omega
+  SERVICE: federation-respawn
+  FEDERATION_SYNC_BUS_SHEET_ID: ${{ vars.FEDERATION_SYNC_BUS_SHEET_ID }}
+
+jobs:
+  deploy-private-mcp-canary:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FEDERATION_RESPAWN_PRIVATE_CANARY_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact signed-main source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless deployer
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Re-prove exact deployment authority and runtime configuration without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p respawn-deploy-proof
+          test -n "$FEDERATION_SYNC_BUS_SHEET_ID"
+
+          ACTIVE="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          OBSERVED_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$ACTIVE" = "$DEPLOYER_SA"
+          test "$OBSERVED_NUMBER" = "$PROJECT_NUMBER"
+
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > respawn-deploy-proof/project-policy-pre.json
+          gcloud artifacts repositories get-iam-policy "$ARTIFACT_REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/repository-policy-pre.json
+          gcloud iam service-accounts get-iam-policy "$RUNTIME_SA" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/runtime-sa-policy-pre.json
+
+          for API in run.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com sts.googleapis.com drive.googleapis.com sheets.googleapis.com; do
+            test "$(gcloud services list --enabled --project "$PROJECT_ID" --filter="config.name=$API" --format='value(config.name)')" = "$API"
+          done
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          deployer='serviceAccount:'+os.environ['DEPLOYER_SA']
+          pp=json.loads(Path('respawn-deploy-proof/project-policy-pre.json').read_text())
+          rp=json.loads(Path('respawn-deploy-proof/repository-policy-pre.json').read_text())
+          sp=json.loads(Path('respawn-deploy-proof/runtime-sa-policy-pre.json').read_text())
+          def has(policy, role, member):
+              return any(
+                  b.get('role') == role and
+                  not b.get('condition') and
+                  member in (b.get('members') or [])
+                  for b in policy.get('bindings') or []
+              )
+          run_developer=has(pp,'roles/run.developer',deployer)
+          ar_writer=has(pp,'roles/artifactregistry.writer',deployer) or has(rp,'roles/artifactregistry.writer',deployer)
+          sa_user=has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer)
+          assert run_developer, 'effective Cloud Run developer authority missing'
+          assert ar_writer, 'effective Artifact Registry writer authority missing'
+          assert sa_user, 'effective runtime service-account user authority missing'
+          Path('respawn-deploy-proof/preflight.json').write_text(json.dumps({
+              'schema':'FEDERATION_RESPAWN_PRIVATE_CANARY_PREFLIGHT_V1',
+              'project_id':os.environ['PROJECT_ID'],
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'active_account':os.environ['DEPLOYER_SA'],
+              'cloud_run_developer':run_developer,
+              'artifact_registry_writer':ar_writer,
+              'runtime_service_account_user':sa_user,
+              'sync_bus_runtime_config_present':True,
+              'iam_mutation_performed':False,
+              'api_enablement_performed':False,
+              'secret_payload_accessed':False,
+              'provider_mutation_performed':False,
+          },indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Capture pre-deployment service and IAM state
+        id: pre
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/service-pre.json 2>/dev/null; then
+            echo 'service_existed=true' >> "$GITHUB_OUTPUT"
+            gcloud run services get-iam-policy "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/service-policy-pre.json
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('respawn-deploy-proof/service-policy-pre.json').read_text())
+          public={'allUsers','allAuthenticatedUsers'}
+          for b in p.get('bindings') or []:
+              if b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'} and public.intersection(set(b.get('members') or [])):
+                  raise SystemExit('existing federation-respawn service has public invocation; refuse to mutate IAM in canary')
+          PY
+          else
+            echo '{}' > respawn-deploy-proof/service-pre.json
+            echo '{}' > respawn-deploy-proof/service-policy-pre.json
+            echo 'service_existed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push immutable Respawn image
+        id: image
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/federation-respawn:$SOURCE_SHA"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build --pull --file respawn/Dockerfile --tag "$IMAGE" respawn
+          docker push "$IMAGE"
+          gcloud artifacts docker images describe "$IMAGE" --format=json > respawn-deploy-proof/image.json
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy private Respawn candidate without public access
+        id: deploy
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          TAG="rc-${SOURCE_SHA:0:8}"
+          COMMON=(
+            "$SERVICE"
+            --image "$IMAGE"
+            --project "$PROJECT_ID"
+            --region "$REGION"
+            --service-account "$RUNTIME_SA"
+            --port 8080
+            --tag "$TAG"
+            --no-allow-unauthenticated
+            --ingress all
+            --max-instances 2
+            --set-env-vars "FEDERATION_SYNC_BUS_SHEET_ID=$FEDERATION_SYNC_BUS_SHEET_ID,FEDERATION_PROVIDER_WRITES=false,FEDERATION_RESPAWN_STATE=/data/runtime_state.json"
+            --quiet
+          )
+          if [[ "$SERVICE_EXISTED" == "true" ]]; then
+            gcloud run deploy "${COMMON[@]}" --no-traffic
+            TRAFFIC_MODE=EXISTING_SERVICE_ZERO_PERCENT_TAGGED
+          else
+            gcloud run deploy "${COMMON[@]}"
+            TRAFFIC_MODE=NEW_PRIVATE_FIRST_REVISION
+          fi
+          gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/service-post.json
+          REVISION="$(python - <<'PY'
+          import json
+          s=json.load(open('respawn-deploy-proof/service-post.json'))
+          print(s.get('status',{}).get('latestCreatedRevisionName') or s.get('status',{}).get('latestReadyRevisionName') or '')
+          PY
+          )"
+          test -n "$REVISION"
+          gcloud run revisions describe "$REVISION" --region "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/revision.json
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "traffic_mode=$TRAFFIC_MODE" >> "$GITHUB_OUTPUT"
+
+      - name: Prove private IAM and bounded traffic state
+        shell: bash
+        env:
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+          REVISION: ${{ steps.deploy.outputs.revision }}
+        run: |
+          set -euo pipefail
+          gcloud run services get-iam-policy "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/service-policy-post.json
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > respawn-deploy-proof/project-policy-post.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          pre=json.loads(Path('respawn-deploy-proof/service-pre.json').read_text())
+          post=json.loads(Path('respawn-deploy-proof/service-post.json').read_text())
+          service_policy_pre=json.loads(Path('respawn-deploy-proof/service-policy-pre.json').read_text())
+          service_policy=json.loads(Path('respawn-deploy-proof/service-policy-post.json').read_text())
+          project_policy=json.loads(Path('respawn-deploy-proof/project-policy-post.json').read_text())
+          revision=os.environ['REVISION']
+          existed=os.environ['SERVICE_EXISTED']=='true'
+          public={'allUsers','allAuthenticatedUsers'}
+          def public_invoker(policy):
+              return any(
+                  b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'} and
+                  not b.get('condition') and public.intersection(set(b.get('members') or []))
+                  for b in policy.get('bindings') or []
+              )
+          assert not public_invoker(service_policy), 'service is publicly invokable'
+          assert not public_invoker(project_policy), 'project grants public Cloud Run invocation'
+          if existed:
+              def normalize(policy):
+                  p=dict(policy)
+                  p.pop('etag',None)
+                  p.pop('version',None)
+                  return p
+              assert normalize(service_policy_pre) == normalize(service_policy), 'existing service IAM changed during canary'
+          def allocation(service):
+              result={}
+              for item in service.get('status',{}).get('traffic') or []:
+                  name=item.get('revisionName')
+                  if name:
+                      result[name]=result.get(name,0)+int(item.get('percent') or 0)
+              return result
+          before=allocation(pre)
+          after=allocation(post)
+          new_percent=after.get(revision,0)
+          if existed:
+              assert new_percent == 0, {'new_revision_percent':new_percent,'traffic':after}
+              for name,percent in before.items():
+                  assert after.get(name,0) == percent, {'revision':name,'before':percent,'after':after.get(name,0)}
+          else:
+              assert not before
+              assert new_percent in {0,100}, {'new_revision_percent':new_percent,'traffic':after}
+          Path('respawn-deploy-proof/traffic-proof.json').write_text(json.dumps({
+              'service_existed_before':existed,
+              'new_revision':revision,
+              'new_revision_percent':new_percent,
+              'pre_existing_allocation':before,
+              'post_allocation':after,
+              'public_invocation':False,
+              'pre_existing_traffic_preserved':True if existed else None,
+              'provider_mutation_performed':True,
+              'iam_mutation_performed':False,
+              'secret_payload_accessed':False,
+          },indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Resolve private candidate and canonical service URLs
+        id: endpoint
+        shell: bash
+        env:
+          TAG: ${{ steps.deploy.outputs.tag }}
+        run: |
+          set -euo pipefail
+          SERVICE_URL="$(python - <<'PY'
+          import json
+          s=json.load(open('respawn-deploy-proof/service-post.json'))
+          print((s.get('status') or {}).get('url') or '')
+          PY
+          )"
+          CANARY_URL="$(python - <<'PY'
+          import json, os
+          s=json.load(open('respawn-deploy-proof/service-post.json'))
+          status=s.get('status') or {}
+          url=''
+          for item in status.get('traffic') or []:
+              if item.get('tag') == os.environ['TAG'] and item.get('url'):
+                  url=item['url']; break
+          print(url or status.get('url') or '')
+          PY
+          )"
+          test -n "$SERVICE_URL"
+          test -n "$CANARY_URL"
+          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
+          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Mint one-run private candidate identity token
+        id: canary_auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: id_token
+          id_token_audience: ${{ steps.endpoint.outputs.service_url }}
+
+      - name: Install Respawn MCP client dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r respawn/requirements.txt
+
+      - name: Prove remote MCP tools and live Federation provider readback
+        shell: bash
+        env:
+          CANARY_URL: ${{ steps.endpoint.outputs.canary_url }}
+          ID_TOKEN: ${{ steps.canary_auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import asyncio, inspect, json, os
+          from pathlib import Path
+          from mcp import ClientSession
+          from mcp.client.streamable_http import streamable_http_client
+
+          url=os.environ['CANARY_URL'].rstrip('/') + '/mcp'
+          token=os.environ['ID_TOKEN']
+          required={
+              'bootstrap_spawn',
+              'already_solved',
+              'get_current_federation_state',
+              'resume_federation_mission',
+              'get_federation_corpus_coverage',
+              'search',
+              'fetch',
+              'federation_health',
+          }
+
+          def structured(result):
+              if hasattr(result, 'model_dump'):
+                  raw=result.model_dump(by_alias=True)
+              else:
+                  raw={}
+              value=raw.get('structuredContent') or raw.get('structured_content')
+              if isinstance(value, dict):
+                  return value
+              for item in raw.get('content') or []:
+                  if isinstance(item, dict) and isinstance(item.get('text'), str):
+                      try:
+                          parsed=json.loads(item['text'])
+                          if isinstance(parsed, dict):
+                              return parsed
+                      except Exception:
+                          pass
+              raise AssertionError(f'No structured dict in MCP result keys={sorted(raw)}')
+
+          async def exercise(read_stream, write_stream):
+              async with ClientSession(read_stream, write_stream) as session:
+                  init=await session.initialize()
+                  tools=await session.list_tools()
+                  names={tool.name for tool in tools.tools}
+                  missing=sorted(required-names)
+                  assert not missing, f'missing MCP tools: {missing}'
+
+                  health=structured(await session.call_tool('federation_health', {}))
+                  assert health.get('ok') is True
+                  assert health.get('chatgpt_native_context',{}).get('contract') == 'FUSE_CHATGPT_THIN_SHIM_V1'
+
+                  bootstrap=structured(await session.call_tool('bootstrap_spawn', {
+                      'system':'Federation Omega',
+                      'objective':'Resume FUSE Federation context',
+                      'terms':['Federation','Respawn'],
+                      'compact':True,
+                      'max_bible_chars':3000,
+                  }))
+                  provider=bootstrap.get('provider_context') or {}
+                  assert provider.get('provider_readback') is True, provider
+                  assert isinstance(provider.get('system_record'), dict), provider
+                  assert str(provider['system_record'].get('System') or '').strip().lower() == 'federation omega'
+
+                  current=structured(await session.call_tool('get_current_federation_state', {
+                      'query':'Federation Omega',
+                      'system':'Federation Omega',
+                      'limit':5,
+                  }))
+                  assert current.get('current_state_proof')
+                  assert 'claimable_current' in current
+                  assert 'supporting_verified_not_current_by_itself' in current
+
+                  resume=structured(await session.call_tool('resume_federation_mission', {
+                      'system':'Federation Omega',
+                      'mission':'Continue the Federation Respawn deployment mission',
+                      'matter':'Respawn',
+                      'chat_ref':'provider-canary',
+                      'terms':['Respawn','ChatGPT'],
+                      'max_bible_chars':3000,
+                  }))
+                  assert resume.get('continuation_mode')
+                  assert resume.get('next_executable_action')
+
+                  coverage=structured(await session.call_tool('get_federation_corpus_coverage', {}))
+                  assert coverage.get('full_account_history_proven') is False
+                  assert coverage.get('coverage_state')
+
+                  receipt={
+                      'schema':'FEDERATION_RESPAWN_REMOTE_MCP_CANARY_V1',
+                      'mcp_url':url,
+                      'server_name':getattr(getattr(init,'serverInfo',None),'name',None) or getattr(getattr(init,'server_info',None),'name',None),
+                      'tool_names':sorted(names),
+                      'required_tools_present':True,
+                      'health_contract':'FUSE_CHATGPT_THIN_SHIM_V1',
+                      'google_workspace_provider_readback':True,
+                      'provider_system':'Federation Omega',
+                      'current_state_proof':current.get('current_state_proof'),
+                      'resume_continuation_mode':resume.get('continuation_mode'),
+                      'coverage_state':coverage.get('coverage_state'),
+                      'full_account_history_proven':False,
+                      'provider_writes_enabled':False,
+                      'secret_payload_accessed':False,
+                  }
+                  Path('respawn-deploy-proof/mcp-canary.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+
+          async def main():
+              sig=inspect.signature(streamable_http_client)
+              if 'headers' in sig.parameters:
+                  async with streamable_http_client(url, headers={'Authorization':f'Bearer {token}'}) as streams:
+                      await exercise(*streams[:2])
+              else:
+                  import httpx2
+                  async with httpx2.AsyncClient(
+                      headers={'Authorization':f'Bearer {token}'},
+                      timeout=httpx2.Timeout(30.0, read=180.0),
+                  ) as http_client:
+                      transport=streamable_http_client(url, http_client=http_client)
+                      async with transport as streams:
+                          await exercise(*streams[:2])
+          asyncio.run(main())
+          PY
+
+      - name: Compile bounded deployment receipt
+        shell: bash
+        env:
+          CANARY_URL: ${{ steps.endpoint.outputs.canary_url }}
+          SERVICE_URL: ${{ steps.endpoint.outputs.service_url }}
+          REVISION: ${{ steps.deploy.outputs.revision }}
+          TRAFFIC_MODE: ${{ steps.deploy.outputs.traffic_mode }}
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, hashlib
+          from pathlib import Path
+          image=json.loads(Path('respawn-deploy-proof/image.json').read_text())
+          mcp=json.loads(Path('respawn-deploy-proof/mcp-canary.json').read_text())
+          traffic=json.loads(Path('respawn-deploy-proof/traffic-proof.json').read_text())
+          receipt={
+              'schema':'FEDERATION_RESPAWN_PRIVATE_DEPLOYMENT_RECEIPT_V1',
+              'source_sha':os.environ['GITHUB_SHA'],
+              'project_id':os.environ['PROJECT_ID'],
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'region':os.environ['REGION'],
+              'service':os.environ['SERVICE'],
+              'revision':os.environ['REVISION'],
+              'service_url':os.environ['SERVICE_URL'],
+              'canary_url':os.environ['CANARY_URL'],
+              'mcp_url':os.environ['CANARY_URL'].rstrip('/')+'/mcp',
+              'traffic_mode':os.environ['TRAFFIC_MODE'],
+              'image':os.environ['IMAGE'],
+              'image_digest':image.get('image_summary',{}).get('digest') or image.get('imageSummary',{}).get('digest'),
+              'provider_ready_state_verified':True,
+              'https_mcp_reachability_verified':True,
+              'mcp_initialization_verified':True,
+              'mcp_tool_list_verified':mcp.get('required_tools_present') is True,
+              'federation_health_verified':mcp.get('health_contract') == 'FUSE_CHATGPT_THIN_SHIM_V1',
+              'compact_bootstrap_verified':mcp.get('google_workspace_provider_readback') is True,
+              'current_state_gate_verified':bool(mcp.get('current_state_proof')),
+              'resume_gate_verified':bool(mcp.get('resume_continuation_mode')),
+              'coverage_fail_closed_verified':mcp.get('full_account_history_proven') is False,
+              'chatgpt_custom_app_binding_verified':False,
+              'public_invocation':traffic.get('public_invocation'),
+              'provider_writes_enabled':False,
+              'provider_mutation_performed':True,
+              'iam_mutation_performed':False,
+              'api_enablement_performed':False,
+              'secret_payload_accessed':False,
+              'deployment_state':'PRIVATE_PROVIDER_CANARY_VERIFIED_CHATGPT_BINDING_PENDING',
+          }
+          canonical=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
+          receipt['receipt_sha256']=hashlib.sha256(canonical).hexdigest()
+          Path('respawn-deploy-proof/respawn-deployment-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Upload immutable Respawn provider proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: federation-respawn-private-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            respawn-deploy-proof/preflight.json
+            respawn-deploy-proof/image.json
+            respawn-deploy-proof/service-post.json
+            respawn-deploy-proof/revision.json
+            respawn-deploy-proof/traffic-proof.json
+            respawn-deploy-proof/mcp-canary.json
+            respawn-deploy-proof/respawn-deployment-receipt.json
+          if-no-files-found: error
+          retention-days: 90

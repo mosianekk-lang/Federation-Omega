@@ -11,10 +11,14 @@
   let settings = {
     autoSend: true,
     maxReplayChars: 28000,
-    tokenThreshold: 65000,
-    messageThreshold: 80,
-    captureIntervalMs: 30000
+    tokenThreshold: 24000,
+    messageThreshold: 32,
+    captureIntervalMs: 10000
   };
+  let autoHandoffInFlight = false;
+  let autoHandoffComplete = false;
+  let autoHandoffLastAttemptAt = 0;
+  const AUTO_HANDOFF_RETRY_MS = 5000;
 
   function status(message, kind, timeoutMs) {
     let chip = document.querySelector("[data-chatbridge-status]");
@@ -41,15 +45,26 @@
     });
   }
 
-  async function checkpoint(reason) {
+  async function checkpoint(reason, options) {
     if (captureInFlight) return null;
     captureInFlight = true;
     try {
       const packet = currentPacket();
       const result = await chrome.runtime.sendMessage({type: "CHATBRIDGE_CAPTURE", packet, reason});
       if (!result || !result.ok) throw new Error(result && result.error || "CAPTURE_FAILED");
-      if (core.shouldPreempt(packet.metrics, settings)) status("ChatBridge Ω4.9 checkpoint verified — migration ready", "ready");
-      return {packet, result};
+      const captured = {packet, result};
+      const manifest = result && result.manifest || {};
+      const pressurePacket = Object.assign({}, packet, {metrics: {
+        estimatedRenderedTokens: Math.max(Number(packet.metrics && packet.metrics.estimatedRenderedTokens || 0), Number(manifest.estimatedTranscriptTokens || 0)),
+        renderedMessageCount: Math.max(Number(packet.metrics && packet.metrics.renderedMessageCount || 0), Number(manifest.latestRenderedMessageCount || 0))
+      }});
+      if (!(options && options.suppressAuto) && core.shouldAutoHandoff(pressurePacket, settings)) {
+        const triggerReason = packet.terminalNotice ? "TERMINAL_LIMIT_DETECTED" : "PRE_LIMIT_PRESSURE";
+        queueMicrotask(() => triggerAutomaticHandoff(captured, triggerReason).catch(() => {
+          setTimeout(() => checkpoint("AUTO_HANDOFF_RETRY").catch(() => {}), AUTO_HANDOFF_RETRY_MS);
+        }));
+      }
+      return captured;
     } finally {
       captureInFlight = false;
     }
@@ -69,43 +84,63 @@
     return candidates.find((node) => node.querySelector("button")) || candidates[0] || null;
   }
 
-  async function startSuccessor() {
-    const captured = await checkpoint("SUCCESSOR_REQUEST");
-    if (!captured) throw new Error("CAPTURE_BUSY");
+  async function openSuccessorForCapture(captured, reason) {
+    if (!captured || !captured.packet) throw new Error("CAPTURE_REQUIRED");
+    let durableEgress = null;
+    try {
+      durableEgress = await chrome.runtime.sendMessage({
+        type: "CHATBRIDGE_EDGE_EGRESS_STATUS",
+        conversationKey: captured.packet.conversationKey,
+        reason: "CAPACITY_HANDOFF_PREDETACH"
+      });
+    } catch (_) {
+      durableEgress = {ok: false, state: "EDGE_EGRESS_CALL_FAILED"};
+    }
     const result = await chrome.runtime.sendMessage({
       type: "CHATBRIDGE_OPEN",
-      conversationKey: captured.packet.conversationKey
+      conversationKey: captured.packet.conversationKey,
+      reason: reason || "CAPACITY_HANDOFF"
     });
     if (!result || !result.ok) throw new Error(result && result.error || "OPEN_FAILED");
-    status(`ChatBridge successor opened with ${result.packetCount} replay packets`, "ready", 10000);
-    return result;
+    status(
+      `ChatBridge successor ${result.reused ? "reused" : "opened"} with ${result.packetCount} replay packets`,
+      "ready",
+      10000
+    );
+    return Object.assign({}, result, {durableEgress});
   }
 
-  function decorateLimitBanner() {
+  async function triggerAutomaticHandoff(captured, reason) {
+    if (!captured || autoHandoffComplete || autoHandoffInFlight) return null;
+    const now = Date.now();
+    if (now - autoHandoffLastAttemptAt < AUTO_HANDOFF_RETRY_MS) return null;
+    autoHandoffInFlight = true;
+    autoHandoffLastAttemptAt = now;
+    try {
+      const result = await openSuccessorForCapture(captured, reason || "CAPACITY_HANDOFF");
+      autoHandoffComplete = true;
+      return result;
+    } finally {
+      autoHandoffInFlight = false;
+    }
+  }
+
+  async function startSuccessor() {
+    const captured = await checkpoint("SUCCESSOR_REQUEST", {suppressAuto: true});
+    if (!captured) throw new Error("CAPTURE_BUSY");
+    return openSuccessorForCapture(captured, "CAPACITY_HANDOFF_MANUAL_RETRY");
+  }
+
+  function suppressLimitBanner() {
     const banner = findLimitBanner();
-    if (!banner || banner.querySelector("[data-chatbridge-start]")) return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.chatbridgeStart = "true";
-    button.className = "chatbridge-start-button";
-    button.textContent = "Start successor via ChatBridge Ω4.9";
-    button.setAttribute("aria-label", "Capture this rendered conversation and open a ChatBridge successor chat");
-    button.addEventListener("click", async () => {
-      button.disabled = true;
-      button.textContent = "Capturing full rendered ledger…";
-      try {
-        await startSuccessor();
-        button.textContent = "ChatBridge successor opened";
-      } catch (error) {
-        button.disabled = false;
-        button.textContent = "Start successor via ChatBridge Ω4.9";
-        status(`ChatBridge handoff failed: ${String(error.message || error)}`, "error", 10000);
-      }
+    if (!banner) return false;
+    banner.setAttribute("aria-hidden", "true");
+    banner.dataset.chatbridgeSuppressed = "true";
+    banner.style.setProperty("display", "none", "important");
+    checkpoint("TERMINAL_WARNING_SUPPRESSED").catch(() => {
+      setTimeout(() => checkpoint("TERMINAL_WARNING_RETRY").catch(() => {}), AUTO_HANDOFF_RETRY_MS);
     });
-    const nativeButton = Array.from(banner.querySelectorAll("button")).find((node) => /start new chat/i.test(node.textContent || ""));
-    if (nativeButton && nativeButton.parentElement) nativeButton.parentElement.insertBefore(button, nativeButton);
-    else banner.appendChild(button);
-    checkpoint("TERMINAL_WARNING_DETECTED").catch(() => {});
+    return true;
   }
 
   function setComposerText(composer, text) {
@@ -219,12 +254,12 @@
   });
 
   const observer = new MutationObserver(() => {
-    decorateLimitBanner();
+    suppressLimitBanner();
     scheduleCheckpoint("DOM_CHANGE");
   });
   observer.observe(document.documentElement, {subtree: true, childList: true, characterData: true});
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") checkpoint("VISIBILITY_HIDDEN").catch(() => {});
   });
-  decorateLimitBanner();
+  suppressLimitBanner();
 })();
