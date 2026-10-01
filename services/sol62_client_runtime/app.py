@@ -15,10 +15,15 @@ from services.fuse_mobile_gateway.bindings import runtime_from_environment as ga
 from services.fuse_mobile_gateway.runtime import GatewayRuntime, RuntimeBindingError, bearer_token
 from services.sol62_client_runtime import VERSION
 from services.sol62_client_runtime.gateway_adapter import GatewayChatAdapter
+from services.sol62_client_runtime.interrupt_resume import enqueue_after_interruption_resolution
 from services.sol62_client_runtime.sovereign_meta_intelligence import SovereignMetaIntelligence
 from services.sol62_client_runtime.autonomous_harvester import FuseAutonomousHarvester
 from services.sol62_client_runtime.capability_registry import compile_registry
 from services.sol62_client_runtime.runtime_upgrade_genome import UPGRADE_GENOME, genome_summary, select_upgrade_genes
+from federation.formation_omega_acceleration_binding_v1 import (
+    FIVE_MINUTE_SLO_SECONDS,
+    VERIFY_DELIVERY_RESERVE_SECONDS,
+)
 from services.sol62_client_runtime.alpha_omega_formation_binding import (
     Sol62AlphaOmegaFormationBinding,
     receipt_to_dict as alpha_omega_formation_receipt_to_dict,
@@ -283,6 +288,15 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             "provider_specific_limits_are_mission_terminal": False,
             "capability_registry": compile_registry(gateway_execution_ready=ctx.gateway.execution_ready)["counts"],
             "runtime_upgrade_genome": genome_summary(),
+            "formation_omega_runtime": {
+                "direct_active_deadline_bound": True,
+                "active_execution_budget_seconds": float(ctx.client.policy.max_active_wake_seconds),
+                "total_slo_seconds": FIVE_MINUTE_SLO_SECONDS,
+                "verification_delivery_reserve_seconds": VERIFY_DELIVERY_RESERVE_SECONDS,
+                "automatic_interruption_resume_enqueue": True,
+                "universal_external_wait_guarantee": False,
+                "effect_authority_created": False,
+            },
             "alpha_omega_formation": {
                 "bound": True,
                 "formation_producer": "EVIDENCEOPS-ALGORITHM-FOUNDRY",
@@ -777,12 +791,23 @@ def create_app(context: ServiceContext | None = None) -> FastAPI:
             )
         except Exception as error:
             raise HTTPException(status_code=400, detail={"status": "HELD", "reason": str(error)}) from error
+        auto_resume = enqueue_after_interruption_resolution(
+            client=ctx.client,
+            bridge=ctx.genesis,
+            mission_id=mission_id,
+            decision=body.decision,
+            now_epoch=time.time(),
+        )
         return {
             "status": "RESOLVED",
             "mission_id": mission_id,
             "interruption": stored["value"],
+            "durable_handoff": auto_resume,
             "effect_authorized": False,
-            "truth_boundary": "INTERRUPTION_DECISION_NE_EFFECT_AUTHORITY",
+            "truth_boundary": (
+                "INTERRUPTION_DECISION_NE_EFFECT_AUTHORITY;"
+                "RESOLVED_RESUME_OR_APPROVE_AUTO_ENQUEUES_EXISTING_GENESIS_WAKE"
+            ),
         }
 
     @app.get("/v1/missions/{mission_id}/events")
