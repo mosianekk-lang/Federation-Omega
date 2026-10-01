@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import json
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Awaitable, Callable, Mapping, Protocol, Sequence
+
+from federation.formation_omega_acceleration_binding_v1 import (
+    ACTIVE_EXECUTION_BUDGET_SECONDS,
+    FIVE_MINUTE_SLO_SECONDS,
+    VERIFY_DELIVERY_RESERVE_SECONDS,
+    FiveMinuteScientiaGovernor,
+)
 
 try:
     from .sol_62_frontier_primitives import (
@@ -144,6 +152,7 @@ class ClientRuntimePolicy:
     negative_cache_seconds: int = 300
     retry_delay_seconds: int = 30
     fence_ttl_seconds: int = 120
+    max_active_wake_seconds: float = ACTIVE_EXECUTION_BUDGET_SECONDS
     durability_mode: str = "EFFECT_BOUNDARY"
     auto_harvest: bool = True
     auto_build: bool = True
@@ -823,6 +832,10 @@ class Sol62CompleteClientRuntime:
             "satisfied_constraints": sorted(set(satisfied_constraints) | set(existing["value"].get("satisfied_constraints", []) if existing else [])),
             "total_attempts": int(existing["value"].get("total_attempts", 0)) if existing else 0,
             "next_retry_epoch": int(existing["value"].get("next_retry_epoch", 0)) if existing else 0,
+            "mission_started_epoch": float(
+                existing["value"].get("mission_started_epoch", time.time())
+                if existing else time.time()
+            ),
             "last_reason": existing["value"].get("last_reason", "") if existing else "",
             "goal_mutation_by_provider_forbidden": True,
             "continue_until_verified": self.policy.continue_until_verified,
@@ -1011,6 +1024,50 @@ class Sol62CompleteClientRuntime:
         )
         return ordered
 
+    def _five_minute_observation(
+        self,
+        mission_id: str,
+        *,
+        acceptance_complete: bool,
+        proof_complete: bool,
+    ) -> dict[str, Any]:
+        client = self._get("sol62.client.mission", mission_id)
+        if not client:
+            raise KeyError(mission_id)
+        started = client["value"].get("mission_started_epoch")
+        if started is None:
+            return {
+                "mission_id": mission_id,
+                "state": "FIVE_MINUTE_SLO_UNOBSERVED_ORIGIN",
+                "observed_wall_seconds": None,
+                "acceptance_complete": bool(acceptance_complete),
+                "proof_complete": bool(proof_complete),
+                "within_slo": False,
+                "total_slo_seconds": FIVE_MINUTE_SLO_SECONDS,
+                "active_execution_budget_seconds": float(self.policy.max_active_wake_seconds),
+                "verification_delivery_reserve_seconds": VERIFY_DELIVERY_RESERVE_SECONDS,
+                "truth_boundary": "LEGACY_MISSION_START_UNOBSERVED_NE_FIVE_MINUTE_VERIFIED",
+            }
+        observed = max(0.0, time.time() - float(started))
+        verified = FiveMinuteScientiaGovernor.verify_observed(
+            mission_id=mission_id,
+            observed_wall_seconds=observed,
+            acceptance_complete=acceptance_complete,
+            proof_complete=proof_complete,
+        )
+        return {
+            **dataclasses.asdict(verified),
+            "mission_started_epoch": float(started),
+            "observed_at_epoch": time.time(),
+            "total_slo_seconds": FIVE_MINUTE_SLO_SECONDS,
+            "active_execution_budget_seconds": float(self.policy.max_active_wake_seconds),
+            "verification_delivery_reserve_seconds": VERIFY_DELIVERY_RESERVE_SECONDS,
+            "truth_boundary": (
+                "OBSERVED_WALL_CLOCK_PLUS_ACCEPTANCE_PLUS_PROOF_REQUIRED;"
+                "EXTERNAL_WAIT_REMAINS_INCLUDED_IN_FULL_MISSION_ELAPSED_TIME"
+            ),
+        }
+
     def _update_client_mission(self, mission_id: str, **changes: Any) -> dict[str, Any]:
         row = self._get("sol62.client.mission", mission_id)
         if not row:
@@ -1121,10 +1178,20 @@ class Sol62CompleteClientRuntime:
         worker: str,
         now_epoch: int,
         authority_lease_resolver: AuthorityLeaseResolver | None,
+        active_deadline_monotonic: float | None = None,
     ) -> dict[str, Any]:
         client = self._get("sol62.client.mission", mission_id)
         if not client:
             raise KeyError(mission_id)
+        if (
+            active_deadline_monotonic is not None
+            and time.monotonic() >= active_deadline_monotonic
+        ):
+            return {
+                "state": "ACTIVE_DEADLINE_EXHAUSTED",
+                "reason": "OMEGA_SCIENTIA_ACTIVE_DEADLINE_BEFORE_EFFECT",
+                "effect_prepared": False,
+            }
         attempt_no = int(client["value"].get("total_attempts", 0)) + 1
         if attempt_no > self.policy.max_total_attempts:
             return {"state": "HELD_ATTEMPT_BUDGET", "attempt_no": attempt_no}
@@ -1239,7 +1306,36 @@ class Sol62CompleteClientRuntime:
             "sol.authority.expansion": False,
         }
         try:
-            response = await adapter.execute(request)
+            if active_deadline_monotonic is None:
+                response = await adapter.execute(request)
+            else:
+                remaining = active_deadline_monotonic - time.monotonic()
+                if remaining <= 0:
+                    self.runtime.control.transition_effect(
+                        effect_id,
+                        expected_state="DISPATCHING",
+                        next_state="CANCELLED",
+                        result={"reason": "OMEGA_SCIENTIA_ACTIVE_DEADLINE_BEFORE_PROVIDER_CALL"},
+                    )
+                    self.runtime.requeue_after_pre_dispatch_cancel(
+                        effect_id=effect_id,
+                        transition_id=transition_id,
+                        mission_id=mission_id,
+                        worker=worker,
+                        lease_epoch=fence["epoch"],
+                        fencing_token=fence["fencing_token"],
+                        now_epoch=now_epoch,
+                    )
+                    return {
+                        "state": "ACTIVE_DEADLINE_EXHAUSTED",
+                        "reason": "OMEGA_SCIENTIA_ACTIVE_DEADLINE_BEFORE_PROVIDER_CALL",
+                        "effect_prepared": True,
+                        "provider_dispatch_started": False,
+                    }
+                response = await asyncio.wait_for(
+                    adapter.execute(request),
+                    timeout=max(0.001, remaining),
+                )
         except Exception as exc:
             self._record_attempt(
                 mission_id,
@@ -1250,10 +1346,16 @@ class Sol62CompleteClientRuntime:
                 detail={"effect_id": effect_id, "error_class": type(exc).__name__, "error_sha256": digest(str(exc))},
                 now_epoch=now_epoch,
             )
+            deadline_timeout = isinstance(exc, (asyncio.TimeoutError, TimeoutError))
+            failure_reason = (
+                "OMEGA_SCIENTIA_ACTIVE_DEADLINE_EFFECT_STATE_UNKNOWN"
+                if deadline_timeout
+                else "ADAPTER_EXCEPTION_EFFECT_STATE_UNKNOWN"
+            )
             self._update_client_mission(
                 mission_id,
                 state="WAITING_READBACK",
-                last_reason="ADAPTER_EXCEPTION_EFFECT_STATE_UNKNOWN",
+                last_reason=failure_reason,
                 next_retry_epoch=now_epoch + self.policy.retry_delay_seconds,
             )
             self.runtime.trace(
@@ -1273,7 +1375,11 @@ class Sol62CompleteClientRuntime:
                     "sol.effect.state": "UNKNOWN",
                 },
             )
-            return {"state": "WAITING_READBACK", "reason": "ADAPTER_EXCEPTION_EFFECT_STATE_UNKNOWN"}
+            return {
+                "state": "WAITING_READBACK",
+                "reason": failure_reason,
+                "active_deadline_timeout": deadline_timeout,
+            }
 
         self.runtime.trace(
             trace_id=trace_id,
@@ -1458,6 +1564,12 @@ class Sol62CompleteClientRuntime:
         max_steps: int | None = None,
     ) -> dict[str, Any]:
         now_epoch = int(time.time()) if now_epoch is None else int(now_epoch)
+        if float(self.policy.max_active_wake_seconds) <= 0:
+            raise ValueError("MAX_ACTIVE_WAKE_SECONDS_INVALID")
+        wake_started_monotonic = time.monotonic()
+        active_deadline_monotonic = (
+            wake_started_monotonic + float(self.policy.max_active_wake_seconds)
+        )
         max_steps = self.policy.max_attempts_per_wake if max_steps is None else min(int(max_steps), self.policy.max_attempts_per_wake)
         if max_steps < 1:
             raise ValueError("MAX_STEPS_INVALID")
@@ -1505,7 +1617,42 @@ class Sol62CompleteClientRuntime:
                     last_reason="TARGET_STATE_PLUS_PROOF_VERIFIED",
                     next_retry_epoch=0,
                 )
-                return {"state": "VERIFIED_REALITY", "closure": closure}
+                five_minute = self._five_minute_observation(
+                    mission_id,
+                    acceptance_complete=bool(
+                        closure.get("target_satisfied")
+                        and not closure.get("missing_constraints")
+                    ),
+                    proof_complete=bool((closure.get("proof") or {}).get("valid")),
+                )
+                return {
+                    "state": "VERIFIED_REALITY",
+                    "closure": closure,
+                    "five_minute_slo": five_minute,
+                    "wake_active_elapsed_seconds": max(
+                        0.0, time.monotonic() - wake_started_monotonic
+                    ),
+                }
+
+            if time.monotonic() >= active_deadline_monotonic:
+                self._update_client_mission(
+                    mission_id,
+                    state="RETRY_SCHEDULED",
+                    last_reason="OMEGA_SCIENTIA_ACTIVE_DEADLINE_RESERVE",
+                    next_retry_epoch=now_epoch,
+                )
+                return {
+                    "state": "RETRY_SCHEDULED",
+                    "reason": "OMEGA_SCIENTIA_ACTIVE_DEADLINE_RESERVE",
+                    "active_execution_budget_seconds": float(
+                        self.policy.max_active_wake_seconds
+                    ),
+                    "verification_delivery_reserve_seconds": VERIFY_DELIVERY_RESERVE_SECONDS,
+                    "resume_packet": self.resume_packet(
+                        mission_id,
+                        reason="OMEGA_SCIENTIA_ACTIVE_DEADLINE_RESERVE",
+                    ),
+                }
 
             inflight = self._inflight_for_mission(mission_id)
             if inflight:
@@ -1610,10 +1757,30 @@ class Sol62CompleteClientRuntime:
                     worker=worker,
                     now_epoch=now_epoch,
                     authority_lease_resolver=authority_lease_resolver,
+                    active_deadline_monotonic=active_deadline_monotonic,
                 )
                 if result["state"] == "VERIFIED_STEP":
                     verified = True
                     break
+                if result["state"] == "ACTIVE_DEADLINE_EXHAUSTED":
+                    self._update_client_mission(
+                        mission_id,
+                        state="RETRY_SCHEDULED",
+                        last_reason=result.get(
+                            "reason", "OMEGA_SCIENTIA_ACTIVE_DEADLINE_RESERVE"
+                        ),
+                        next_retry_epoch=now_epoch,
+                    )
+                    return {
+                        **result,
+                        "state": "RETRY_SCHEDULED",
+                        "resume_packet": self.resume_packet(
+                            mission_id,
+                            reason=result.get(
+                                "reason", "OMEGA_SCIENTIA_ACTIVE_DEADLINE_RESERVE"
+                            ),
+                        ),
+                    }
                 if result["state"] == "RETRY_CHANGED_ROUTE" and self.policy.auto_retry:
                     continue
                 return {**result, "resume_packet": self.resume_packet(mission_id, reason=result["state"])}
@@ -1682,4 +1849,18 @@ class Sol62CompleteClientRuntime:
             "inflight_effect_ids": list(checkpoint["inflight_effect_ids"]),
             "replay_guard_verified": True,
             "replay_guard_history_sha256": replay_guard["history_sha256_observed"],
+            "five_minute_contract": {
+                "mission_started_epoch": client["value"].get("mission_started_epoch"),
+                "total_slo_seconds": FIVE_MINUTE_SLO_SECONDS,
+                "active_execution_budget_seconds": float(
+                    self.policy.max_active_wake_seconds
+                ),
+                "verification_delivery_reserve_seconds": VERIFY_DELIVERY_RESERVE_SECONDS,
+                "success_requires": [
+                    "OBSERVED_WALL_CLOCK_LE_300",
+                    "ACCEPTANCE_COMPLETE",
+                    "PROOF_COMPLETE",
+                ],
+                "external_wait_guaranteed": False,
+            },
         }
