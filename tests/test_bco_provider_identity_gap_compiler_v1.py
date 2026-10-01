@@ -78,7 +78,7 @@ class BCOProviderIdentityGapCompilerTests(unittest.TestCase):
             ],
             "mutation_performed": False,
             "receipt": "FEDOMEGA-GEMINI-ADC-VERIFICATION-FAILED",
-            "runtime_service_account": "sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+            "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
             "state": "NOT_VERIFIED",
         }
 
