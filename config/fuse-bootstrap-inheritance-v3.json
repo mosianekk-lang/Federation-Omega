@@ -53,6 +53,7 @@
     "HIPB_PRE_COMPILE",
     "GOOGLE_INTELLIGENCE_RUNTIME_BINDING",
     "FORMATION_POWER_INHERITANCE",
+    "FORMATION_OMEGA_ACCELERATION",
     "FORMATION_SURFACE_LOAD_BALANCER",
     "ROUTE_COMPILE",
     "HIPB_PRE_EFFECT",
@@ -224,5 +225,23 @@
     "required_before_route_compilation": true,
     "applies_to": "ALL_MATERIAL_MISSIONS",
     "truth_boundary": "SURFACE_FORMATION_BOUND!=SURFACE_CALLABLE!=PROVIDER_EXECUTED!=SEMANTIC_READBACK!=EFFECT_VERIFIED!=OWNER_VALUE!=COMPLETE"
+  },
+  "formation_omega_acceleration": {
+    "contract_id": "FUSE-FORMATION-OMEGA-ACCEL-001",
+    "schema": "FUSE_FORMATION_OMEGA_ACCELERATION_BINDING_V1",
+    "version": "1.0.0",
+    "enabled": true,
+    "config_path": "config/fuse-formation-omega-acceleration-v1.json",
+    "binding_path": "federation/formation_omega_acceleration_binding_v1.py",
+    "applies_to": "ALL_FUSE_WORKFLOWS",
+    "required_before_route_compilation": true,
+    "five_minute_slo_seconds": 300,
+    "active_execution_budget_seconds": 240,
+    "verification_delivery_reserve_seconds": 60,
+    "omega_scientia_required": true,
+    "ultimate_programming_profile": "FORMATION_ULTIMATE_PROGRAMMING_V1",
+    "alpha_omega_compiler_profile": "FORMATION_ALPHA_OMEGA_COMPILER_V1",
+    "authority_expansion": false,
+    "truth_boundary": "ACCELERATION_BOUND!=DEADLINE_FORECAST!=WORKFLOW_EXECUTED!=OBSERVED_5M_SLO!=PROGRAMMING_VERIFIED!=ALPHA_OMEGA_PLAN_EXECUTED!=COMPLETE"
   }
 }
