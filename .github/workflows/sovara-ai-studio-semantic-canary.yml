@@ -9,6 +9,13 @@ on:
       - "governance/fuse_gemini_role_matrix_request_v1.json"
       - "scripts/run_gemini_role_matrix.py"
       - "scripts/run_gemini_role_holdout_benchmark.py"
+      - "config/fuse-google-intelligence-runtime-v2.json"
+      - "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V2_MASTER.md"
+      - "frontier_convergence/gemini_adapter.py"
+      - "frontier_convergence/intelligence_formation_v2.py"
+      - "scripts/run_google_interactions_v2_canary.py"
+      - "tests/test_fuse_google_intelligence_runtime_v2.py"
+      - "tests/test_sovara_google_interactions_v2_canary.py"
       - "prompts/FUSE_GOOGLE_AI_STUDIO_ULTIMATE_INTELLIGENCE_RUNTIME_V1_MASTER.md"
       - "config/fuse-google-intelligence-runtime-v1.json"
       - "config/fuse-bootstrap-inheritance-v3.json"
@@ -33,6 +40,8 @@ env:
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
   ROLE_MATRIX_OUT: /tmp/fuse-gemini-role-matrix
+  INTERACTIONS_MODEL: gemini-3.8-flash
+  INTERACTIONS_OUT: /tmp/fuse-google-interactions-v2
 
 jobs:
   semantic-canary:
@@ -154,12 +163,28 @@ jobs:
           set +x
           python3 scripts/run_gemini_role_matrix.py
 
+      - name: Run V2 Gemini 3.8 Interactions semantic canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 scripts/run_google_interactions_v2_canary.py
+
       - name: Upload immutable redacted semantic receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sovara-ai-studio-semantic-${{ github.run_id }}-${{ github.run_attempt }}
           path: /tmp/sovara-ai-studio/AI_STUDIO_SEMANTIC_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload immutable redacted V2 Interactions receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-google-interactions-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-google-interactions-v2/INTERACTIONS_V2_SEMANTIC_RECEIPT.json
           if-no-files-found: error
           retention-days: 90
 
