@@ -175,5 +175,40 @@ class FuseGoogleIntelligenceRuntimeV2Tests(unittest.TestCase):
         self.assertEqual(plan.selected_cell_ids, ("good",))
 
 
+    def test_v2_bootstrap_guard_is_bound_before_execute(self) -> None:
+        bootstrap = json.loads(
+            (ROOT / "config" / "fuse-bootstrap-inheritance-v3.json").read_text(encoding="utf-8")
+        )
+        manifest = json.loads(
+            (ROOT / "respawn" / "federation_manifest.json").read_text(encoding="utf-8")
+        )
+        service = (ROOT / "respawn" / "bootstrap_service.py").read_text(encoding="utf-8")
+
+        binding = bootstrap["google_intelligence_runtime"]
+        runtime = manifest["google_intelligence_runtime"]
+        self.assertEqual(binding["contract_id"], "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-002")
+        self.assertEqual(runtime["contract_id"], "FUSE-GOOGLE-INTELLIGENCE-RUNTIME-002")
+        self.assertEqual(binding["primary_google_protocol"], "VERTEX_AI_INTERACTIONS_REST")
+        self.assertEqual(runtime["primary_google_protocol"], "VERTEX_AI_INTERACTIONS_REST")
+        self.assertIs(binding["rollback_v1_preserved"], True)
+        self.assertIs(runtime["rollback_v1_preserved"], True)
+
+        order = manifest["bootstrap_order"]
+        self.assertLess(order.index("load_google_intelligence_runtime_contract"), order.index("execute"))
+        self.assertLess(order.index("compile_google_intelligence_route"), order.index("execute"))
+        for invariant in (
+            "GOOGLE_INTERACTIONS_V2_REQUIRES_PROVIDER_SEMANTIC_READBACK",
+            "GOOGLE_38_CHAMPION_REQUIRES_MATCHED_NONREGRESSION_COURT",
+            "GOOGLE_SENSITIVE_INTERACTIONS_DEFAULT_STORE_FALSE",
+            "GOOGLE_LIVE_EXTENDED_THINKING_REQUIRES_INTERACTION_STATUS_FINALITY",
+            "CROSS_PROVIDER_FUSION_REQUIRES_INDEPENDENCE_PROOF",
+        ):
+            self.assertIn(invariant, manifest["bootstrap_invariants"])
+
+        self.assertIn("FUSE_GOOGLE_INTELLIGENCE_BOOTSTRAP_GUARD_V2", service)
+        self.assertIn("GOOGLE_V1_ROLLBACK_PROMPT_HASH_MISMATCH", service)
+        self.assertIn("GOOGLE_INTERACTIONS_PRIMARY_PROTOCOL_MISMATCH", service)
+
+
 if __name__ == "__main__":
     unittest.main()
