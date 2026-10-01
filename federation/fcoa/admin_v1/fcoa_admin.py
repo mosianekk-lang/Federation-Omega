@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable, Mapping
 
+from federation.fcoa.intelligence_v1.fcoa_intelligence import FCOAIntelligenceBinding
 from federation.capability_truth_v1 import (
     AdapterRouteDecision,
     CapabilityCurrentnessFabric,
@@ -121,8 +122,18 @@ class FCOASuperAdmin:
     PROFILE_ID = "FCOA_INTERNAL_SUPER_ADMIN_V1"
     ROUTING_DOCTRINE = ("REUSE", "REBIND", "REPAIR", "EXTEND", "COMPOSE", "HARVEST", "BUILD_MINIMUM")
 
-    def __init__(self, registry: FCOAAdminRegistry):
+    def __init__(self, registry: FCOAAdminRegistry, intelligence: FCOAIntelligenceBinding | None = None):
         self.registry = registry
+        self.intelligence = intelligence or FCOAIntelligenceBinding()
+
+
+    def compile_intelligence(self, **kwargs):
+        """Compile FCOA work through Formation Power; HIPB/auto-improvement are runtime-required.
+
+        This does not grant provider authority or external effects. The returned
+        plan preserves the existing FCOA authorization/currentness path.
+        """
+        return self.intelligence.compile(**kwargs)
 
     def census(self) -> dict:
         rows = self.registry.all()
