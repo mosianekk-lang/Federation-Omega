@@ -351,6 +351,9 @@ def formation_power_inheritance_bootstrap_guard(payload: Optional[Dict[str, Any]
             issues.append(f"FORMATION_POWER_BOOT_STEP_MISSING:{step}")
         elif "execute" in order and order.index(step) > order.index("execute"):
             issues.append(f"FORMATION_POWER_STEP_AFTER_EXECUTE:{step}")
+    if "compile_surface_formation" in order and "compile_workflow_formation_power" in order:
+        if order.index("compile_workflow_formation_power") > order.index("compile_surface_formation"):
+            issues.append("FORMATION_POWER_AFTER_SURFACE_FORMATION")
     required = {
         "ALL_FUSE_WORKFLOWS_REQUIRE_FORMATION_POWER_COMPILE",
         "FORMATION_POWER_USES_EXISTING_ORGANS_NO_DUPLICATE_CONTROL_PLANE",
@@ -423,6 +426,9 @@ def formation_omega_acceleration_bootstrap_guard(payload: Optional[Dict[str, Any
             issues.append(f"FORMATION_ACCELERATION_BOOT_STEP_MISSING:{step}")
         elif "execute" in order and order.index(step) > order.index("execute"):
             issues.append(f"FORMATION_ACCELERATION_STEP_AFTER_EXECUTE:{step}")
+    if "compile_surface_formation" in order and "compile_applicable_alpha_omega" in order:
+        if order.index("compile_applicable_alpha_omega") > order.index("compile_surface_formation"):
+            issues.append("FORMATION_ACCELERATION_AFTER_SURFACE_FORMATION")
     required = {
         "ALL_FUSE_WORKFLOWS_GET_FIVE_MINUTE_SCIENTIA_PREFLIGHT",
         "OVER_BUDGET_FORMATION_MUST_RECOMPILE_BEFORE_EXECUTION",
