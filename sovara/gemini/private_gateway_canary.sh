@@ -151,6 +151,9 @@ DEPLOYMENT_MODE="EXISTING_SERVICE_ZERO_TRAFFIC"
 EPHEMERAL_SERVICE=false
 EPHEMERAL_CREATED=false
 EPHEMERAL_SERVICE_NAME="sovara-gemini-g3-${RUN_ID}-${RUN_ATTEMPT}"
+PROXY_PID=""
+PROXY_PORT=18085
+PROXY_BASE="http://127.0.0.1:${PROXY_PORT}"
 
 if gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json \
   > "$RECEIPT_DIR/G3_SERVICE_BEFORE.json" 2>/dev/null; then
@@ -171,6 +174,11 @@ fi
 cleanup_on_exit() {
   rc=$?
   trap - EXIT
+  if [[ -n "$PROXY_PID" ]] && kill -0 "$PROXY_PID" >/dev/null 2>&1; then
+    kill "$PROXY_PID" >/dev/null 2>&1 || true
+    wait "$PROXY_PID" >/dev/null 2>&1 || true
+  fi
+  PROXY_PID=""
   if [[ "$EPHEMERAL_CREATED" == true ]]; then
     gcloud run services delete "$TARGET_SERVICE" \
       --project "$PROJECT_ID" --region "$REGION" --quiet >/dev/null 2>&1 || true
@@ -295,26 +303,71 @@ print(json.load(open(sys.argv[1]))['revision'])
 PY
 )"
 
-ID_TOKEN="$(gcloud auth print-identity-token --audiences="$CANARY_URL")"
-[[ -n "$ID_TOKEN" ]] || { echo "Identity token acquisition failed" >&2; exit 7; }
+# Invoke the private service through Google's authenticated local proxy.
+# This keeps Cloud Run IAM enforced and avoids manually minting or logging an
+# audience-bound identity token from the external-account CI credential.
+gcloud run services proxy "$TARGET_SERVICE" \
+  --project "$PROJECT_ID" \
+  --region "$REGION" \
+  --port "$PROXY_PORT" \
+  > "$RECEIPT_DIR/G3_PROXY.log" 2>&1 &
+PROXY_PID=$!
 
-curl --fail --silent --show-error -H "Authorization: Bearer $ID_TOKEN" "$CANARY_URL/health" \
-  > "$RECEIPT_DIR/G3_HEALTH.json"
-curl --fail --silent --show-error -H "Authorization: Bearer $ID_TOKEN" "$CANARY_URL/ready" \
+PROXY_READY=false
+for _ in $(seq 1 45); do
+  if ! kill -0 "$PROXY_PID" >/dev/null 2>&1; then
+    echo "Authenticated Cloud Run proxy exited before readiness" >&2
+    tail -n 80 "$RECEIPT_DIR/G3_PROXY.log" >&2 || true
+    exit 7
+  fi
+  if curl --fail --silent --show-error --max-time 2 "$PROXY_BASE/health" \
+      > "$RECEIPT_DIR/G3_HEALTH.json" 2>/dev/null; then
+    PROXY_READY=true
+    break
+  fi
+  sleep 1
+done
+[[ "$PROXY_READY" == true ]] || {
+  echo "Authenticated Cloud Run proxy did not become ready" >&2
+  tail -n 80 "$RECEIPT_DIR/G3_PROXY.log" >&2 || true
+  exit 7
+}
+
+curl --fail --silent --show-error --max-time 15 "$PROXY_BASE/ready" \
   > "$RECEIPT_DIR/G3_READY.json"
+
 NONCE="G3-${RUN_ID}-${RUN_ATTEMPT}-${SOURCE_SHA:0:12}"
-curl --fail --silent --show-error \
-  -H "Authorization: Bearer $ID_TOKEN" \
+curl --fail --silent --show-error --max-time 90 \
   -H "Content-Type: application/json" \
   -d "{\"semantic_nonce\":\"${NONCE}\"}" \
-  "$CANARY_URL/v1/handshake" > "$RECEIPT_DIR/G3_HANDSHAKE.json"
+  "$PROXY_BASE/v1/handshake" > "$RECEIPT_DIR/G3_HANDSHAKE.json"
 
 INTERACTIONS_NONCE="G3I-${RUN_ID}-${RUN_ATTEMPT}-${SOURCE_SHA:0:12}"
-curl --fail --silent --show-error \
-  -H "Authorization: Bearer $ID_TOKEN" \
+curl --fail --silent --show-error --max-time 120 \
   -H "Content-Type: application/json" \
   -d "{\"semantic_nonce\":\"${INTERACTIONS_NONCE}\"}" \
-  "$CANARY_URL/v2/interactions-handshake" > "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json"
+  "$PROXY_BASE/v2/interactions-handshake" > "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json"
+
+python3 - "$TARGET_SERVICE" "$CANARY_URL" "$PROXY_PORT" <<'PY' > "$RECEIPT_DIR/G3_PROXY_TRANSPORT.json"
+import json,sys
+service,url,port=sys.argv[1:4]
+print(json.dumps({
+    'schema':'SOVARA_G3_PRIVATE_PROXY_TRANSPORT_V1',
+    'transport':'GCLOUD_RUN_AUTHENTICATED_PROXY',
+    'target_service':service,
+    'provider_target_url_sha256':__import__('hashlib').sha256(url.encode()).hexdigest(),
+    'local_proxy_host':'127.0.0.1',
+    'local_proxy_port':int(port),
+    'cloud_run_iam_enforced':True,
+    'manual_identity_token_minted':False,
+    'token_value_recorded':False,
+    'public_unauthenticated_access':False,
+},sort_keys=True))
+PY
+
+kill "$PROXY_PID" >/dev/null 2>&1 || true
+wait "$PROXY_PID" >/dev/null 2>&1 || true
+PROXY_PID=""
 
 EPHEMERAL_SERVICE_DELETED=false
 if [[ "$EPHEMERAL_SERVICE" == true ]]; then
@@ -350,7 +403,7 @@ if not cleanup_verified:
     raise SystemExit('G3 cleanup verification failed')
 PY
 
-python3 - "$RECEIPT_DIR/G3_HEALTH.json" "$RECEIPT_DIR/G3_READY.json" "$RECEIPT_DIR/G3_HANDSHAKE.json" "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json" "$RECEIPT_DIR/G3_CANARY_TARGET.json" "$RECEIPT_DIR/G3_CLEANUP_VERIFICATION.json" "$NONCE" "$INTERACTIONS_NONCE" "$PROJECT_ID" "$PROJECT_NUMBER" "$RUNTIME_SA" "$SOURCE_SHA" "$SERVICE_PREEXISTED" "$PREVIOUS_READY" <<'PY' > "$RECEIPT_DIR/G3_PRIVATE_CANARY_RECEIPT.json"
+python3 - "$RECEIPT_DIR/G3_HEALTH.json" "$RECEIPT_DIR/G3_READY.json" "$RECEIPT_DIR/G3_HANDSHAKE.json" "$RECEIPT_DIR/G3_INTERACTIONS_HANDSHAKE.json" "$RECEIPT_DIR/G3_CANARY_TARGET.json" "$RECEIPT_DIR/G3_CLEANUP_VERIFICATION.json" "$RECEIPT_DIR/G3_PROXY_TRANSPORT.json" "$NONCE" "$INTERACTIONS_NONCE" "$PROJECT_ID" "$PROJECT_NUMBER" "$RUNTIME_SA" "$SOURCE_SHA" "$SERVICE_PREEXISTED" "$PREVIOUS_READY" <<'PY' > "$RECEIPT_DIR/G3_PRIVATE_CANARY_RECEIPT.json"
 import hashlib,json,sys
 health=json.load(open(sys.argv[1],encoding='utf-8'))
 ready=json.load(open(sys.argv[2],encoding='utf-8'))
@@ -358,9 +411,10 @@ hs=json.load(open(sys.argv[3],encoding='utf-8'))
 ihs=json.load(open(sys.argv[4],encoding='utf-8'))
 target=json.load(open(sys.argv[5],encoding='utf-8'))
 cleanup=json.load(open(sys.argv[6],encoding='utf-8'))
-nonce,interactions_nonce,project,number,runtime,source=sys.argv[7:13]
-service_preexisted=(sys.argv[13].lower()=='true')
-previous_ready=sys.argv[14]
+proxy=json.load(open(sys.argv[7],encoding='utf-8'))
+nonce,interactions_nonce,project,number,runtime,source=sys.argv[8:14]
+service_preexisted=(sys.argv[14].lower()=='true')
+previous_ready=sys.argv[15]
 assert health.get('status')=='HEALTHY', health
 assert health.get('provider_execution_verified') is False, health
 assert ready.get('status')=='READY_IDENTITY_VERIFIED', ready
@@ -388,6 +442,11 @@ assert isinstance(ihs.get('usage'),dict), ihs
 assert len(str(ihs.get('receipt_sha256') or ''))==64, ihs
 assert target.get('normal_traffic_percent')==0, target
 assert cleanup.get('cleanup_verified') is True, cleanup
+assert proxy.get('transport')=='GCLOUD_RUN_AUTHENTICATED_PROXY', proxy
+assert proxy.get('cloud_run_iam_enforced') is True, proxy
+assert proxy.get('manual_identity_token_minted') is False, proxy
+assert proxy.get('token_value_recorded') is False, proxy
+assert proxy.get('public_unauthenticated_access') is False, proxy
 if target.get('ephemeral_service') is True:
     assert target.get('production_service_mutated') is False, target
     assert cleanup.get('ephemeral_service_deleted') is True, cleanup
@@ -410,6 +469,10 @@ r={
   'ephemeral_service_deleted':cleanup.get('ephemeral_service_deleted'),
   'cleanup_verified':cleanup.get('cleanup_verified'),
   'production_service_mutated':target.get('production_service_mutated'),
+  'invocation_transport':proxy.get('transport'),
+  'cloud_run_iam_enforced':proxy.get('cloud_run_iam_enforced'),
+  'manual_identity_token_minted':proxy.get('manual_identity_token_minted'),
+  'token_value_recorded':proxy.get('token_value_recorded'),
   'provider_request_id':hs['provider_request_id'],
   'model_identity':hs['model_identity'],
   'semantic_nonce_sha256':hs['semantic_nonce_sha256'],
