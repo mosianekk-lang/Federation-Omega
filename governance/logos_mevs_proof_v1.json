@@ -1,0 +1,53 @@
+{
+  "schema": "FUSE-LOGOS-MEVS-PROOF-BINDING-V1",
+  "version": "1.0.0",
+  "proven_source_head": "747999ef1b52b05b44e61e9b2f2f26d218122a3b",
+  "source_identity_mode": "WINDOWS_CHECKOUT_CRLF_BYTES_FROM_GIT_TEXT",
+  "source_tree_sha256": "e51f0806c96c46380b5ce4cf2622edfd37dbac7669b94084ae5c5f7b2a6600d0",
+  "runtime_source_file_count": 18,
+  "compilation_unit_count": 12,
+  "source_files": [
+    ["include/logos_base.h", 1447, "db5604b8610b494dbcd230a61d8babbcbea9ff167efb81c8e929c7e4f6074104"],
+    ["include/logos_format.h", 3285, "b4e0cac35c4a287853224b1f47a19e261a63269c43a483a94e33a8fd6eb1877e"],
+    ["include/logos_store.h", 897, "dffb59b31b0b5fb44ef2fb0f3d630f864016a3914952ae90f1420c1fca305078"],
+    ["include/logos_graph.h", 1503, "e5036491c0c2b933b67c4a7798f6dc74e8314e179e7d4186f47fab749a8a8227"],
+    ["include/logos_ingest.h", 1098, "b2c206605dfd48d396d2c4975d1e3bdce437eb0b8137d75763198835408882e1"],
+    ["include/logos_court.h", 505, "72122dbc83c9c54d17ca1d0d6564b9f4e6a0e76aacf3ad5a739e9bc1f3d081f5"],
+    ["src/main.cpp", 3265, "c8010db60cf17f24ef54c8eb81f4a168cb531d13a2f5a3db4ec34f4d66ba4cb6"],
+    ["src/base.cpp", 5316, "585678d817fb453e95806eba7e16095d8bd5a5468a24f80a5a9d7588506a2e37"],
+    ["src/format.cpp", 7252, "a9a3fc5f25aa4a548cebaa85e78f3e7e81dc99a01f0be84ce8f49414d9613e65"],
+    ["src/object_store.cpp", 3322, "9ba3018ae0008e9344e4170498bab5c91698df73b69df2d6dc5cecb7e39ff394"],
+    ["src/ledger.cpp", 2068, "5e4de901f5823971939a0ea561c85d4c3e05bf39b569960f24a135da3d775417"],
+    ["src/graph.cpp", 13920, "e44259d14e71036ad183ca98f22aaac903ff66748a7138153390983ca85e9fe4"],
+    ["src/ingest.cpp", 12070, "1bc715fcb91e968e4684a69229e995dfa6e3c83fba9440dace005e587830588c"],
+    ["src/contradiction.cpp", 2431, "b2a8e7947b61f7964b882bc68d32268b4eb3d7359606335cdecc38e9d2aa8aec"],
+    ["src/views.cpp", 3474, "3165fcbd565d07281a3f4dbbab9718e2ee609188889e12066552168c1e38f561"],
+    ["src/verify.cpp", 9585, "4b5e3ab6dbcc38c2b1133de09f21c1645885754457186f703a5e42da188fe0cb"],
+    ["court/graph_court.cpp", 10945, "b5b9fcecd445665949dcafd3abe2a8015ba06e0e33148f7af1161a9f72b66b70"],
+    ["court/compiler_court.cpp", 11338, "9d639a82657ed94622b01ac5a8c644db7027144021a27d154cb04e5b7f8c20a9"]
+  ],
+  "hosted_windows": {
+    "run_id": 35126451961,
+    "job_id": 104896561705,
+    "artifact_id": 10459562115,
+    "artifact_zip_sha256": "95a2ce922377739cf5eff1c5a11d9725c4b772718cbf109bb59b482ad3e90506",
+    "build_a_sha256": "f419b3c8b9fe465f380230269aa06c28ea0a3ad86cb03eb74ccfb2eaf8c8d94e",
+    "build_b_sha256": "f419b3c8b9fe465f380230269aa06c28ea0a3ad86cb03eb74ccfb2eaf8c8d94e",
+    "byte_identical": true,
+    "graph_court": "18/18",
+    "compiler_court": "20/20",
+    "network_blocked_court": "PASS"
+  },
+  "mevs": {
+    "historical_input_digest": "745ff45f6f12eb14b036adce0d32a5d61d9edf73f2045b1604eb56f8a1b6dc92",
+    "genesis_input_digest": "ed47f7e9b335a5ab2245d87c748826c6e905b407ffb3607ad7489d4e81872205",
+    "graph_root": "af5cb60d04c8cb7a4f338e3cc464ca50140729823e04a86a7b4a53295e541d32",
+    "canon_view_digest": "1378113c291322465d5c53c4b61ab89e26205c03a6a1640f93288b80e6172e00",
+    "proof_view_digest": "a437c5a9becb66a2e75772339dabe064b4c6d402a117033811d3693bc8e6e503",
+    "contradiction_count": 1,
+    "replay_match": true,
+    "duplicate_ingest_match": true
+  },
+  "owner_pc_physical_proof": false,
+  "truth_boundary": "Hosted Windows deterministic LOGOS-MEVS fixture proof only; not autonomous research, historical truth, Canon validity, production scalability or owner-PC proof."
+}
