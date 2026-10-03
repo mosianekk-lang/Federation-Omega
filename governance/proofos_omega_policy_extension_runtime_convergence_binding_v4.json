@@ -1,0 +1,75 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/alpha_omega_lifecycle_binding_v1.py",
+        "federation/runtime_convergence_binding_v4.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/engine.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/models.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/of50_adapter.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/frcb_lifecycle_adapter.py",
+        "tests/test_runtime_convergence_binding_v4.py",
+        "governance/runtime_convergence_binding_v4.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v4.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V4.md"
+      ],
+      "reason": "FUSE_ALPHA_OMEGA_LOCAL_BUILD_RECEIPT_AND_RUNTIME_CONVERGENCE_BINDING_V4"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_ALPHA_OMEGA_TURNKEY_LOCAL_BUILD_V1",
+      "patterns": [
+        "systems/alpha-omega-turnkey/src/alpha_omega/engine.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/models.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/of50_adapter.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/frcb_lifecycle_adapter.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    },
+    {
+      "subsystem": "FUSE_RUNTIME_CONVERGENCE_BINDING_V4",
+      "patterns": [
+        "federation/alpha_omega_lifecycle_binding_v1.py",
+        "federation/runtime_convergence_binding_v4.py",
+        "tests/test_runtime_convergence_binding_v4.py",
+        "governance/runtime_convergence_binding_v4.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v4.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V4.md"
+      ],
+      "depends_on": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V3",
+        "FUSE_ALPHA_OMEGA_TURNKEY_LOCAL_BUILD_V1",
+        "FUSE_OF50_ACE_V1",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "runtime_convergence_binding_v4",
+      "kind": "unittest_glob",
+      "target": "test_runtime_convergence_binding_v4.py",
+      "patterns": [
+        "federation/alpha_omega_lifecycle_binding_v1.py",
+        "federation/runtime_convergence_binding_v4.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/frcb_lifecycle_adapter.py",
+        "tests/test_runtime_convergence_binding_v4.py",
+        "governance/runtime_convergence_binding_v4.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v4.json"
+      ],
+      "subsystems": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V4"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 300
+    }
+  ]
+}
