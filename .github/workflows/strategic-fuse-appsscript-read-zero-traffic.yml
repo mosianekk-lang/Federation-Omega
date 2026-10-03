@@ -181,6 +181,7 @@ jobs:
         run: |
           set -euo pipefail
           EPHEMERAL_AUDIENCE="https://${EPHEMERAL_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          export EPHEMERAL_AUDIENCE
           {
             echo "EPHEMERAL_AUDIENCE=${EPHEMERAL_AUDIENCE}"
             echo "CANDIDATE_SERVICE=${EPHEMERAL_SERVICE}"
