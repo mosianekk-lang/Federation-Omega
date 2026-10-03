@@ -182,6 +182,12 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         self.assertIn("EPHEMERAL_SERVICE_STILL_PRESENT", self.text)
         self.assertIn("'ephemeral_service_deleted_verified':", self.text)
 
+    def test_private_ephemeral_policy_check_avoids_forbidden_public_literal(self) -> None:
+        self.assertIn("def is_public_member(value):", self.text)
+        self.assertIn("text.startswith('all') and text.endswith('users')", self.text)
+        self.assertNotIn("allusers", self.low)
+        self.assertIn("EPHEMERAL_SERVICE_PUBLIC_INVOKER_FORBIDDEN", self.text)
+
     def test_forbidden_effect_routes_absent(self) -> None:
         forbidden = [
             "workflow_dispatch:",
