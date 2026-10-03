@@ -1,0 +1,50 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R3_HIGH",
+      "patterns": [
+        "sol_61_runtime/sovereign_fdof_v1.py",
+        "sol_61_runtime/test_sovereign_fdof_v1.py",
+        "governance/fuse_sovereign_replacement_trigger_v1.json",
+        "governance/proofos_omega_policy_extension_sovereign_replacement_v1.json"
+      ],
+      "reason": "FDOF_SOVEREIGN_REPLACEMENT_ROUTING_AND_EXTERNAL_DEPENDENCY_RETIREMENT"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FDOF_SOVEREIGN_REPLACEMENT",
+      "patterns": [
+        "sol_61_runtime/sovereign_fdof_v1.py",
+        "sol_61_runtime/test_sovereign_fdof_v1.py",
+        "governance/fuse_sovereign_replacement_trigger_v1.json",
+        "governance/proofos_omega_policy_extension_sovereign_replacement_v1.json"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fdof_sovereign_replacement_contract",
+      "kind": "unittest_glob",
+      "target": "test_sovereign_fdof_v1.py",
+      "patterns": [
+        "sol_61_runtime/sovereign_fdof_v1.py",
+        "sol_61_runtime/test_sovereign_fdof_v1.py",
+        "governance/fuse_sovereign_replacement_trigger_v1.json",
+        "governance/proofos_omega_policy_extension_sovereign_replacement_v1.json"
+      ],
+      "subsystems": [
+        "FDOF_SOVEREIGN_REPLACEMENT"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}

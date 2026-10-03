@@ -1,0 +1,85 @@
+{
+  "schema": "FUSE-SOVEREIGN-REPLACEMENT-TRIGGER-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Convert external-provider friction into automatic owner-controlled FUSE replacement work instead of provider-specific dead ends.",
+  "primary_runtime": "sol_61_runtime.sovereign_fdof_v1.SovereignFederationDistributedOperatingFabric",
+  "base_runtime_reused": "sol_61_runtime.fdof_v1.FederationDistributedOperatingFabric",
+  "laws": {
+    "external_provider_is_control_plane": false,
+    "external_provider_role": "OPTIONAL_ADAPTER",
+    "fuse_owned_replacement_default": true,
+    "reuse_existing_fuse_native_first": true,
+    "duplicate_builds_forbidden": true,
+    "clean_room_reimplementation": true,
+    "owner_private_default": true,
+    "proof_before_promotion": true,
+    "external_control_dependency_retirement_required": true,
+    "no_unknown_spend": true,
+    "no_secret_exposure": true
+  },
+  "automatic_triggers": [
+    "NO_VERIFIED_EXECUTOR_ROUTE",
+    "WORKFLOW_ADMISSION_BLOCKED",
+    "EXTERNAL_POLICY_BLOCK",
+    "PERMISSION_DENIED",
+    "AUTHORITY_LOST",
+    "OIDC_OR_IDENTITY_FAILURE",
+    "MISSING_RUNTIME_CONFIG",
+    "EXTERNAL_SERVICE_OUTAGE",
+    "RATE_LIMIT_OR_QUOTA",
+    "CONNECTOR_OR_API_UNAVAILABLE",
+    "LICENSE_OR_FEATURE_RESTRICTION",
+    "VENDOR_LOCK_IN",
+    "PROVIDER_ONLY_CAPABILITY_GAP"
+  ],
+  "replacement_targets": {
+    "workflow_ci_admission_policy": "FUSE_FORGE_PROOF_GATE",
+    "identity_auth_oidc_permission": "FUSE_IDENTITY_AUTHORITY",
+    "configuration_variable_secret_reference": "FUSE_CONFIG_VAULT",
+    "artifact_registry_package": "FUSE_ARTIFACT_STORE",
+    "hosting_service_deployment": "FUSE_SERVICE_FABRIC",
+    "sync_drive_sheet_memory_data": "FUSE_MEMORY_FABRIC",
+    "mcp_api_connector_capability": "FUSE_CAPABILITY_BUS",
+    "rate_quota_model_compute": "FUSE_COMPUTE_ROUTER",
+    "repository_git_source": "FUSE_SOURCE_LEDGER",
+    "unclassified": "FUSE_NATIVE_CAPABILITY"
+  },
+  "lifecycle": [
+    "DETECT_EXTERNAL_FRICTION",
+    "REUSE_EXISTING_FUSE_NATIVE_FIRST",
+    "BUILD_MINIMUM_MISSING_FUSE_NATIVE",
+    "DETERMINISTIC_TEST",
+    "ADVERSARIAL_PROOF",
+    "PROMOTE_FUSE_NATIVE_ON_EVIDENCE",
+    "DEMOTE_EXTERNAL_TO_OPTIONAL_ADAPTER",
+    "RETIRE_EXTERNAL_CONTROL_DEPENDENCY"
+  ],
+  "completion_contract": {
+    "source_only_is_complete": false,
+    "design_only_is_complete": false,
+    "provider_workaround_is_complete": false,
+    "requires_fuse_owned_executor": true,
+    "requires_fresh_healthy_readback": true,
+    "requires_proof_id": true,
+    "requires_external_dependency_demoted_to_optional_adapter": true
+  },
+  "interoperability": {
+    "existing_external_services_may_remain": true,
+    "external_services_may_be_used_when_better_or_convenient": true,
+    "mission_must_not_be_blocked_by_external_service": true,
+    "provider_adapters_must_not_receive_canonical_authority": true
+  },
+  "retirement_story": {
+    "trigger": "FUSE_NATIVE_REPLACEMENT_VERIFIED",
+    "external_dependency_role_after_trigger": "OPTIONAL_ADAPTER",
+    "control_plane_dependency_after_trigger": false,
+    "historical_evidence_retained": true
+  },
+  "proof": {
+    "test": "sol_61_runtime/test_sovereign_fdof_v1.py",
+    "evidence_boundary": "DETERMINISTIC_LOCAL_STATE_UNTIL_A_FUSE_OWNED_EXECUTOR_HAS_FRESH_HEALTH_AND_PROOF",
+    "provider_mutation_required_for_test": false,
+    "credentials_required_for_test": false
+  }
+}
