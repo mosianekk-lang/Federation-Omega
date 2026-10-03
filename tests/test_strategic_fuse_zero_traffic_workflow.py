@@ -82,7 +82,7 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "'iam_mutation_performed':False",
             "'wif_mutation_performed':False",
             "'traffic_promotion_performed':False",
-            "'provider_effect_scope':'ZERO_TRAFFIC_CANDIDATE_REVISION_ONLY'",
+            "'provider_effect_scope':'EPHEMERAL_PRIVATE_SERVICE_ONLY'",
         ]
         missing = [item for item in required if item not in self.text]
         self.assertFalse(missing, missing)
@@ -125,7 +125,7 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         self.assertIn("docker build --pull", self.text)
         self.assertIn('docker push "$IMAGE_TAG"', self.text)
         self.assertIn('gcloud artifacts docker images describe "$IMAGE_TAG"', self.text)
-        self.assertLess(self.text.index('docker push "$IMAGE_TAG"'), self.text.index('gcloud run deploy "$OPERATOR_SERVICE"'))
+        self.assertLess(self.text.index('docker push "$IMAGE_TAG"'), self.text.index('gcloud run deploy "$EPHEMERAL_SERVICE"'))
 
     def test_existing_provider_authority_is_reproved_before_candidate_deploy(self) -> None:
         self.assertIn('gcloud projects get-iam-policy "$PROJECT_ID"', self.text)
@@ -136,19 +136,16 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         self.assertIn("roles/iam.serviceAccountUser", self.text)
         self.assertIn("ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED", self.text)
         self.assertIn("CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED", self.text)
-        self.assertLess(self.text.index("CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED"), self.text.index('gcloud run deploy "$OPERATOR_SERVICE"'))
+        self.assertLess(self.text.index("CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED"), self.text.index('gcloud run deploy "$EPHEMERAL_SERVICE"'))
         self.assertNotIn("add-iam-policy-binding", self.low)
 
-    def test_candidate_clears_all_inherited_secrets_before_creation(self) -> None:
-        deploy = self.text.index('gcloud run deploy "$OPERATOR_SERVICE"')
-        clear = self.text.index("--clear-secrets", deploy)
-        env = self.text.index("--set-env-vars", deploy)
-        self.assertLess(deploy, clear)
-        self.assertLess(clear, env)
-        self.assertEqual(1, self.text.count("--clear-secrets"))
-        self.assertNotIn("--remove-secrets", self.text)
-        self.assertNotIn("--set-secrets", self.text)
-        self.assertNotIn("--update-secrets", self.text)
+    def test_candidate_is_new_isolated_service_without_inherited_secret_state(self) -> None:
+        self.assertIn('gcloud run deploy "$EPHEMERAL_SERVICE"', self.text)
+        self.assertNotIn('gcloud run deploy "$OPERATOR_SERVICE"', self.text)
+        self.assertIn('--no-allow-unauthenticated', self.text)
+        self.assertNotIn('--set-secrets', self.text)
+        self.assertNotIn('--update-secrets', self.text)
+        self.assertIn("assert not secret_backed, 'CANDIDATE_SECRET_BACKED_ENV_FORBIDDEN'", self.text)
 
     def test_candidate_uses_only_pre_authorized_runtime_identity(self) -> None:
         self.assertIn("CANDIDATE_RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com", self.text)
@@ -178,14 +175,12 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         )
         self.assertLess(self.text.index("--set-env-vars"), self.text.index("/tmp/strategic-read/read-request.json"))
 
-    def test_cloud_run_candidate_tag_is_deterministic_and_within_provider_limit(self) -> None:
-        self.assertIn('TAG="sf-${GITHUB_SHA:0:8}"', self.text)
-        self.assertIn('if (( ${#OPERATOR_SERVICE} + ${#TAG} > 46 )); then', self.text)
-        self.assertIn("CLOUD_RUN_SERVICE_TAG_LENGTH_EXCEEDS_46", self.text)
-        self.assertNotIn('TAG="strategic-read-${GITHUB_SHA:0:8}"', self.text)
-        service = "federation-omega-operator"
-        tag = "sf-" + ("0" * 8)
-        self.assertLessEqual(len(service) + len(tag), 46)
+    def test_ephemeral_service_identity_and_cleanup_are_bounded(self) -> None:
+        self.assertIn("EPHEMERAL_SERVICE: sf-appscript-${{ github.run_id }}-${{ github.run_attempt }}", self.text)
+        self.assertIn('EPHEMERAL_AUDIENCE="https://${EPHEMERAL_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"', self.text)
+        self.assertIn('gcloud run services delete "$EPHEMERAL_SERVICE"', self.text)
+        self.assertIn("EPHEMERAL_SERVICE_STILL_PRESENT", self.text)
+        self.assertIn("'ephemeral_service_deleted_verified':", self.text)
 
     def test_forbidden_effect_routes_absent(self) -> None:
         forbidden = [
@@ -216,9 +211,12 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
     def test_status_precedes_strategic_read(self) -> None:
         self.assertLess(self.text.index("/tmp/strategic-read/status-request.json"), self.text.index("/tmp/strategic-read/read-request.json"))
 
-    def test_no_traffic_is_proven_before_and_after_read(self) -> None:
-        self.assertLess(self.text.index("CANDIDATE_TRAFFIC_NOT_ZERO"), self.text.index("/tmp/strategic-read/read-request.json"))
-        self.assertLess(self.text.index("/tmp/strategic-read/read-request.json"), self.text.index("CANDIDATE_NOT_ZERO_TRAFFIC_AT_END"))
+    def test_production_traffic_is_unchanged_and_ephemeral_service_is_private(self) -> None:
+        self.assertLess(self.text.index("SERVING_TRAFFIC_CHANGED"), self.text.index("Delete isolated ephemeral candidate"))
+        self.assertIn("EPHEMERAL_SERVICE_PUBLIC_INVOKER_FORBIDDEN", self.text)
+        self.assertIn("'serving_traffic_unchanged':True", self.text)
+        self.assertIn("'ephemeral_service_isolated':True", self.text)
+        self.assertIn("'production_service_template_mutation_performed':False", self.text)
 
     def test_no_raw_source_is_persisted_in_receipt(self) -> None:
         self.assertIn("'project_digest':read.get('projectDigest')", self.text)
