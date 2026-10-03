@@ -1,0 +1,67 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/fuse_one_commercial_closure_v1.py",
+        "tests/test_fuse_one_commercial_closure_v1.py",
+        "governance/fuse_one_commercial_closure_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_commercial_closure_v1.json",
+        "docs/product/FUSE_ONE_COMMERCIAL_PRODUCT_V1.md"
+      ],
+      "reason": "FUSE_ONE_COMMERCIAL_RELEASE_MATURITY_AND_FALSE_READINESS_PREVENTION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_ONE_COMMERCIAL_CLOSURE_V1",
+      "patterns": [
+        "federation/fuse_one_commercial_closure_v1.py",
+        "tests/test_fuse_one_commercial_closure_v1.py",
+        "governance/fuse_one_commercial_closure_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_one_commercial_closure_v1.json",
+        "docs/product/FUSE_ONE_COMMERCIAL_PRODUCT_V1.md"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_one_commercial_closure_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_one_commercial_closure_v1.py",
+      "patterns": [
+        "federation/fuse_one_commercial_closure_v1.py",
+        "tests/test_fuse_one_commercial_closure_v1.py",
+        "governance/fuse_one_commercial_closure_v1.json",
+        "docs/product/FUSE_ONE_COMMERCIAL_PRODUCT_V1.md"
+      ],
+      "subsystems": [
+        "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "fuse_one_hypercube_dependency_v1",
+      "kind": "unittest_glob",
+      "target": "test_hypercube_bottleneck_resolver_v1.py",
+      "patterns": [
+        "federation/fuse_one_commercial_closure_v1.py",
+        "governance/fuse_one_commercial_closure_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}

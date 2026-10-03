@@ -1,0 +1,54 @@
+{
+  "schema": "FUSE_ONE_COMMERCIAL_CLOSURE_GOVERNANCE_V1",
+  "version": "1.0.0",
+  "product_id": "FUSE_ONE_SOVEREIGN_WORKBENCH",
+  "authority_ceiling": "A1_INTERNAL",
+  "provider_effect_authorized": false,
+  "external_publication_authorized": false,
+  "spend_authorized": false,
+  "canonical_role": "COMMERCIAL_CLOSURE_COMPILER_NOT_CONTROLLER",
+  "target_customer": [
+    "TECHNICAL_FOUNDER_OPERATOR",
+    "AI_AUTOMATION_LEAD",
+    "TRUST_SENSITIVE_KNOWLEDGE_TEAM"
+  ],
+  "commercial_wedge": "WINDOWS_FIRST_LOCAL_FIRST_PROOF_CARRYING_AI_WORKBENCH",
+  "distribution": [
+    "MSIX_USER",
+    "ZIP_PORTABLE",
+    "OPTIONAL_WEB_MOBILE_COMPANION"
+  ],
+  "hard_rules": [
+    "SOURCE_IS_NOT_COMMERCIAL_RELEASE",
+    "TEST_GREEN_IS_NOT_PROVIDER_RUNTIME",
+    "INSTALLER_CONTRACT_IS_NOT_INSTALLER_PROOF",
+    "HOSTED_WINDOWS_IS_NOT_OWNER_PC",
+    "PROVIDER_EFFECT_REQUIRES_EXACT_AUTHORITY",
+    "COMMERCIAL_RELEASE_REQUIRES_VALUE_EVIDENCE",
+    "HYPERCUBE_MUST_RESOLVE_DOMINANT_BOTTLENECKS",
+    "REUSE_EXISTING_FUSE_ORGANS_BEFORE_BUILDING_NEW_ONES",
+    "OWNER_PC_NON_ADMIN_INSTALL_IS_A_REQUIRED_USER_JOURNEY",
+    "LOCAL_OFFLINE_CORE_MUST_NOT_REQUIRE_A_CLOUD_MODEL"
+  ],
+  "release_terminal": [
+    "WEBSITE_DEPLOYED_READBACK",
+    "INSTALLER_SIGNED",
+    "CLEAN_INSTALL_VERIFIED",
+    "UPGRADE_VERIFIED",
+    "UNINSTALL_VERIFIED",
+    "SECURE_UPDATE_VERIFIED",
+    "TENANT_ISOLATION_VERIFIED",
+    "AUTH_VERIFIED",
+    "RECOVERY_VERIFIED",
+    "SUPPLY_CHAIN_VERIFIED",
+    "TRUST_CENTER_CLAIMS_CURRENT",
+    "OWNER_VALUE_VERIFIED"
+  ],
+  "truth_boundary": {
+    "compiler_can_measure_commercial_maturity": true,
+    "compiler_can_authorize_provider_effect": false,
+    "source_admission_equals_commercial_readiness": false,
+    "synthetic_full_proof_vector_equals_real_release": false,
+    "commercial_release_requires_real_observed_proofs": true
+  }
+}
