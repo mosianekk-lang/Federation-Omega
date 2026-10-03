@@ -321,10 +321,12 @@ jobs:
                for x in p.get('status', {}).get('traffic', []) if int(x.get('percent') or 0) > 0),
               key=lambda x: (x['revision'] or '', x['percent']))
           assert before == after, f'SERVING_TRAFFIC_CHANGED:{before!r}!={after!r}'
-          public={'allUsers','allAuthenticatedUsers'}
+          def is_public_member(value):
+              text=str(value or '').strip().lower()
+              return text.startswith('all') and text.endswith('users')
           public_invoker=any(
               b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'}
-              and public.intersection(set(b.get('members') or []))
+              and any(is_public_member(member) for member in (b.get('members') or []))
               for b in policy.get('bindings') or []
           )
           assert not public_invoker, 'EPHEMERAL_SERVICE_PUBLIC_INVOKER_FORBIDDEN'
