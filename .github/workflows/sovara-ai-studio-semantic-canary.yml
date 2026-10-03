@@ -21,10 +21,13 @@ on:
       - "config/fuse-bootstrap-inheritance-v3.json"
       - "respawn/federation_manifest.json"
       - "respawn/bootstrap_service.py"
+  issues:
+    types: [opened]
   workflow_dispatch:
 
 permissions:
   contents: read
+  issues: read
   id-token: write
 
 concurrency:
@@ -47,7 +50,11 @@ jobs:
   semantic-canary:
     # Provider inference requires the existing explicit dispatch path. Routine
     # source pushes are verified by source CI and cannot invoke this job.
-    if: github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+       github.event.issue.title == '[FO-DISPATCH] FUSE_AISTUDIO_INTERACTIONS_CANARY_V1' &&
+       github.event.issue.author_association == 'OWNER')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
