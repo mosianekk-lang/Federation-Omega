@@ -24,6 +24,7 @@ env:
   CANDIDATE_RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
   TARGET_SCRIPT_ID: 1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R
   REQUIRED_ACTION: READ_APPS_SCRIPT_PROJECT_BOUNDED
+  EPHEMERAL_SERVICE: sf-appscript-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
   strategic-read-canary:
@@ -171,39 +172,41 @@ jobs:
             echo "CANDIDATE_DIGEST=$DIGEST"
           } >> "$GITHUB_ENV"
 
-      - name: Deploy tagged zero-traffic candidate with explicit pre-authorized runtime identity
+      - name: Deploy isolated private ephemeral candidate with explicit pre-authorized runtime identity
+        id: deploy
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          TAG="sf-${GITHUB_SHA:0:8}"
-          if (( ${#OPERATOR_SERVICE} + ${#TAG} > 46 )); then
-            echo "CLOUD_RUN_SERVICE_TAG_LENGTH_EXCEEDS_46" >&2
-            exit 1
-          fi
-          gcloud run deploy "$OPERATOR_SERVICE" \
+          EPHEMERAL_AUDIENCE="https://${EPHEMERAL_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          {
+            echo "EPHEMERAL_AUDIENCE=${EPHEMERAL_AUDIENCE}"
+            echo "CANDIDATE_SERVICE=${EPHEMERAL_SERVICE}"
+          } >> "$GITHUB_ENV"
+          gcloud run deploy "$EPHEMERAL_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" \
-            --image "$CANDIDATE_IMAGE" --no-traffic --tag "$TAG" \
+            --image "$CANDIDATE_IMAGE" \
             --service-account "$CANDIDATE_RUNTIME_SA" \
-            --clear-secrets \
-            --set-env-vars "OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}" \
+            --no-allow-unauthenticated \
+            --set-env-vars "OPERATOR_AUDIENCE=${EPHEMERAL_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}" \
             --quiet
-          echo "CANDIDATE_TAG=$TAG" >> "$GITHUB_ENV"
-          gcloud run services describe "$OPERATOR_SERVICE" \
+          gcloud run services describe "$EPHEMERAL_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" --format=json \
             > /tmp/strategic-read/service-candidate.json
           python - <<'PY'
           import json, os
           from pathlib import Path
           p = json.loads(Path('/tmp/strategic-read/service-candidate.json').read_text())
-          tag = os.environ['CANDIDATE_TAG']
-          matches = [x for x in p.get('status', {}).get('traffic', []) if x.get('tag') == tag]
-          assert len(matches) == 1, 'TAGGED_CANDIDATE_NOT_UNIQUE'
-          item = matches[0]
-          assert int(item.get('percent') or 0) == 0, 'CANDIDATE_TRAFFIC_NOT_ZERO'
-          assert item.get('revisionName'), 'CANDIDATE_REVISION_MISSING'
-          assert item.get('url'), 'CANDIDATE_URL_MISSING'
+          status = p.get('status') or {}
+          url = str(status.get('url') or '').strip()
+          revision = str(status.get('latestReadyRevisionName') or '').strip()
+          assert url == os.environ['EPHEMERAL_AUDIENCE'], (url, os.environ['EPHEMERAL_AUDIENCE'])
+          assert revision, 'CANDIDATE_REVISION_MISSING'
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
-              fh.write('CANDIDATE_URL<<STRATEGIC_URL_EOF\n' + item['url'] + '\nSTRATEGIC_URL_EOF\n')
-              fh.write('CANDIDATE_REVISION=' + item['revisionName'] + '\n')
+              fh.write('CANDIDATE_URL<<STRATEGIC_URL_EOF\n' + url + '\nSTRATEGIC_URL_EOF\n')
+              fh.write('CANDIDATE_REVISION=' + revision + '\n')
           PY
 
       - name: Prove candidate runtime trust is exact scoped and secretless
@@ -235,7 +238,7 @@ jobs:
         run: |
           set -euo pipefail
           set +x
-          TOKEN="$(gcloud auth print-identity-token --audiences="$OPERATOR_AUDIENCE" --include-email)"
+          TOKEN="$(gcloud auth print-identity-token --audiences="$CANDIDATE_URL" --include-email)"
           test -n "$TOKEN"
           echo "::add-mask::$TOKEN"
           printf '%s' '{"action":"STATUS","payload":{}}' > /tmp/strategic-read/status-request.json
@@ -259,7 +262,7 @@ jobs:
         run: |
           set -euo pipefail
           set +x
-          TOKEN="$(gcloud auth print-identity-token --audiences="$OPERATOR_AUDIENCE" --include-email)"
+          TOKEN="$(gcloud auth print-identity-token --audiences="$CANDIDATE_URL" --include-email)"
           test -n "$TOKEN"
           echo "::add-mask::$TOKEN"
           python - <<'PY'
@@ -297,29 +300,64 @@ jobs:
           assert not contains_source(p), 'RAW_SOURCE_FIELD_PRESENT'
           PY
 
-      - name: Prove normal serving traffic was unchanged and candidate remains zero traffic
+      - name: Prove production serving traffic unchanged and ephemeral service private
+        shell: bash
         run: |
           set -euo pipefail
           gcloud run services describe "$OPERATOR_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" --format=json \
             > /tmp/strategic-read/service-after.json
+          gcloud run services get-iam-policy "$EPHEMERAL_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > /tmp/strategic-read/ephemeral-policy.json
           python - <<'PY'
-          import hashlib, json, os
+          import hashlib, json
           from pathlib import Path
           before = json.loads(Path('/tmp/strategic-read/serving-before.json').read_text())
           p = json.loads(Path('/tmp/strategic-read/service-after.json').read_text())
+          policy = json.loads(Path('/tmp/strategic-read/ephemeral-policy.json').read_text())
           after = sorted(
               ({'revision': x.get('revisionName'), 'percent': int(x.get('percent') or 0)}
                for x in p.get('status', {}).get('traffic', []) if int(x.get('percent') or 0) > 0),
               key=lambda x: (x['revision'] or '', x['percent']))
           assert before == after, f'SERVING_TRAFFIC_CHANGED:{before!r}!={after!r}'
-          tag = os.environ['CANDIDATE_TAG']
-          tagged = [x for x in p.get('status', {}).get('traffic', []) if x.get('tag') == tag]
-          assert len(tagged) == 1 and int(tagged[0].get('percent') or 0) == 0, 'CANDIDATE_NOT_ZERO_TRAFFIC_AT_END'
+          def is_public_member(value):
+              text=str(value or '').strip().lower()
+              return text.startswith('all') and text.endswith('users')
+          public_invoker=any(
+              b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'}
+              and any(is_public_member(member) for member in (b.get('members') or []))
+              for b in policy.get('bindings') or []
+          )
+          assert not public_invoker, 'EPHEMERAL_SERVICE_PUBLIC_INVOKER_FORBIDDEN'
           raw = json.dumps(after, sort_keys=True, separators=(',', ':')).encode()
           Path('/tmp/strategic-read/serving-after.sha256').write_text(hashlib.sha256(raw).hexdigest())
           assert Path('/tmp/strategic-read/serving-before.sha256').read_text() == Path('/tmp/strategic-read/serving-after.sha256').read_text(), 'SERVING_TRAFFIC_DIGEST_CHANGED'
+          Path('/tmp/strategic-read/isolation-proof.json').write_text(json.dumps({
+              'serving_traffic_unchanged':True,
+              'ephemeral_service_private':True,
+              'public_invocation':False,
+          },sort_keys=True,indent=2)+'\n')
           PY
+
+      - name: Delete isolated ephemeral candidate and prove absence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gcloud run services describe "$EPHEMERAL_SERVICE" --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            gcloud run services delete "$EPHEMERAL_SERVICE" --project "$PROJECT_ID" --region "$REGION" --quiet
+          fi
+          DELETED=false
+          for _ in $(seq 1 20); do
+            if ! gcloud run services describe "$EPHEMERAL_SERVICE" --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+              DELETED=true
+              break
+            fi
+            sleep 2
+          done
+          test "$DELETED" = "true" || { echo "EPHEMERAL_SERVICE_STILL_PRESENT" >&2; exit 1; }
+          printf '%s\n' '{"ephemeral_service_deleted_verified":true}' > /tmp/strategic-read/cleanup.json
 
       - name: Emit bounded no-secret proof receipt
         run: |
@@ -334,6 +372,8 @@ jobs:
             'source_sha':os.environ['GITHUB_SHA'],
             'operator_service':os.environ['OPERATOR_SERVICE'],
             'operator_audience':os.environ['OPERATOR_AUDIENCE'],
+            'candidate_audience':os.environ['EPHEMERAL_AUDIENCE'],
+            'candidate_service':os.environ['EPHEMERAL_SERVICE'],
             'operator_host_sha256':os.environ['OPERATOR_HOST_SHA256'],
             'provider_native_audience':True,
             'serving_operator_audience_present':os.environ['SERVING_AUDIENCE_PRESENT'].lower() == 'true',
@@ -345,15 +385,16 @@ jobs:
             'image_build_transport':'GITHUB_HOSTED_DOCKER_DIRECT_ARTIFACT_REGISTRY',
             'cloud_build_staging_used':False,
             'candidate_revision':os.environ['CANDIDATE_REVISION'],
-            'candidate_tag':os.environ['CANDIDATE_TAG'],
             'candidate_image_digest':os.environ['CANDIDATE_DIGEST'],
-            'candidate_traffic_percent':0,
             'candidate_oidc_principal_count':1,
             'candidate_oidc_principal_deployer_only':True,
             'candidate_environment_closed_world':True,
             'candidate_secret_backed_env_count':0,
             'candidate_only_trust_binding':True,
-            'service_template_mutation_performed':True,
+            'ephemeral_service_isolated':True,
+            'ephemeral_service_deleted_verified':json.loads(Path('/tmp/strategic-read/cleanup.json').read_text()).get('ephemeral_service_deleted_verified') is True,
+            'production_service_template_mutation_performed':False,
+            'ephemeral_service_mutation_performed':True,
             'serving_revision_runtime_identity_mutation_performed':False,
             'serving_revision_trust_mutation_performed':False,
             'serving_traffic_unchanged':True,
@@ -373,7 +414,7 @@ jobs:
             'iam_mutation_performed':False,
             'wif_mutation_performed':False,
             'traffic_promotion_performed':False,
-            'provider_effect_scope':'ZERO_TRAFFIC_CANDIDATE_REVISION_ONLY',
+            'provider_effect_scope':'EPHEMERAL_PRIVATE_SERVICE_ONLY',
           }
           Path('/tmp/strategic-read/receipt.json').write_text(json.dumps(receipt,sort_keys=True,indent=2),encoding='utf-8')
           PY
