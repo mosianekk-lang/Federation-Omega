@@ -1,0 +1,44 @@
+{
+  "schema": "FUSE-KDV-READ-CONTINUITY-CAPTURE-CONTROL-V1",
+  "version": "1.0.0",
+  "state": "SOURCE_CANDIDATE",
+  "architecture_mode": "COMPOSE_EXISTING_PROVIDER_READER_FKCM_AND_F312",
+  "reuse": [
+    "KDVSheetsReader-compatible provider row source",
+    "FKCM_V1.from_bmf_row",
+    "KDV_READ_CONTINUITY_V1"
+  ],
+  "provider_transport_implemented_here": false,
+  "provider_credentials_accepted_here": false,
+  "new_store_created": false,
+  "new_writer_created": false,
+  "live_shape_canary": {
+    "sheet": "BMF_SHADOW_EVENTS",
+    "provider_read_observed": true,
+    "required_header_count": 21,
+    "shape_matches_fkcm_from_bmf_row": true,
+    "payload_material_persisted_in_public_source": false
+  },
+  "capture": {
+    "verified_provider_read_required": true,
+    "exact_bmf_fields_required": true,
+    "provider_event_sha256_shape_required": true,
+    "unique_event_id_required": true,
+    "unique_stream_version_required": true,
+    "rowset_sha256_bound": true,
+    "fkcm_normalization_only": true,
+    "f312_archive_only": true
+  },
+  "authority": {
+    "canonical_authority": false,
+    "write_authority": false,
+    "provider_effect_authorized": false,
+    "cutover_authorized": false
+  },
+  "maturity_boundary": {
+    "source_admission_proves_live_capture_runtime": false,
+    "live_shape_canary_proves_runtime_binding": false,
+    "caller_supplied_verified_provider_rows_required": true,
+    "continuity_snapshot_remains_as_of_only": true
+  }
+}
