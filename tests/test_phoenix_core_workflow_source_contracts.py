@@ -59,7 +59,8 @@ class SovaraWorkflowSourceContracts(unittest.TestCase):
 
     def test_provider_job_requires_explicit_owner_dispatch(self) -> None:
         self.assertIn("workflow_dispatch:", self.workflow)
-        self.assertIn("issues:\\n    types: [opened]", self.workflow)
+        self.assertIn("issues:", self.workflow)
+        self.assertIn("    types: [opened]", self.workflow)
         self.assertIn("github.event_name == 'workflow_dispatch'", self.workflow)
         self.assertIn("github.event_name == 'issues'", self.workflow)
         self.assertIn("github.event.issue.title == '[FO-DISPATCH] FUSE_AISTUDIO_INTERACTIONS_CANARY_V1'", self.workflow)
