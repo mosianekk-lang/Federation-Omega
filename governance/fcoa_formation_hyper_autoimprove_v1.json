@@ -1,0 +1,63 @@
+{
+  "schema": "FCOA_FORMATION_HYPER_AUTOIMPROVE_BINDING_V1",
+  "version": "1.0.0",
+  "contract_id": "FCOA-INTELLIGENCE-001",
+  "agent_id": "FCOA-OMEGA",
+  "enabled": true,
+  "role": "ADDITIVE_INTELLIGENCE_AND_SELF_IMPROVEMENT_BINDING",
+  "reuse": {
+    "formation_power": "FUSE-FORMATION-POWER-002",
+    "formation_surface_load_balancer": "FUSE-FORMATION-SURFACE-LB-001",
+    "hyper_intelligence_performance": "FUSE-HIPB-001",
+    "autonomous_improvement": "FUSE_AUTONOMOUS_IMPROVEMENT_LOOP_V1",
+    "output_mirror": "FUSE_OUTPUT_MIRROR_V3",
+    "proof": "PROOFOS_REALITY_JUDGE",
+    "authority": "FDOF_SICF",
+    "learning": "FEDERATION_LEARNING_EXISTING_RECEIVERS"
+  },
+  "applies_to": [
+    "FCOA_ADMIN",
+    "FCOA_CREATIVE",
+    "FCOA_DEVICE_CONTROL",
+    "FCOA_WINDOWS",
+    "FCOA_SURFACE_CENSUS",
+    "FCOA_AUTOMATION",
+    "FCOA_ARTIFACT_PRODUCTION",
+    "FCOA_CAPABILITY_CENSUS"
+  ],
+  "required_cycle": [
+    "FORMATION_COMPILE",
+    "HIPB_PRE_COMPILE",
+    "ROUTE_AND_PARALLELISM_COMPILE",
+    "HIPB_PRE_EFFECT",
+    "FCOA_EXECUTE_WITH_EXISTING_AUTHORITY",
+    "READBACK",
+    "HIPB_POST_EFFECT",
+    "AUTONOMOUS_IMPROVEMENT_10",
+    "MATCHED_NONREGRESSION_IF_PERFORMANCE_CLAIM",
+    "INDEPENDENT_JUDGE",
+    "LEARNING_PERSISTENCE"
+  ],
+  "autonomous_improvement": {
+    "iterations": 10,
+    "promotion_requires": "MATCHED_NONREGRESSION_PROOF_READBACK_ROLLBACK_AND_PROVENANCE",
+    "tie_behavior": "KEEP_CURRENT_CHAMPION",
+    "natural_prevention_separate": true,
+    "owner_value_separate": true
+  },
+  "hyper_performance": {
+    "contract_id": "FUSE-HIPB-001",
+    "three_hooks": ["PRE_COMPILE", "PRE_EFFECT", "POST_EFFECT"],
+    "matched_empirical_proof_required": true,
+    "no_hyper_performance_claim_from_source_only": true
+  },
+  "authority_expansion": false,
+  "external_effect_authorized": false,
+  "provider_execution_proven": false,
+  "builder_self_certification": false,
+  "new_controller": false,
+  "new_scheduler": false,
+  "new_truth_root": false,
+  "new_memory_root": false,
+  "truth_boundary": "FCOA_INTELLIGENCE_BOUND!=FORMATION_EXECUTED!=HIPB_RUNTIME_CONSUMED!=AUTOIMPROVEMENT_EXECUTED!=MATCHED_PERFORMANCE_PROVEN!=PROVIDER_EFFECT_VERIFIED!=OWNER_VALUE!=COMPLETE"
+}
