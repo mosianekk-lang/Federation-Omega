@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.39",
+  "version": "2.9.40",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -181,6 +181,7 @@
       "workflow_dispatch"
     ],
     ".github/workflows/sovara-ai-studio-semantic-canary.yml": [
+      "issues",
       "push",
       "workflow_dispatch"
     ],

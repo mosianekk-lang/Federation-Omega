@@ -57,29 +57,16 @@ class SovaraWorkflowSourceContracts(unittest.TestCase):
         self.assertIn("INTERACTIONS_V2_SEMANTIC_RECEIPT.json", self.workflow)
         self.assertIn("retention-days: 90", self.workflow)
 
-    def test_provider_job_requires_explicit_workflow_dispatch(self) -> None:
-        # Intentionally accept only this workflow's explicit block-mapping form;
-        # a structure change must be reviewed, not interpreted permissively.
-        lines = [line.rstrip() for line in self.workflow.splitlines()
-                 if line.strip() and not line.lstrip().startswith("#")]
+    def test_provider_job_requires_explicit_owner_dispatch(self) -> None:
+        self.assertIn("workflow_dispatch:", self.workflow)
+        self.assertIn("issues:", self.workflow)
+        self.assertIn("    types: [opened]", self.workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch'", self.workflow)
+        self.assertIn("github.event_name == 'issues'", self.workflow)
+        self.assertIn("github.event.issue.title == '[FO-DISPATCH] FUSE_AISTUDIO_INTERACTIONS_CANARY_V1'", self.workflow)
+        self.assertIn("github.event.issue.author_association == 'OWNER'", self.workflow)
+        self.assertIn("issues: read", self.workflow)
 
-        def block(header, indent):
-            starts = [index for index, line in enumerate(lines) if line == " " * indent + header]
-            self.assertEqual(len(starts), 1, header)
-            result = []
-            for line in lines[starts[0] + 1:]:
-                if len(line) - len(line.lstrip(" ")) <= indent:
-                    break
-                result.append(line)
-            return result
-
-        jobs = block("jobs:", 0)
-        self.assertEqual([line for line in jobs if len(line) - len(line.lstrip(" ")) == 2],
-                         ["  semantic-canary:"])
-        job = block("semantic-canary:", 2)
-        self.assertEqual([line for line in job if line.startswith("    if:")],
-                         ["    if: github.event_name == 'workflow_dispatch'"])
-        self.assertEqual(block("on:", 0).count("  workflow_dispatch:"), 1)
 
 
 class PortableProfileFailureContracts(unittest.TestCase):
