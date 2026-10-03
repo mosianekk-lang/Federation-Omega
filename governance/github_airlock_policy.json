@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.40",
+  "version": "2.9.41",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -375,8 +375,10 @@
       "google_workspace_provider_readback"
     ],
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": [
-      "--no-traffic",
-      "candidate_traffic_percent",
+      "--no-allow-unauthenticated",
+      "ephemeral_service_isolated",
+      "ephemeral_service_deleted_verified",
+      "production_service_template_mutation_performed",
       "serving_traffic_unchanged",
       "iam_mutation_performed",
       "traffic_promotion_performed"
