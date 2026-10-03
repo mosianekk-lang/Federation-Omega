@@ -1,0 +1,27 @@
+{
+  "schema": "FUSE-CREATIVE-FREEDOM-ROUTING-V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "provider_neutral": true,
+  "creative_intent_is_sovereign": true,
+  "provider_lock_in_allowed": false,
+  "platform_constraints_may_rewrite_goal": false,
+  "canonical_intermediate_representation": "FUSE_CREATIVE_IR_V1",
+  "allowed_constraint_dispositions": [
+    "ROUTE_AROUND",
+    "TRANSCODE",
+    "DECOMPOSE",
+    "BUILD_RESIDUAL",
+    "HOLD_EXECUTION"
+  ],
+  "hard_boundary_rule": "HOLD_EXECUTION_WITHOUT_GOAL_DILUTION",
+  "inherits": [
+    "FUSE_ONE",
+    "SOVARA_CREATIVE",
+    "FORMATION_OMEGA",
+    "CFBE",
+    "HYPERCUBE",
+    "PROOFOS"
+  ]
+}

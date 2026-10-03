@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from .creative_freedom import (
+    CreativeFreedomPlan,
+    CreativeIntentContract,
+    compile_creative_freedom_plan,
+)
 from .policy import ContentClass, PrivacyClass, RouteType
 from .router import RouteDecision
 
@@ -54,6 +59,11 @@ class StudioPlan:
     route_decision_bound: bool = False
     selected_route_id: str | None = None
     selected_route_type: str | None = None
+    creative_freedom_bound: bool = True
+    creative_intent_preserved: bool = True
+    provider_lock_in_allowed: bool = False
+    platform_constraint_treatment: str = "ROUTE_AROUND_NOT_GOAL_REWRITE"
+    canonical_intermediate_representation: str = "FUSE_CREATIVE_IR_V1"
 
 
 def _plane_from_route_decision(request: StudioRequest, decision: RouteDecision) -> ExecutionPlane:
@@ -77,6 +87,7 @@ def compile_studio_plan(
     request: StudioRequest,
     *,
     route_decision: RouteDecision | None = None,
+    freedom_plan: CreativeFreedomPlan | None = None,
 ) -> StudioPlan:
     """Translate creator intent into a conservative execution-plane plan.
 
@@ -93,6 +104,24 @@ def compile_studio_plan(
         raise ValueError("request_id is required")
     if not request.objective.strip():
         raise ValueError("objective is required")
+
+    if freedom_plan is None:
+        freedom_plan = compile_creative_freedom_plan(
+            CreativeIntentContract(
+                request_id=request.request_id,
+                objective=request.objective,
+            )
+        )
+    if freedom_plan.request_id != request.request_id.strip():
+        raise ValueError("creative freedom plan request_id mismatch")
+    if freedom_plan.canonical_objective != request.objective.strip():
+        raise ValueError("creative freedom plan may not rewrite the creator objective")
+    if (
+        not freedom_plan.objective_preserved
+        or freedom_plan.provider_lock_in_allowed
+        or freedom_plan.platform_constraints_may_rewrite_goal
+    ):
+        raise ValueError("creative freedom contract violation")
 
     sensitive = request.privacy_class in {
         PrivacyClass.PRIVATE_ASSET,
@@ -139,4 +168,9 @@ def compile_studio_plan(
         route_decision_bound=route_bound,
         selected_route_id=selected_route_id,
         selected_route_type=selected_route_type,
+        creative_freedom_bound=True,
+        creative_intent_preserved=freedom_plan.objective_preserved,
+        provider_lock_in_allowed=freedom_plan.provider_lock_in_allowed,
+        platform_constraint_treatment="ROUTE_AROUND_NOT_GOAL_REWRITE",
+        canonical_intermediate_representation=freedom_plan.canonical_intermediate_representation,
     )

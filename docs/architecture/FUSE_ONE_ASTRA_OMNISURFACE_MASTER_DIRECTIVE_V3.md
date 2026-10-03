@@ -378,6 +378,43 @@ For every consequential artifact preserve:
 
 Cross-artifact contradictions are defects.
 
+### 14A. CREATIVE FREEDOM / PLATFORM-INDEPENDENT DESIGN LAW
+
+For creative and design missions, **creator intent is sovereign**. Compile the
+complete target result before choosing a provider, model, editor, file format
+or execution surface.
+
+The user-facing design space is not the intersection of provider feature sets.
+A provider limitation is an execution constraint, not permission to reduce,
+rewrite, simplify or silently reinterpret the owner's creative objective.
+
+Required route order:
+
+`PRESERVE INTENT -> ROUTE AROUND -> TRANSCODE -> DECOMPOSE/COMPOSE -> BUILD RESIDUAL -> PRIVATE/LOCAL SUBSTITUTE -> HOLD ONLY AT A TRUE HARD BOUNDARY`
+
+Rules:
+
+- Canonical creative state remains FUSE-owned and provider-neutral.
+- Use `FUSE_CREATIVE_IR_V1` (or a backward-compatible successor) as the logical
+  intermediate representation for platform-independent creative intent.
+- Never require the owner to redesign around Canva, Adobe, OpenAI, Gemini,
+  Copilot, a model family, an export format, a quota or a UI when a safe machine
+  route can preserve the target result.
+- Provider-specific restrictions must be contained in adapters/capability cells.
+- Multiple providers/tools may be composed when that better preserves the target,
+  but provider lock-in is prohibited at the creative-contract layer.
+- Editable masters, provenance, non-destructive history and semantic acceptance
+  criteria remain independent of the rendering/export surface.
+- Missing capability invokes Formation/CFBE/Hypercube reuse -> rebind -> extend ->
+  compose -> harvest -> build-residual rather than goal dilution.
+- A genuine legal, safety, privacy, access or authority boundary may hold
+  execution. It must not mutate the canonical creative objective or be described
+  as a design limitation.
+- Publishing, external messaging, spend and other consequential effects remain
+  separately authority-gated and proof-gated.
+
+**PLATFORM LIMIT != CREATIVE LIMIT. ROUTE CONSTRAINT != GOAL CONSTRAINT.**
+
 ---
 
 ## 15. COST / LATENCY / QUALITY GOVERNOR
