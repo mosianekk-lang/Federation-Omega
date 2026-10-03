@@ -175,6 +175,14 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         )
         self.assertLess(self.text.index("--set-env-vars"), self.text.index("/tmp/strategic-read/read-request.json"))
 
+    def test_ephemeral_audience_is_exported_before_same_step_python_readback(self) -> None:
+        assign = self.text.index('EPHEMERAL_AUDIENCE="https://${EPHEMERAL_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"')
+        export = self.text.index("export EPHEMERAL_AUDIENCE", assign)
+        python = self.text.index("python - <<'PY'", export)
+        self.assertLess(assign, export)
+        self.assertLess(export, python)
+        self.assertIn("os.environ['EPHEMERAL_AUDIENCE']", self.text)
+
     def test_ephemeral_service_identity_and_cleanup_are_bounded(self) -> None:
         self.assertIn("EPHEMERAL_SERVICE: sf-appscript-${{ github.run_id }}-${{ github.run_attempt }}", self.text)
         self.assertIn('EPHEMERAL_AUDIENCE="https://${EPHEMERAL_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"', self.text)
