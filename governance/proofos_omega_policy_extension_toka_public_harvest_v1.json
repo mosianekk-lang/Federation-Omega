@@ -1,0 +1,67 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "benchmarking/cfbe_omega/toka_public_capability_harvest_v1.py",
+        "docs/architecture/FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1.md",
+        "evidenceops/capability_heartbeat/sources.json",
+        "governance/toka_public_capability_harvest_v1.json",
+        "governance/proofos_omega_policy_extension_toka_public_harvest_v1.json",
+        "scheduler/run_scheduler.py",
+        "scheduler/tasks.json",
+        "superior_logic/hypercube_bottleneck_resolver.py",
+        "tests/test_toka_public_capability_harvest_v1.py"
+      ],
+      "reason": "TOKA_PUBLIC_CLEAN_ROOM_CAPABILITY_HARVEST_AFFECTS_CFBE_HYPERCUBE_HEARTBEAT_AND_RECURRING_MISSION_CONTINUITY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1",
+      "patterns": [
+        "benchmarking/cfbe_omega/toka_public_capability_harvest_v1.py",
+        "docs/architecture/FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1.md",
+        "evidenceops/capability_heartbeat/sources.json",
+        "governance/toka_public_capability_harvest_v1.json",
+        "governance/proofos_omega_policy_extension_toka_public_harvest_v1.json",
+        "scheduler/run_scheduler.py",
+        "scheduler/tasks.json",
+        "tests/test_toka_public_capability_harvest_v1.py"
+      ],
+      "depends_on": [
+        "CFBE",
+        "FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1",
+        "EVIDENCEOPS"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "toka_public_capability_harvest_v1",
+      "kind": "unittest_glob",
+      "target": "test_toka_public_capability_harvest_v1.py",
+      "patterns": [
+        "benchmarking/cfbe_omega/toka_public_capability_harvest_v1.py",
+        "docs/architecture/FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1.md",
+        "evidenceops/capability_heartbeat/sources.json",
+        "governance/toka_public_capability_harvest_v1.json",
+        "governance/proofos_omega_policy_extension_toka_public_harvest_v1.json",
+        "scheduler/run_scheduler.py",
+        "scheduler/tasks.json",
+        "tests/test_toka_public_capability_harvest_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1",
+        "CFBE",
+        "EVIDENCEOPS"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}
