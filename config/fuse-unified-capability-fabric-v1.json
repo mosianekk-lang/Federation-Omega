@@ -128,7 +128,9 @@
     "PROMOTE_NEW_RESIDUAL_INTO_EXISTING_FAMILY",
     "KEEP_PROVIDER_ADAPTERS_REPLACEABLE",
     "READBACK_BEFORE_EFFECT_RETRY",
-    "PROVE_BEFORE_TERMINAL_DELIVERY"
+    "PROVE_BEFORE_TERMINAL_DELIVERY",
+    "FORMATION_INFINITY_PRODUCTION_CLOSURE_FOR_NONTERMINAL_PRODUCT_WORK",
+    "FUTURE_FAMILIES_INHERIT_PRODUCTION_BINDING_THROUGH_EXISTING_ECOSYSTEM"
   ],
   "owner_command_compiler": {
     "input": "OWNER_OUTCOME",
@@ -182,5 +184,18 @@
     "algorithm_default": "INTERNAL_IMPLEMENTATION_CANDIDATE_NOT_PRODUCT",
     "product_surface_default": "ONE_FUSE_ECOSYSTEM"
   },
-  "truth_boundary": "UNIFIED_SOURCE_CONTRACT_DOES_NOT_BY_ITSELF_PROVE_ALL_PROVIDER_BINDINGS_OR_ALL_RUNTIME_SERVICES_CURRENTLY_HEALTHY"
+  "truth_boundary": "UNIFIED_SOURCE_CONTRACT_DOES_NOT_BY_ITSELF_PROVE_ALL_PROVIDER_BINDINGS_OR_ALL_RUNTIME_SERVICES_CURRENTLY_HEALTHY",
+  "formation_infinity_production": {
+    "contract_id": "FUSE-FORMATION-INFINITY-PRODUCTION-001",
+    "enabled": true,
+    "family_binding": "DYNAMIC_FROM_REGISTERED_ECOSYSTEM_SERVICES",
+    "resource_binding": "FEDERATION_OMNISURFACE_FABRIC_V2",
+    "logical_agent_budget": 99,
+    "runtime_enforcement_required": true,
+    "production_ready_requires_all_applicable_predicates_closed": true,
+    "commercial_ready_requires_independent_proof": true,
+    "authority_expansion": false,
+    "provider_execution_proven": false,
+    "truth_boundary": "FORMATION_INFINITY_BOUND!=FAMILY_RUNTIME_CONSUMED!=RESOURCE_CALLABLE!=PROVIDER_EXECUTED!=PREDICATE_PROVEN!=PRODUCTION_READY!=CUSTOMER_VALUE!=COMMERCIAL_READY"
+  }
 }

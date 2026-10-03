@@ -4,6 +4,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable, Mapping
 
+from federation.formation_infinity_production_v1 import (
+    FormationInfinityProductionCompiler,
+    ProductionPredicate,
+)
 from federation.capability_truth_v1 import (
     AdapterRouteDecision,
     CapabilityCurrentnessFabric,
@@ -172,8 +176,27 @@ class FuseEcosystemKernel:
     ):
         self.fabric = fabric
         self.services = dict(services or FUSE_ECOSYSTEM_SERVICES)
+        self.formation_infinity = FormationInfinityProductionCompiler()
         for spec in self.services.values():
             spec.validate()
+
+    def compile_production_infinity(
+        self,
+        *,
+        mission_id: str,
+        predicates: Iterable[ProductionPredicate],
+        next_work_limit: int = 5,
+    ):
+        """Compile production/end-state closure across every registered family/resource.
+
+        Planning only: no provider call, authority minting or external effect.
+        """
+        return self.formation_infinity.compile(
+            mission_id=mission_id,
+            services=self.services,
+            predicates=predicates,
+            next_work_limit=next_work_limit,
+        )
 
     def compile(
         self,
