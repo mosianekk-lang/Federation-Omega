@@ -21,6 +21,8 @@ on:
       - "config/fuse-bootstrap-inheritance-v3.json"
       - "respawn/federation_manifest.json"
       - "respawn/bootstrap_service.py"
+  # Exact owner-issued issue dispatch is a machine bridge to this existing canary;
+  # it does not widen model, credential, deployment, or provider authority.
   issues:
     types: [opened]
   workflow_dispatch:
