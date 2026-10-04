@@ -1,0 +1,17 @@
+[
+  {"predicate_id":"FCC-C01","description":"CANONICAL_CURRENTNESS","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C02","description":"MISSION_REGISTERED","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C03","description":"SOURCE_PACKAGE","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C04","description":"DRIVE_CONTROL","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C05","description":"GAS_COORDINATOR","required":"TRUE_VERIFIED_OR_IRREDUCIBLE_PROVIDER_BOUNDARY"},
+  {"predicate_id":"FCC-C06","description":"GCP_RUNTIME","required":"TRUE_VERIFIED_OR_IRREDUCIBLE_PROVIDER_BOUNDARY"},
+  {"predicate_id":"FCC-C07","description":"AI_RUNTIME","required":"TRUE_VERIFIED_OR_IRREDUCIBLE_PROVIDER_BOUNDARY"},
+  {"predicate_id":"FCC-C08","description":"WINDOWS_RUNTIME","required":"TRUE_VERIFIED_OR_IRREDUCIBLE_PROVIDER_BOUNDARY"},
+  {"predicate_id":"FCC-C09","description":"IMAGE_WORKER","required":"TRUE_VERIFIED_OR_IRREDUCIBLE_PROVIDER_BOUNDARY"},
+  {"predicate_id":"FCC-C10","description":"VIDEO_WORKER","required":"TRUE_VERIFIED_OR_IRREDUCIBLE_PROVIDER_BOUNDARY"},
+  {"predicate_id":"FCC-C11","description":"GOLDEN_PATH","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C12","description":"RECOVERY","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C13","description":"AUTOMATION","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C14","description":"COMMERCIAL_BASELINE","required":"TRUE_VERIFIED"},
+  {"predicate_id":"FCC-C15","description":"COMPLETE_VERIFIED","required":"TRUE_VERIFIED"}
+]
