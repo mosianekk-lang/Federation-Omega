@@ -1,0 +1,1 @@
+Do not add further source files before the PR admission cycle unless CI proves a defect.
