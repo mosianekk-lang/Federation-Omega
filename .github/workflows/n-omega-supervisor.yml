@@ -1,0 +1,590 @@
+name: N-Omega Supervisor
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Capability domain to audit"
+        required: false
+        default: all
+        type: choice
+        options:
+          - all
+          - superior-logic
+          - evidenceops
+          - commercial
+      drift_threshold:
+        description: "Maximum tolerated semantic drift findings before an issue is raised"
+        required: false
+        default: "0"
+        type: string
+  workflow_run:
+    workflows:
+      - "ACME v3 Bootstrap CI"
+      - "ACME v3 CI"
+      - "Alpha Omega Commercial Provider Authority Acquisition Proof"
+      - "Alpha Omega Commercial Authority Action Atomicity Proof"
+      - "Alpha Omega Commercial Authority Action Binding Release"
+      - "Alpha Omega Commercial Authority Action Binding Proof"
+      - "Alpha Omega Commercial Authority Action Coordination Release"
+      - "Alpha Omega Commercial Authority Action Coordination Proof"
+      - "Alpha Omega Commercial Authority Action Crash Recovery Release"
+      - "Alpha Omega Commercial Authority Action Crash Recovery Proof"
+      - "Alpha Omega Commercial Authority Action Idempotency Release"
+      - "Alpha Omega Commercial Authority Action Idempotency Proof"
+      - "Alpha Omega Commercial Authority Action Journal Release"
+      - "Alpha Omega Commercial Authority Action Journal Proof"
+      - "Alpha Omega Commercial Authority Anti-Rollback Proof"
+      - "Alpha Omega Commercial Authority Snapshot Release"
+      - "Alpha Omega Commercial Authority Snapshot Proof"
+      - "Alpha Omega Commercial C01-C05 Proof"
+      - "Alpha Omega Commercial C06-C09 Proof"
+      - "Alpha Omega Commercial C10-C15 Proof"
+      - "Alpha Omega Commercial Canonical API v10 Reconciliation"
+      - "Alpha Omega Commercial Effective State Proof"
+      - "Alpha Omega Commercial Governed Authority Proof"
+      - "Alpha Omega Commercial Institution Reconciliation"
+      - "Alpha Omega Commercial Live Provider Expansion"
+      - "Alpha Omega Commercial Owner Authority Receipts Proof"
+      - "Alpha Omega Commercial Provider Reconciliation Recovery v17 Release"
+      - "Alpha Omega Commercial Provider Dispatch Fencing Proof"
+      - "Alpha Omega Commercial Provider Dispatch Lease Release"
+      - "Alpha Omega Commercial Provider Dispatch Lease Proof"
+      - "Alpha Omega Commercial Provider Dispatch Outbox Proof"
+      - "Alpha Omega Commercial Provider Dispatch Outbox Release"
+      - "Bubbles Browser Runtime Canary"
+      - "Bubbles Command Bus"
+      - "Bubbles Provider Authority Recovery Probe"
+      - "EvidenceOps AI ICT durable runtime"
+      - "EvidenceOps Boundary Resolution"
+      - "EvidenceOps External Scheduler"
+      - "EvidenceOps FEVX CSE Read-Only Adapter"
+      - "EvidenceOps FEVX Adapter Verify"
+      - "EvidenceOps In-Place Alignment"
+      - "EvidenceOps In-Place Audit Omega"
+      - "EvidenceOps MCP Adapter CI"
+      - "EvidenceOps Permanent Cloud Capability"
+      - "EvidenceOps Provider Boundary Watch"
+      - "EvidenceOps PST Corpus v2 Canary"
+      - "EvidenceOps PST Corpus v2 Artifact Recovery"
+      - "EvidenceOps PST v2 Fanout Observer"
+      - "EvidenceOps PST Corpus v2 Observer"
+      - "EvidenceOps PST Corpus v2 Shard Fanout"
+      - "EvidenceOps PST v2 Drive Remote Observer"
+      - "EvidenceOps PST v2 Drive Remote Verify"
+      - "EvidenceOps RESOLVE CI"
+      - "EvidenceOps RESOLVE Job"
+      - "EvidenceOps Sovereign Runtime"
+      - "EvidenceOps Sovereign Translator Alignment"
+      - "EvidenceOps v7.2.2 P12 Provider Worker"
+      - "EvidenceOps v7.2.2 P13 Longitudinal Value Ledger"
+      - "EvidenceOps v7.2.2 P13 Raw Provider Freshness"
+      - "EvidenceOps Virtual Organization"
+      - "Superior Logic CI"
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: n-omega-supervisor-${{ github.event_name }}-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  N_OMEGA_SCOPE: ${{ inputs.scope || 'all' }}
+  N_OMEGA_DRIFT_THRESHOLD: ${{ inputs.drift_threshold || '0' }}
+  N_OMEGA_WINDOW_HOURS: "24"
+
+jobs:
+  audit-ci-tests:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      failure_count: ${{ steps.scan.outputs.failure_count }}
+    steps:
+      - name: Scan failed audited workflows
+        id: scan
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          mkdir -p audit
+          python3 - <<'PY'
+          import fnmatch, json, os, subprocess
+          from datetime import datetime, timedelta, timezone
+
+          repo = os.environ["REPO"]
+          scope = os.environ["N_OMEGA_SCOPE"]
+          patterns = [
+              "test.yml", "alpha-omega-commercial-*.yml", "evidenceops-*.yml",
+              "acme-v3*.yml", "bubbles-*.yml",
+          ]
+
+          def domain_of(name):
+              if name.startswith("alpha-omega-commercial-"):
+                  return "commercial"
+              if name.startswith("evidenceops-"):
+                  return "evidenceops"
+              return "superior-logic"
+
+          def gh(path):
+              out = subprocess.run(["gh", "api", path], check=True, capture_output=True, text=True).stdout
+              return json.loads(out)
+
+          if os.environ["EVENT_NAME"] == "workflow_run":
+              runs = [gh(f"repos/{repo}/actions/runs/{os.environ['TRIGGER_RUN_ID']}")]
+          else:
+              since = (datetime.now(timezone.utc) - timedelta(hours=int(os.environ["N_OMEGA_WINDOW_HOURS"]))).strftime("%Y-%m-%dT%H:%M:%SZ")
+              runs = gh(f"repos/{repo}/actions/runs?status=failure&created=%3E%3D{since}&per_page=100").get("workflow_runs", [])
+
+          failures = []
+          for run in runs:
+              name = run["path"].split("@")[0].rsplit("/", 1)[-1]
+              if not any(fnmatch.fnmatch(name, p) for p in patterns):
+                  continue
+              if run.get("conclusion") != "failure":
+                  continue
+              domain = domain_of(name)
+              if scope != "all" and domain != scope:
+                  continue
+              failures.append({
+                  "run_id": run["id"], "workflow_file": name, "workflow_name": run["name"],
+                  "domain": domain, "head_sha": run["head_sha"], "event": run["event"],
+                  "created_at": run["created_at"], "html_url": run["html_url"],
+              })
+
+          report = {
+              "schema": "N-OMEGA-CI-AUDIT-V1",
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+              "scope": scope, "window_hours": int(os.environ["N_OMEGA_WINDOW_HOURS"]),
+              "failure_count": len(failures), "failures": failures,
+          }
+          json.dump(report, open("audit/ci-audit.json", "w"), indent=2)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as handle:
+              handle.write(f"failure_count={len(failures)}\n")
+          print(f"{len(failures)} failed audited workflow run(s)")
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: n-omega-ci-audit
+          path: audit/ci-audit.json
+          if-no-files-found: error
+          retention-days: 30
+
+  investigate-failures:
+    needs: audit-ci-tests
+    if: needs.audit-ci-tests.outputs.failure_count != '0'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: n-omega-ci-audit
+          path: audit
+
+      - name: Investigate failed jobs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from datetime import datetime, timezone
+
+          repo = os.environ["REPO"]
+          modules = ["codeforge", "mission_ir", "parallel_runtime", "hypercube_bottleneck_resolver",
+                     "live_thread", "skill_forge", "finalization_kernel", "evolution_lab"]
+          # (regex, domain or None to keep the workflow's domain, capability gap, severity, root cause, verification, prevention)
+          heuristics = [
+              (r"ModuleNotFoundError: No module named '([\w.]+)'", None, "Module gap", "high",
+               "A required runtime module cannot be imported.",
+               "Run `python -c \"import <module>\"` and the failing test locally.",
+               "Add an import smoke test covering: " + ", ".join(modules) + "."),
+              (r"JFRIE", "evidenceops", "Jurisdiction gating (JFRIE hard gate)", "high",
+               "A JFRIE jurisdiction hard gate rejected or could not evaluate the input.",
+               "Re-run the EvidenceOps JFRIE gate tests against the failing fixture.",
+               "Add a regression fixture for the rejected jurisdiction path."),
+              (r"(?i:(?:checkpoint|receipt|contract)[\w.-]*\.json|proof artifact)", "commercial", "Proof artifact missing or invalid", "high",
+               "A checkpoint, receipt or contract proof artifact is missing or fails validation.",
+               "Regenerate the proof artifact and compare against the committed contract.",
+               "Fail the producing job when a proof artifact is not emitted."),
+              (r"ECASP|\bG(?:10|[1-9])\b gate", "superior-logic", "ECASP gate failure", "high",
+               "An ECASP gate (G1-G10) failed.",
+               "Re-run the ECASP gate suite and inspect the failing gate id.",
+               "Pin gate expectations in tests."),
+              (r"SLRK", "superior-logic", "SLRK endpoint registration", "medium",
+               "An SLRK endpoint is missing or misregistered.",
+               "Re-run the SLRK registration tests.", "Add endpoint registration contract tests."),
+              (r"(?i)sqlite|ledger", "superior-logic", "SQLite ledger consistency", "high",
+               "The SQLite event ledger is inconsistent or unavailable.",
+               "Run the ledger consistency tests on a fresh database.", "Add ledger integrity checks."),
+              (r"LEX-OMEGA", "evidenceops", "LEX-OMEGA policy", "high",
+               "A LEX-OMEGA policy check failed.", "Re-run the LEX-OMEGA policy tests.",
+               "Version-lock policy fixtures."),
+              (r"(?i)kim dataverse|schema validat", "evidenceops", "Kim Dataverse schema validator", "medium",
+               "A Kim Dataverse schema validator rejected its input.",
+               "Re-run the schema validator tests.", "Add schema drift tests."),
+              (r"(?i)ecertify", "evidenceops", "eCertify ZA integrity validation", "high",
+               "eCertify ZA integrity validation failed.", "Re-run the eCertify ZA integrity tests.",
+               "Add an integrity regression fixture."),
+              (r"(?i)phoenix", "commercial", "Phoenix execution plane", "medium",
+               "The Phoenix execution plane reported an error.", "Re-run the Phoenix plane tests.",
+               "Add execution plane canaries."),
+              (r"(?i)idempoten|atomicity|journal", "commercial", "Authority-action journal idempotency/atomicity", "high",
+               "The authority-action journal violated idempotency or atomicity.",
+               "Re-run the authority-action journal tests including crash recovery.",
+               "Add replay and crash-injection regression tests."),
+          ]
+
+          def gh_text(path):
+              proc = subprocess.run(["gh", "api", path], capture_output=True, text=True)
+              return proc.stdout if proc.returncode == 0 else ""
+
+          audit = json.load(open("audit/ci-audit.json"))
+          findings = []
+          for failure in audit["failures"]:
+              run_id = failure["run_id"]
+              jobs = json.loads(gh_text(f"repos/{repo}/actions/runs/{run_id}/jobs?per_page=100") or '{"jobs": []}')["jobs"]
+              failed_jobs = [j for j in jobs if j.get("conclusion") == "failure"]
+              seen = set()
+              for job in failed_jobs or [None]:
+                  log = gh_text(f"repos/{repo}/actions/jobs/{job['id']}/logs") if job else ""
+                  log = log[-200000:]
+                  matched = False
+                  for regex, domain, gap, severity, cause, verify, prevent in heuristics:
+                      hit = re.search(regex, log)
+                      if not hit:
+                          continue
+                      if gap == "Module gap" and hit.group(1).split(".")[0] in modules:
+                          domain = domain or "superior-logic"
+                      domain = domain or failure["domain"]
+                      key = (domain, gap, failure["workflow_file"])
+                      matched = True
+                      if key in seen:
+                          break
+                      seen.add(key)
+                      lines = [l[:300] for l in log.splitlines() if re.search(regex, l)][:5]
+                      if gap == "Module gap":
+                          gap = f"Module gap ({hit.group(1)})"
+                      findings.append({
+                          "domain": domain, "capability_gap": gap, "severity": severity,
+                          "workflow_file": failure["workflow_file"], "workflow_name": failure["workflow_name"],
+                          "run_url": failure["html_url"], "job_name": job["name"] if job else None,
+                          "head_sha": failure["head_sha"], "evidence": lines,
+                          "root_cause": cause, "verification": verify, "prevention": prevent,
+                          "code_refs": [f".github/workflows/{failure['workflow_file']}"],
+                      })
+                      matched = True
+                      break
+                  if not matched:
+                      key = (failure["domain"], "Unclassified CI failure", failure["workflow_file"])
+                      if key in seen:
+                          continue
+                      seen.add(key)
+                      tail = [l[:300] for l in log.splitlines() if re.search(r"(?i)error|failed|traceback", l)][-5:]
+                      findings.append({
+                          "domain": failure["domain"], "capability_gap": "Unclassified CI failure", "severity": "medium",
+                          "workflow_file": failure["workflow_file"], "workflow_name": failure["workflow_name"],
+                          "run_url": failure["html_url"], "job_name": job["name"] if job else None,
+                          "head_sha": failure["head_sha"], "evidence": tail,
+                          "root_cause": "No known error pattern matched; manual log review required.",
+                          "verification": "Re-run the failed workflow and inspect the job log.",
+                          "prevention": "Add a heuristic for this failure signature.",
+                          "code_refs": [f".github/workflows/{failure['workflow_file']}"],
+                      })
+
+          os.makedirs("audit", exist_ok=True)
+          json.dump({"schema": "N-OMEGA-INVESTIGATION-V1",
+                     "generated_at": datetime.now(timezone.utc).isoformat(),
+                     "findings": findings}, open("audit/investigation.json", "w"), indent=2)
+          print(f"{len(findings)} investigation finding(s)")
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: n-omega-investigation
+          path: audit/investigation.json
+          if-no-files-found: error
+          retention-days: 30
+
+  detect-semantic-drift:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Scan config and governance for semantic drift
+        shell: bash
+        run: |
+          mkdir -p audit
+          python3 - <<'PY'
+          import glob, json, os, re
+          from collections import defaultdict
+          from datetime import datetime, timezone
+
+          import yaml
+
+          version_keys = ("version", "schema_version", "policy_version", "spec_version")
+          id_keys = ("policy_id", "schema_id")
+          scope = os.environ["N_OMEGA_SCOPE"]
+          threshold = int(os.environ["N_OMEGA_DRIFT_THRESHOLD"])
+
+          def domain_of(path):
+              lower = path.lower()
+              if "evidenceops" in lower or "jfrie" in lower or "lex-omega" in lower or "ecertify" in lower:
+                  return "evidenceops"
+              if "alpha_omega" in lower or "alpha-omega" in lower or "commercial" in lower or "phoenix" in lower:
+                  return "commercial"
+              return "superior-logic"
+
+          def major(value):
+              hit = re.match(r"v?(\d+)", str(value).strip().lower())
+              return hit.group(1) if hit else None
+
+          findings = []
+          identities = defaultdict(list)
+          for root in ("config", "governance"):
+              for path in sorted(glob.glob(f"{root}/**/*", recursive=True)):
+                  if not path.endswith((".json", ".yaml", ".yml")) or not os.path.isfile(path):
+                      continue
+                  domain = domain_of(path)
+                  try:
+                      with open(path, encoding="utf-8") as handle:
+                          data = json.load(handle) if path.endswith(".json") else yaml.safe_load(handle)
+                  except Exception as exc:
+                      findings.append({"domain": domain, "kind": "unparseable_document", "path": path,
+                                       "detail": f"{type(exc).__name__}: {' '.join(str(exc).split())[:200]}"})
+                      continue
+                  if not isinstance(data, dict):
+                      continue
+                  version = next((data[k] for k in version_keys if k in data), None)
+                  if version is None:
+                      findings.append({"domain": domain, "kind": "missing_version_key", "path": path,
+                                       "detail": "none of " + ", ".join(version_keys) + " present"})
+                      continue
+                  for key in id_keys:
+                      ident = data.get(key)
+                      if isinstance(ident, str):
+                          identities[ident].append((path, str(version)))
+                          embedded = re.search(r"[-_.]v(\d+)(?:[-_.]|$)", ident.lower())
+                          if embedded and major(version) and embedded.group(1) != major(version):
+                              findings.append({"domain": domain, "kind": "schema_version_mismatch", "path": path,
+                                               "detail": f"{key}={ident} implies major {embedded.group(1)} but version={version}"})
+                          break
+
+          for ident, entries in identities.items():
+              versions = {v for _, v in entries}
+              if len(entries) > 1 and len(versions) > 1:
+                  for path, _ in entries:
+                      findings.append({"domain": domain_of(path), "kind": "version_inconsistency", "path": path,
+                                       "detail": f"{ident} declared with versions {sorted(versions)} in {len(entries)} files"})
+
+          if scope != "all":
+              findings = [f for f in findings if f["domain"] == scope]
+          report = {
+              "schema": "N-OMEGA-DRIFT-V1",
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+              "scope": scope, "threshold": threshold, "drift_count": len(findings),
+              "exceeds_threshold": len(findings) > threshold, "findings": findings,
+          }
+          json.dump(report, open("audit/drift.json", "w"), indent=2)
+          print(f"{len(findings)} drift finding(s); threshold {threshold}")
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: n-omega-drift
+          path: audit/drift.json
+          if-no-files-found: error
+          retention-days: 30
+
+  create-resolution-issue:
+    needs: [audit-ci-tests, investigate-failures, detect-semantic-drift]
+    if: always() && !cancelled() && (needs.audit-ci-tests.result == 'success' || needs.detect-semantic-drift.result == 'success')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: n-omega-*
+          path: audit
+          merge-multiple: true
+
+      - name: Create or update resolution issues
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timedelta, timezone
+
+          repo = os.environ["REPO"]
+          now = datetime.now(timezone.utc)
+          today = now.strftime("%Y-%m-%d")
+          severity_rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}
+
+          def load(name):
+              path = f"audit/{name}"
+              return json.load(open(path)) if os.path.isfile(path) else None
+
+          investigation = load("investigation.json") or {"findings": []}
+          drift = load("drift.json")
+
+          # group by (domain, capability gap)
+          groups = {}
+          for finding in investigation["findings"]:
+              groups.setdefault((finding["domain"], finding["capability_gap"]), []).append(finding)
+          if drift and drift["exceeds_threshold"]:
+              by_domain = {}
+              for item in drift["findings"]:
+                  by_domain.setdefault(item["domain"], []).append(item)
+              for domain, items in by_domain.items():
+                  kinds = sorted({i["kind"] for i in items})
+                  severity = "high" if any(k in ("schema_version_mismatch", "version_inconsistency") for k in kinds) else "medium"
+                  evidence = [f"{i['kind']}: {i['path']} - {i['detail']}" for i in items[:20]]
+                  if len(items) > 20:
+                      evidence.append(f"... and {len(items) - 20} more (see n-omega-audit-report artifact)")
+                  groups[(domain, "Configuration semantic drift")] = [{
+                      "domain": domain, "capability_gap": "Configuration semantic drift", "severity": severity,
+                      "run_url": None, "evidence": evidence,
+                      "root_cause": f"{len(items)} config/governance document(s) show {', '.join(kinds)}.",
+                      "verification": "Re-run the N-Omega Supervisor with the same scope and confirm drift_count is at or below the threshold.",
+                      "prevention": "Require a version key and consistent schema/version majors in config and governance documents via a schema test.",
+                      "code_refs": sorted({i["path"] for i in items})[:20],
+                  }]
+
+          def fence(text):
+              return "````text\n" + text.replace("````", "```") + "\n````"
+
+          def gh(args, check=True):
+              return subprocess.run(["gh", *args], check=check, capture_output=True, text=True)
+
+          results = []
+          for (domain, gap), items in groups.items():
+              severity = max((i["severity"] for i in items), key=lambda s: severity_rank[s])
+              title = f"[N-Omega Audit] {domain}: {gap} - {today}"
+              body = "\n".join([
+                  "## N-Omega Supervisor Resolution Report",
+                  "",
+                  f"- **Timestamp:** {now.isoformat()}",
+                  f"- **Domain:** {domain}",
+                  f"- **Capability gap:** {gap}",
+                  f"- **Severity:** {severity}",
+                  f"- **Supervisor run:** https://github.com/{repo}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+                  "",
+                  "## Evidence",
+                  *[f"- Failing run: {i['run_url']} (workflow `{i['workflow_file']}`, job `{i['job_name']}`)"
+                    for i in items if i.get("run_url")],
+                  *[fence("\n".join(i["evidence"])) for i in items if i["evidence"]],
+                  "",
+                  "## Root cause analysis",
+                  *sorted({f"- {i['root_cause']}" for i in items}),
+                  "",
+                  "## Code references",
+                  *sorted({f"- `{ref}`" for i in items for ref in i["code_refs"]}),
+                  "",
+                  "## Verification steps",
+                  *sorted({f"- {i['verification']}" for i in items}),
+                  "",
+                  "## Long-term prevention",
+                  *sorted({f"- {i['prevention']}" for i in items}),
+                  "",
+                  "_Generated by the N-Omega Supervisor. Automated findings are heuristic and require owner review; this issue grants no authority._",
+              ])
+              wanted = {"automation/n-omega": "5319e7", f"audit/{domain}": "0e8a16",
+                        f"severity/{severity}": {"low": "c2e0c6", "medium": "fbca04", "high": "d93f0b", "critical": "b60205"}[severity]}
+              for name, color in wanted.items():
+                  gh(["label", "create", name, "--color", color, "--force", "--repo", repo], check=False)
+
+              existing = json.loads(gh(["issue", "list", "--repo", repo, "--state", "open",
+                                        "--label", "automation/n-omega", "--label", f"audit/{domain}",
+                                        "--json", "number,title,createdAt", "--limit", "100"]).stdout)
+              cutoff = now - timedelta(days=7)
+              marker = f"[N-Omega Audit] {domain}: {gap} - "
+              duplicate = next((e for e in existing if e["title"].startswith(marker)
+                                and datetime.fromisoformat(e["createdAt"].replace("Z", "+00:00")) >= cutoff), None)
+              if duplicate:
+                  gh(["issue", "comment", str(duplicate["number"]), "--repo", repo, "--body", body])
+                  results.append({"domain": domain, "capability_gap": gap, "action": "commented", "issue": duplicate["number"]})
+              else:
+                  created = gh(["issue", "create", "--repo", repo, "--title", title, "--body", body,
+                                "--label", ",".join(wanted)]).stdout.strip()
+                  results.append({"domain": domain, "capability_gap": gap, "action": "created", "issue": created})
+
+          json.dump({"schema": "N-OMEGA-ISSUES-V1", "generated_at": now.isoformat(), "results": results},
+                    open("audit/issues.json", "w"), indent=2)
+          print(f"{len(results)} issue action(s)")
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: n-omega-issues
+          path: audit/issues.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-audit-logs:
+    needs: [audit-ci-tests, investigate-failures, detect-semantic-drift, create-resolution-issue]
+    if: always() && !cancelled() && needs.audit-ci-tests.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: n-omega-*
+          path: audit
+          merge-multiple: true
+
+      - name: Assemble audit report
+        shell: bash
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+
+          def load(name):
+              path = f"audit/{name}"
+              return json.load(open(path)) if os.path.isfile(path) else None
+
+          report = {
+              "schema": "N-OMEGA-AUDIT-REPORT-V1",
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "event": os.environ["GITHUB_EVENT_NAME"],
+              "scope": os.environ["N_OMEGA_SCOPE"],
+              "job_results": json.loads(os.environ["RESULTS"]),
+              "ci_audit": load("ci-audit.json"),
+              "investigation": load("investigation.json"),
+              "semantic_drift": load("drift.json"),
+              "issues": load("issues.json"),
+          }
+          json.dump(report, open("n-omega-audit-report.json", "w"), indent=2)
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: n-omega-audit-report
+          path: n-omega-audit-report.json
+          if-no-files-found: error
+          retention-days: 30
