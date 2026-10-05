@@ -143,7 +143,11 @@ jobs:
               runs = [gh(f"repos/{repo}/actions/runs/{os.environ['TRIGGER_RUN_ID']}")]
           else:
               since = (datetime.now(timezone.utc) - timedelta(hours=int(os.environ["N_OMEGA_WINDOW_HOURS"]))).strftime("%Y-%m-%dT%H:%M:%SZ")
-              runs = gh(f"repos/{repo}/actions/runs?status=failure&created=%3E%3D{since}&per_page=100").get("workflow_runs", [])
+              out = subprocess.run(
+                  ["gh", "api", "--paginate", "--jq", ".workflow_runs[]",
+                   f"repos/{repo}/actions/runs?status=failure&created=%3E%3D{since}&per_page=100"],
+                  check=True, capture_output=True, text=True).stdout
+              runs = [json.loads(line) for line in out.splitlines() if line.strip()]
 
           failures = []
           for run in runs:
@@ -413,9 +417,12 @@ jobs:
 
   create-resolution-issue:
     needs: [audit-ci-tests, investigate-failures, detect-semantic-drift]
-    if: always() && !cancelled() && (needs.audit-ci-tests.result == 'success' || needs.detect-semantic-drift.result == 'success')
+    if: always() && !cancelled() && needs.investigate-failures.result != 'failure' && (needs.audit-ci-tests.result == 'success' || needs.detect-semantic-drift.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    concurrency:
+      group: n-omega-supervisor-issues
+      cancel-in-progress: false
     permissions:
       actions: read
       contents: read
