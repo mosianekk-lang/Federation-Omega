@@ -1,0 +1,39 @@
+name: Deploy Phase 1 Execution Bridge
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/phase1-listener.yml'
+
+jobs:
+  deploy-listener:
+    runs-on: self-hosted
+    steps:
+      - name: Scaffold Execution Bridge Directories
+        run: |
+          $BridgeDir = "C:\FUSE\Bridge"
+          if (-not (Test-Path $BridgeDir)) { New-Item -Path $BridgeDir -ItemType Directory -Force | Out-Null }
+        shell: powershell
+
+      - name: Write N-Omega Local Listener Script
+        run: |
+          $ListenerPath = "C:\FUSE\Bridge\n_omega_listener.ps1"
+          $ScriptContent = @"
+          `$ErrorActionPreference = 'Stop'
+          Write-Output "[`$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] N-OMEGA Execution Bridge Active. Awaiting cloud directives..." | Out-File -FilePath C:\FUSE\Bridge\bridge.log -Append
+          while (`$true) { Start-Sleep -Seconds 60 }
+          "@
+          Set-Content -Path $ListenerPath -Value$ScriptContent
+        shell: powershell
+
+      - name: Register and Start Continuous Background Task
+        run: |
+          $TaskName = "N-Omega-Execution-Bridge"
+          if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
+              Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+          }
+          $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -File C:\FUSE\Bridge\n_omega_listener.ps1"
+          $Trigger = New-ScheduledTaskTrigger -AtStartup$Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+          Register-ScheduledTask -TaskName $TaskName -Action$Action -Trigger $Trigger -Principal$Principal -Force
+          Start-ScheduledTask -TaskName $TaskName
+        shell: powershell
