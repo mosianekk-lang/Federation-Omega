@@ -20,6 +20,11 @@ on:
         required: false
         default: "0"
         type: string
+      max_copilot_assignments:
+        description: "Maximum new issues assigned to Copilot in this run"
+        required: false
+        default: "3"
+        type: string
   workflow_run:
     workflows:
       - "ACME v3 Bootstrap CI"
@@ -97,6 +102,7 @@ concurrency:
 env:
   N_OMEGA_SCOPE: ${{ inputs.scope || 'all' }}
   N_OMEGA_DRIFT_THRESHOLD: ${{ inputs.drift_threshold || '0' }}
+  N_OMEGA_MAX_COPILOT_ASSIGNMENTS: ${{ inputs.max_copilot_assignments || '3' }}
   N_OMEGA_WINDOW_HOURS: "24"
 
 jobs:
@@ -424,8 +430,6 @@ jobs:
       group: n-omega-supervisor-issues
       cancel-in-progress: false
     permissions:
-      actions: read
-      contents: read
       issues: write
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -439,12 +443,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          SCOPE: ${{ inputs.scope || 'all' }}
+          MAX_COPILOT_ASSIGNMENTS: ${{ inputs.max_copilot_assignments || '3' }}
         run: |
           python3 - <<'PY'
-          import json, os, subprocess
+          import json, os, re, subprocess
           from datetime import datetime, timedelta, timezone
 
           repo = os.environ["REPO"]
+          scope = os.environ["SCOPE"]
+          max_assignments = int(os.environ["MAX_COPILOT_ASSIGNMENTS"])
+          if max_assignments < 0:
+              raise ValueError("max_copilot_assignments must be non-negative")
           now = datetime.now(timezone.utc)
           today = now.strftime("%Y-%m-%d")
           severity_rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}
@@ -466,7 +476,12 @@ jobs:
                   by_domain.setdefault(item["domain"], []).append(item)
               for domain, items in by_domain.items():
                   kinds = sorted({i["kind"] for i in items})
-                  severity = "high" if any(k in ("schema_version_mismatch", "version_inconsistency") for k in kinds) else "medium"
+                  if any(k in ("schema_version_mismatch", "version_inconsistency") for k in kinds):
+                      severity = "high"
+                  elif kinds == ["missing_version_key"]:
+                      severity = "low"
+                  else:
+                      severity = "medium"
                   evidence = [f"{i['kind']}: {i['path']} - {i['detail']}" for i in items[:20]]
                   if len(items) > 20:
                       evidence.append(f"... and {len(items) - 20} more (see n-omega-audit-report artifact)")
@@ -485,48 +500,77 @@ jobs:
           def gh(args, check=True):
               return subprocess.run(["gh", *args], check=check, capture_output=True, text=True)
 
+          def best_effort_gh(args):
+              try:
+                  result = gh(args, check=False)
+              except (OSError, subprocess.SubprocessError) as exc:
+                  print(f"Non-blocking GitHub CLI operation failed ({type(exc).__name__})")
+                  return None
+              if result.returncode:
+                  print("Non-blocking GitHub CLI operation failed")
+                  return None
+              return result
+
+          def clean(value, limit=600):
+              return str(value or "").replace("`", "'").replace("@", "＠").replace("\r", " ").replace("\n", " ").strip()[:limit]
+
           results = []
+          assignment_attempts = 0
           for (domain, gap), items in groups.items():
               severity = max((i["severity"] for i in items), key=lambda s: severity_rank[s])
-              title = f"[N-Omega Audit] {domain}: {gap} - {today}"
+              title = f"[N-Omega Audit] {clean(domain, 80)}: {clean(gap, 180)} - {today}"
+              affected_files = sorted({clean(ref, 300) for i in items for ref in i.get("code_refs", [])})
+              acceptance_criteria = sorted({clean(i.get("verification"), 500) for i in items if i.get("verification")})
               body = "\n".join([
                   "## N-Omega Supervisor Resolution Report",
                   "",
                   f"- **Timestamp:** {now.isoformat()}",
-                  f"- **Domain:** {domain}",
-                  f"- **Capability gap:** {gap}",
+                  f"- **Domain:** {clean(domain, 80)}",
+                  f"- **Capability gap:** {clean(gap, 300)}",
                   f"- **Severity:** {severity}",
                   f"- **Supervisor run:** https://github.com/{repo}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
                   "",
                   "## Evidence",
-                  *[f"- Failing run: {i['run_url']} (workflow `{i['workflow_file']}`, job `{i['job_name']}`)"
+                  *[f"- Failing run: {clean(i.get('run_url'), 300)} (workflow '{clean(i.get('workflow_file'), 150)}', job '{clean(i.get('job_name'), 150)}')"
                     for i in items if i.get("run_url")],
-                  *[fence("\n".join(i["evidence"])) for i in items if i["evidence"]],
+                  *[fence("\n".join(clean(line, 300) for line in i.get("evidence", [])))
+                    for i in items if i.get("evidence")],
                   "",
                   "## Root cause analysis",
-                  *sorted({f"- {i['root_cause']}" for i in items}),
+                  *sorted({f"- {clean(i.get('root_cause'), 600)}" for i in items}),
                   "",
                   "## Code references",
-                  *sorted({f"- `{ref}`" for i in items for ref in i["code_refs"]}),
+                  *[f"- {ref}" for ref in affected_files],
                   "",
                   "## Verification steps",
-                  *sorted({f"- {i['verification']}" for i in items}),
+                  *[f"- {criterion}" for criterion in acceptance_criteria],
                   "",
                   "## Long-term prevention",
-                  *sorted({f"- {i['prevention']}" for i in items}),
+                  *sorted({f"- {clean(i.get('prevention'), 600)}" for i in items}),
+                  "",
+                  "## Copilot work order",
+                  f"- **Domain:** {clean(domain, 80)}",
+                  f"- **Gap:** {clean(gap, 300)}",
+                  "- **Affected files:**",
+                  *([f"  - {ref}" for ref in affected_files] or ["  - Identify the relevant files from the evidence."]),
+                  "- **Acceptance criteria:**",
+                  "- Implement the fix and add or update regression coverage for the reported behavior.",
+                  *[f"  - {criterion}" for criterion in acceptance_criteria],
+                  "- Follow `.github/instructions/ai-team-mandate.md`.",
                   "",
                   "_Generated by the N-Omega Supervisor. Automated findings are heuristic and require owner review; this issue grants no authority._",
               ])
               wanted = {"automation/n-omega": "5319e7", f"audit/{domain}": "0e8a16",
                         f"severity/{severity}": {"low": "c2e0c6", "medium": "fbca04", "high": "d93f0b", "critical": "b60205"}[severity]}
-              for name, color in wanted.items():
+              for name, color in {**wanted, "ai-team/in-progress": "ffd700",
+                                  "ai-team/needs-human": "ff0000"}.items():
                   gh(["label", "create", name, "--color", color, "--force", "--repo", repo], check=False)
 
               existing = json.loads(gh(["issue", "list", "--repo", repo, "--state", "open",
                                         "--label", "automation/n-omega", "--label", f"audit/{domain}",
                                         "--json", "number,title,createdAt", "--limit", "100"]).stdout)
               cutoff = now - timedelta(days=7)
-              marker = f"[N-Omega Audit] {domain}: {gap} - "
+              marker = f"[N-Omega Audit] {clean(domain, 80)}: {clean(gap, 180)} - "
               duplicate = next((e for e in existing if e["title"].startswith(marker)
                                 and datetime.fromisoformat(e["createdAt"].replace("Z", "+00:00")) >= cutoff), None)
               if duplicate:
@@ -535,7 +579,47 @@ jobs:
               else:
                   created = gh(["issue", "create", "--repo", repo, "--title", title, "--body", body,
                                 "--label", ",".join(wanted)]).stdout.strip()
-                  results.append({"domain": domain, "capability_gap": gap, "action": "created", "issue": created})
+                  issue_match = re.search(r"/issues/(\d+)(?:\D|$)", created)
+                  if not issue_match:
+                      print("Created issue number unavailable; Copilot assignment was skipped")
+                      results.append({"domain": domain, "capability_gap": gap, "action": "created_unassigned", "issue": created})
+                      continue
+                  issue_number = issue_match.group(1)
+
+                  def defer_to_owner(message, action):
+                      best_effort_gh(["issue", "edit", issue_number, "--repo", repo,
+                                      "--add-label", "ai-team/needs-human"])
+                      best_effort_gh(["issue", "comment", issue_number, "--repo", repo, "--body", message])
+                      results.append({"domain": domain, "capability_gap": gap, "action": action, "issue": issue_number})
+
+                  if severity == "low" and scope == "all":
+                      results.append({"domain": domain, "capability_gap": gap,
+                                      "action": "created_low_severity_unassigned", "issue": issue_number})
+                      continue
+
+                  if assignment_attempts >= max_assignments:
+                      defer_to_owner(
+                          "Copilot assignment was skipped because this run reached its configured assignment limit. "
+                          "A repository owner can assign Copilot or re-run the supervisor with a higher "
+                          "`max_copilot_assignments` value.",
+                          "created_unassigned_assignment_limit",
+                      )
+                      continue
+
+                  assignment_attempts += 1
+                  assignment = best_effort_gh([
+                      "issue", "edit", issue_number, "--repo", repo,
+                      "--add-assignee", "@copilot", "--add-label", "ai-team/in-progress",
+                  ])
+                  if assignment:
+                      results.append({"domain": domain, "capability_gap": gap,
+                                      "action": "created_assigned_to_copilot", "issue": issue_number})
+                  else:
+                      defer_to_owner(
+                          "Automatic Copilot assignment failed. Please assign the Copilot coding agent manually "
+                          "and apply the `ai-team/needs-human` label if follow-up is required.",
+                          "created_assignment_failed",
+                      )
 
           json.dump({"schema": "N-OMEGA-ISSUES-V1", "generated_at": now.isoformat(), "results": results},
                     open("audit/issues.json", "w"), indent=2)
