@@ -68,7 +68,8 @@
     ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
     ".github/workflows/work-plane-private-gcp-canary-v1.yml",
     ".github/workflows/sol62-client-runtime-canary.yml",
-    ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml"
+    ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+    ".github/workflows/ai-engineering-team.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -249,6 +250,10 @@
     ],
     ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml": [
       "pull_request",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/ai-engineering-team.yml": [
+      "issues",
       "workflow_dispatch"
     ]
   },
@@ -674,7 +679,8 @@
       ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
       ".github/workflows/work-plane-private-gcp-canary-v1.yml",
       ".github/workflows/sol62-client-runtime-canary.yml",
-      ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml"
+      ".github/workflows/fuse-localllm-desktop-windows-build-v1.yml",
+      ".github/workflows/ai-engineering-team.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
